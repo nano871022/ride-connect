@@ -18,3 +18,7 @@ The primary objective is to write clean, decoupled, maintainable, and simple cod
     *   Implement explicit error handling and avoid silent exception swallowing.
 *   **KISS Principle (Keep It Simple, Stupid):**
     *   Avoid premature optimization, over-engineering, or unnecessary abstraction layers. Choose the simplest design that satisfies the current requirements.
+*   **Internationalization (i18n):**
+    *   Never hardcode user-visible messages or text strings directly in source code.
+    *   Always define strings in resource files (`strings.xml`).
+    *   Provide string resources for both English (`values/strings.xml`) and Spanish (`values-es/strings.xml`).

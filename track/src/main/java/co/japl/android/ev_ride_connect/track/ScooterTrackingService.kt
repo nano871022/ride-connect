@@ -69,10 +69,10 @@ class ScooterTrackingService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Scooter Tracking Service",
+                getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Tracks scooter ride status and distance in background"
+                description = getString(R.string.notification_channel_description)
             }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
@@ -81,8 +81,8 @@ class ScooterTrackingService : Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Scooter Ride Tracking")
-            .setContentText("Tracking current ride details...")
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(getString(R.string.notification_content))
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

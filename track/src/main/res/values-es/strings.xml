@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_name">Servicio de Seguimiento de Scooter</string>
+    <string name="notification_channel_description">Rastrea el estado y la distancia del viaje del scooter en segundo plano</string>
+    <string name="notification_title">Seguimiento de Viaje en Scooter</string>
+    <string name="notification_content">Rastreando detalles del viaje actual…</string>
+</resources>

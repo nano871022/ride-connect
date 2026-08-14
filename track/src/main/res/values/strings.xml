@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_name">Scooter Tracking Service</string>
+    <string name="notification_channel_description">Tracks scooter ride status and distance in background</string>
+    <string name="notification_title">Scooter Ride Tracking</string>
+    <string name="notification_content">Tracking current ride details…</string>
+</resources>
