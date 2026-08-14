@@ -83,6 +83,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.podam)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

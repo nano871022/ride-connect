@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EV Ride Connect</string>
+    <string name="dashboard_title">Scooter Dashboard</string>
+    <string name="speed_unit">km/h</string>
+    <string name="battery_title">Battery</string>
+    <string name="voltage_label">Voltage</string>
+    <string name="odometer_title">Odometer</string>
+    <string name="odometer_unit">km</string>
+    <string name="lock_status_locked">Locked</string>
+    <string name="lock_status_unlocked">Unlocked</string>
+    <string name="lock_button">Lock</string>
+    <string name="unlock_button">Unlock</string>
+    <string name="light_title">Headlight</string>
+    <string name="light_on">On</string>
+    <string name="light_off">Off</string>
+    <string name="speed_mode_title">Speed Mode</string>
+    <string name="speed_mode_eco">ECO</string>
+    <string name="speed_mode_drive">DRIVE</string>
+    <string name="speed_mode_sport">SPORT</string>
+</resources>
