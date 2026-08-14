@@ -63,7 +63,9 @@ dependencies {
     implementation(project(":services:database"))
     implementation(project(":track"))
     implementation(project(":utils"))
-    implementation(project(":about"))
+    if (findProject(":about") != null) {
+        implementation(project(":about"))
+    }
     implementation(project(":ui"))
 
     implementation(libs.androidx.core.ktx)

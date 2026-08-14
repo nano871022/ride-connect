@@ -27,6 +27,8 @@ include(":services:ble")
 include(":services:database")
 include(":track")
 include(":utils")
-include(":about")
-project(":about").projectDir = file("../japl-android-about-module")
+if (file("../japl-android-about-module").exists()) {
+    include(":about")
+    project(":about").projectDir = file("../japl-android-about-module")
+}
 include(":ui")

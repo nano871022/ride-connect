@@ -18,4 +18,17 @@
     <string name="speed_mode_eco">ECO</string>
     <string name="speed_mode_drive">DRIVE</string>
     <string name="speed_mode_sport">SPORT</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Google Drive Backup</string>
+    <string name="backup_now">Backup Now</string>
+    <string name="backup_in_progress">Backing up data...</string>
+    <string name="backup_success">Backup completed successfully</string>
+    <string name="backup_failure">Backup failed</string>
+    <string name="auto_backup_title">Automatic Backup</string>
+    <string name="auto_backup_subtitle">Periodically sync database and images to Google Drive App Space</string>
+    <string name="backup_interval_title">Backup Frequency</string>
+    <string name="backup_interval_hours">%1$d Hours</string>
+    <string name="last_backup_time">Last Backup: %1$s</string>
+    <string name="backup_app_folder">App Space Location</string>
 </resources>

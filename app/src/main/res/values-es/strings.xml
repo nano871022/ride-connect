@@ -18,4 +18,17 @@
     <string name="speed_mode_eco">ECO</string>
     <string name="speed_mode_drive">NORMAL</string>
     <string name="speed_mode_sport">SPORT</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Copia de Seguridad en Google Drive</string>
+    <string name="backup_now">Hacer Copia Ahora</string>
+    <string name="backup_in_progress">Realizando copia de seguridad...</string>
+    <string name="backup_success">Copia de seguridad completada con éxito</string>
+    <string name="backup_failure">Error al realizar la copia de seguridad</string>
+    <string name="auto_backup_title">Copia de Seguridad Automática</string>
+    <string name="auto_backup_subtitle">Sincronizar periódicamente la base de datos e imágenes en Google Drive</string>
+    <string name="backup_interval_title">Frecuencia de Copia</string>
+    <string name="backup_interval_hours">%1$d Horas</string>
+    <string name="last_backup_time">Última Copia: %1$s</string>
+    <string name="backup_app_folder">Ubicación en App Space</string>
 </resources>
