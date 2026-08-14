@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.database.GoogleDriveBackupSettings
+import co.japl.android.ev_ride_connect.core.domain.BackupStatus
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,7 +94,7 @@ fun BackupScreen(
 @Composable
 private fun ManualBackupCard(
     isBackingUp: Boolean,
-    backupStatus: String?,
+    backupStatus: BackupStatus,
     lastBackupTimestamp: Long,
     onBackupNow: () -> Unit
 ) {
@@ -139,8 +139,8 @@ private fun ManualBackupCard(
                 }
             }
 
-            backupStatus?.let { status ->
-                val isSuccess = status == GoogleDriveBackupSettings.STATUS_SUCCESS
+            if (backupStatus == BackupStatus.SUCCESS || backupStatus == BackupStatus.FAILURE) {
+                val isSuccess = backupStatus == BackupStatus.SUCCESS
                 val message = if (isSuccess) {
                     stringResource(R.string.backup_success)
                 } else {
