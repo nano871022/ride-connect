@@ -19,7 +19,7 @@
 
 ### Task 2 (Parallel to Task 1)
 - **Objective:** Implement the `:utils` module for 13S Li-ion battery calculations.
-- **Files to Modify/Create:** `utils/src/main/java/com/vsett/utils/BatteryCalculator.kt` | `utils/src/test/java/com/vsett/utils/BatteryCalculatorTest.kt`
+- **Files to Modify/Create:** `utils/src/main/java/co/japl/android/ev_ride_connect/utils/BatteryCalculator.kt` | `utils/src/test/java/co/japl/android/ev_ride_connect/utils/BatteryCalculatorTest.kt`
 - **Details & Signatures:** 
   - `fun calculate13SPercentage(voltage: Int): Int`
   - Max voltage (100%): 54.6V (input `546`).
@@ -28,14 +28,14 @@
 
 ### Task 3 (Sequential)
 - **Objective:** Define the Domain Entities and Use Cases in the `:core` module.
-- **Files to Modify/Create:** `core/src/main/java/com/vsett/core/domain/ScooterState.kt` | `core/src/test/java/com/vsett/core/domain/ScooterStateTest.kt`
+- **Files to Modify/Create:** `core/src/main/java/co/japl/android/ev_ride_connect/core/domain/ScooterState.kt` | `core/src/test/java/co/japl/android/ev_ride_connect/core/domain/ScooterStateTest.kt`
 - **Details & Signatures:** 
   - `data class ScooterState(val isLocked: Boolean, val speedMode: Int, val currentSpeed: Int, val realtimeVoltage: Int, val batteryPercentage: Int, val totalOdometer: Int, val isLightOn: Boolean)`
 - **Acceptance Criteria:** Unit test passing verifying PODAM object instantiation (excluding circular dependencies if any) and AssertJ assertions.
 
 ### Task 4 (Parallel to Task 3)
 - **Objective:** Define Output Ports (Interfaces) for BLE and Database in the `:core` module.
-- **Files to Modify/Create:** `core/src/main/java/com/vsett/core/ports/BleScooterPort.kt` | `core/src/main/java/com/vsett/core/ports/TripDatabasePort.kt`
+- **Files to Modify/Create:** `core/src/main/java/co/japl/android/ev_ride_connect/core/ports/BleScooterPort.kt` | `core/src/main/java/co/japl/android/ev_ride_connect/core/ports/TripDatabasePort.kt`
 - **Details & Signatures:** 
   - `interface BleScooterPort { fun observeScooterState(): Flow<ScooterState>; fun sendCommand(dpId: Int, value: Any) }`
   - `interface TripDatabasePort { suspend fun saveTripData(distance: Int, batteryConsumed: Int) }`
@@ -43,7 +43,7 @@
 
 ### Task 5 (Sequential)
 - **Objective:** Implement the local SQLite database adapter in `:services:database`.
-- **Files to Modify/Create:** `services/database/src/main/java/com/vsett/database/RoomTripAdapter.kt` | `services/database/src/test/java/com/vsett/database/RoomTripAdapterIntegrationTest.kt`
+- **Files to Modify/Create:** `services/database/src/main/java/co/japl/android/ev_ride_connect/database/RoomTripAdapter.kt` | `services/database/src/test/java/co/japl/android/ev_ride_connect/database/RoomTripAdapterIntegrationTest.kt`
 - **Details & Signatures:** 
   - Implement `TripDatabasePort` using Room/SQLite.
   - Set up entities for storing trip history (duration, battery consumed, distance).
@@ -52,7 +52,7 @@
 
 ### Task 6 (Sequential)
 - **Objective:** Implement the BLE Adapter in `:services:ble` mapping Tuya Data Points (DPs).
-- **Files to Modify/Create:** `services/ble/src/main/java/com/vsett/ble/TuyaBleAdapter.kt` | `services/ble/src/test/java/com/vsett/ble/TuyaBleAdapterTest.kt`
+- **Files to Modify/Create:** `services/ble/src/main/java/co/japl/android/ev_ride_connect/ble/TuyaBleAdapter.kt` | `services/ble/src/test/java/co/japl/android/ev_ride_connect/ble/TuyaBleAdapterTest.kt`
 - **Details & Signatures:** 
   - Implement `BleScooterPort`.
   - Map incoming byte arrays / SDK callbacks to `ScooterState`.
@@ -62,7 +62,7 @@
 
 ### Task 7 (Sequential)
 - **Objective:** Implement the Foreground Service for background tracking in the `:track` module.
-- **Files to Modify/Create:** `track/src/main/java/com/vsett/track/ScooterTrackingService.kt`
+- **Files to Modify/Create:** `track/src/main/java/co/japl/android/ev_ride_connect/track/ScooterTrackingService.kt`
 - **Details & Signatures:** 
   - Create an Android `Service` running in the foreground with a persistent notification.
   - Combine Android Location Services (GPS) and `BleScooterPort` flow.
@@ -71,14 +71,14 @@
 
 ### Task 8 (Parallel to Task 7)
 - **Objective:** Implement the `:about` reusable module.
-- **Files to Modify/Create:** `about/src/main/java/com/vsett/about/AboutScreen.kt`
+- **Files to Modify/Create:** `about/src/main/java/co/japl/android/ev_ride_connect/about/AboutScreen.kt`
 - **Details & Signatures:** 
   - Create a generic Material 3 Compose screen displaying project info, app version, and developer details.
 - **Acceptance Criteria:** UI component renders correctly in Compose Previews.
 
 ### Task 9 (Sequential)
 - **Objective:** Develop the main Jetpack Compose Dashboard in the `:app` module.
-- **Files to Modify/Create:** `app/src/main/java/com/vsett/app/ui/DashboardScreen.kt`
+- **Files to Modify/Create:** `app/src/main/java/co/japl/android/ev_ride_connect/app/ui/DashboardScreen.kt`
 - **Details & Signatures:** 
   - Inject `BleScooterPort` and `TripDatabasePort` via Use Cases.
   - Render real-time speed, accurate battery percentage, odometer, and lock/unlock toggle using Material UI 3.
@@ -87,5 +87,9 @@
 ### Tast 10 (sequantial)
 - **Objective:** Develop `UI` module jetpack compose
 - **Details:** this module contain componentes custom create for some interfaces, when a components its used in multiple times and it has a common setting that is complex so create custom comentent reusable that simplify use of it.
+
+### Task 11 (sequential)
+- **Objective:** Develop a test, and compile process with github actions
+- **Details:** add 2 actions for github one of them to run test each time try to integrate in master the other branch if test file it does not integrate, second:when code was integrate in master in run a compile process of application in formate to upload in android console.
   
 
