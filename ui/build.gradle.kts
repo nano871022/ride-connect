@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vsett.ui"
+    namespace = "co.japl.android.ev_ride_connect.ui"
     compileSdk = 34
 
     defaultConfig {
