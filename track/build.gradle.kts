@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vsett.track"
+    namespace = "co.japl.android.ev_ride_connect.track"
     compileSdk = 34
 
     defaultConfig {
