@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_module_name">Módulo UI</string>
+    <string name="status_loading">Cargando…</string>
+    <string name="status_success">Éxito</string>
+    <string name="status_error">Error</string>
+    <string name="action_retry">Reintentar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_ok">Aceptar</string>
 </resources>
