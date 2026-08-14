@@ -71,10 +71,7 @@
 
 ### Task 8 (Parallel to Task 7)
 - **Objective:** Implement the `:about` reusable module.
-- **Files to Modify/Create:** `about/src/main/java/co/japl/android/ev_ride_connect/about/AboutScreen.kt`
-- **Details & Signatures:** 
-  - Create a generic Material 3 Compose screen displaying project info, app version, and developer details.
-- **Acceptance Criteria:** UI component renders correctly in Compose Previews.
+- **Details & Signatures:** this project reference to https://github.com/nano871022/japl-android-about-module, make a reference to this project,it will be alocated in same folder of ride-connect folder example git/ride-connect, git/japl-android-about-module. file: src/main/java/co/com/japl/homeconnect/about/AboutActivity.kt, UI file: src/main/java/co/com/japl/homeconnect/about/ui/About.kt, in UI module you need to create "co.com.japl.ui.theme.MaterialThemeComposeUI" MaterialThemeComposeUI its a executor theme
 
 ### Task 9 (Sequential)
 - **Objective:** Develop the main Jetpack Compose Dashboard in the `:app` module.
