@@ -1,0 +1,91 @@
+package co.japl.android.ev_ride_connect.track
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
+import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@AndroidEntryPoint
+class ScooterTrackingService : Service() {
+
+    @Inject
+    lateinit var bleScooterPort: BleScooterPort
+
+    @Inject
+    lateinit var tripDatabasePort: TripDatabasePort
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private lateinit var trackingTracker: ScooterTrackingTracker
+
+    override fun onCreate() {
+        super.onCreate()
+        trackingTracker = ScooterTrackingTracker(bleScooterPort, tripDatabasePort, serviceScope)
+        createNotificationChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action ?: TrackingSettings.ACTION_START_TRACKING
+
+        when (action) {
+            TrackingSettings.ACTION_START_TRACKING -> {
+                val notification = createNotification()
+                startForeground(TrackingSettings.NOTIFICATION_ID, notification)
+                trackingTracker.startTracking()
+            }
+            TrackingSettings.ACTION_STOP_TRACKING -> {
+                serviceScope.launch {
+                    trackingTracker.stopTracking()
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+            }
+        }
+
+        return START_STICKY
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                TrackingSettings.CHANNEL_ID,
+                getString(R.string.notification_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.notification_channel_description)
+            }
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun createNotification(): Notification {
+        return NotificationCompat.Builder(this, TrackingSettings.CHANNEL_ID)
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(getString(R.string.notification_content))
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+}
