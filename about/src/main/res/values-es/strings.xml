@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="about_title">Acerca de</string>
-    <string name="about_app_name">Controlador VSETT C7 Plus</string>
-    <string name="about_version">Versión 1.0.0</string>
-    <string name="about_description">Aplicación de control de scooter con soporte de protocolo Tuya BLE y seguimiento de viajes.</string>
-    <string name="about_developer">Desarrollador: JAPL</string>
-</resources>

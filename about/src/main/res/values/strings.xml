@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="about_title">About</string>
-    <string name="about_app_name">VSETT C7 Plus Controller</string>
-    <string name="about_version">Version 1.0.0</string>
-    <string name="about_description"> Scooter controller app with Tuya BLE protocol support and trip tracking.</string>
-    <string name="about_developer">Developer: JAPL</string>
-</resources>
