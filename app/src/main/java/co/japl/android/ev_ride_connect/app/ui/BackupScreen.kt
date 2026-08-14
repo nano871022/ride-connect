@@ -10,15 +10,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -30,6 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import co.com.japl.ui.components.SegmentOption
+import co.com.japl.ui.components.SegmentedChipGroup
+import co.com.japl.ui.components.SettingSwitchRow
+import co.com.japl.ui.components.StatusCard
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
@@ -69,11 +69,24 @@ fun BackupScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ManualBackupCard(
-                isBackingUp = isBackingUp,
-                backupStatus = backupStatus,
-                lastBackupTimestamp = backupConfig.lastBackupTimestamp,
-                onBackupNow = { viewModel.performManualBackup(databasePath, imagePaths) }
+            val lastBackupText = if (backupConfig.lastBackupTimestamp > 0) {
+                stringResource(R.string.last_backup_time, DateUtils.formatTimestamp(backupConfig.lastBackupTimestamp))
+            } else null
+
+            val statusMsg = when (backupStatus) {
+                BackupStatus.SUCCESS -> stringResource(R.string.backup_success)
+                BackupStatus.FAILURE -> stringResource(R.string.backup_failure)
+                else -> null
+            }
+
+            StatusCard(
+                title = stringResource(R.string.backup_title),
+                isLoading = isBackingUp,
+                lastUpdatedText = lastBackupText,
+                actionButtonText = stringResource(R.string.backup_now),
+                onActionClick = { viewModel.performManualBackup(databasePath, imagePaths) },
+                statusMessage = statusMsg,
+                isSuccessStatus = backupStatus == BackupStatus.SUCCESS
             )
 
             AutoBackupCard(
@@ -92,77 +105,6 @@ fun BackupScreen(
 }
 
 @Composable
-private fun ManualBackupCard(
-    isBackingUp: Boolean,
-    backupStatus: BackupStatus,
-    lastBackupTimestamp: Long,
-    onBackupNow: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.backup_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (lastBackupTimestamp > 0) {
-                val formattedDate = DateUtils.formatTimestamp(lastBackupTimestamp)
-                Text(
-                    text = stringResource(R.string.last_backup_time, formattedDate),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            if (isBackingUp) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CircularProgressIndicator()
-                    Text(text = stringResource(R.string.backup_in_progress))
-                }
-            } else {
-                Button(
-                    onClick = onBackupNow,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = stringResource(R.string.backup_now))
-                }
-            }
-
-            if (backupStatus == BackupStatus.SUCCESS || backupStatus == BackupStatus.FAILURE) {
-                val isSuccess = backupStatus == BackupStatus.SUCCESS
-                val message = if (isSuccess) {
-                    stringResource(R.string.backup_success)
-                } else {
-                    stringResource(R.string.backup_failure)
-                }
-                val color = if (isSuccess) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.error
-                }
-                Text(
-                    text = message,
-                    color = color,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun AutoBackupCard(
     backupConfig: BackupConfig,
     onToggleAutoBackup: (Boolean) -> Unit,
@@ -178,27 +120,12 @@ private fun AutoBackupCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.auto_backup_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = stringResource(R.string.auto_backup_subtitle),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                Switch(
-                    checked = backupConfig.isAutoBackupEnabled,
-                    onCheckedChange = onToggleAutoBackup
-                )
-            }
+            SettingSwitchRow(
+                title = stringResource(R.string.auto_backup_title),
+                subtitle = stringResource(R.string.auto_backup_subtitle),
+                checked = backupConfig.isAutoBackupEnabled,
+                onCheckedChange = onToggleAutoBackup
+            )
 
             if (backupConfig.isAutoBackupEnabled) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -206,19 +133,14 @@ private fun AutoBackupCard(
                     text = stringResource(R.string.backup_interval_title),
                     style = MaterialTheme.typography.labelLarge
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val intervals = listOf(6, 12, 24, 48)
-                    intervals.forEach { hours ->
-                        FilterChip(
-                            selected = backupConfig.backupIntervalHours == hours,
-                            onClick = { onIntervalSelected(hours) },
-                            label = { Text(stringResource(R.string.backup_interval_hours, hours)) }
-                        )
-                    }
+                val intervalOptions = listOf(6, 12, 24, 48).map { hours ->
+                    SegmentOption(hours, stringResource(R.string.backup_interval_hours, hours))
                 }
+                SegmentedChipGroup(
+                    options = intervalOptions,
+                    selectedOption = backupConfig.backupIntervalHours,
+                    onOptionSelected = onIntervalSelected
+                )
             }
         }
     }
