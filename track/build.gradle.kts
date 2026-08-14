@@ -38,4 +38,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
