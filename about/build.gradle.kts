@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vsett.about"
+    namespace = "co.com.japl.homeconnect.about"
     compileSdk = 34
 
     defaultConfig {
@@ -36,6 +36,7 @@ android {
 dependencies {
     implementation(project(":ui"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
