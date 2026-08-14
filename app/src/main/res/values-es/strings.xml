@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EV Ride Connect</string>
+    <string name="dashboard_title">Panel del Patinete</string>
+    <string name="speed_unit">km/h</string>
+    <string name="battery_title">Batería</string>
+    <string name="voltage_label">Voltaje</string>
+    <string name="odometer_title">Odómetro</string>
+    <string name="odometer_unit">km</string>
+    <string name="lock_status_locked">Bloqueado</string>
+    <string name="lock_status_unlocked">Desbloqueado</string>
+    <string name="lock_button">Bloquear</string>
+    <string name="unlock_button">Desbloquear</string>
+    <string name="light_title">Luz Frontal</string>
+    <string name="light_on">Encendida</string>
+    <string name="light_off">Apagada</string>
+    <string name="speed_mode_title">Modo de Velocidad</string>
+    <string name="speed_mode_eco">ECO</string>
+    <string name="speed_mode_drive">NORMAL</string>
+    <string name="speed_mode_sport">SPORT</string>
+</resources>
