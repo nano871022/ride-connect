@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vsett.ble"
+    namespace = "co.japl.android.ev_ride_connect.ble"
     compileSdk = 34
 
     defaultConfig {
