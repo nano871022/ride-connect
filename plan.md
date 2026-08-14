@@ -84,11 +84,15 @@
   - Render real-time speed, accurate battery percentage, odometer, and lock/unlock toggle using Material UI 3.
 - **Acceptance Criteria:** Unit tests passing for the ViewModel logic, ensuring SRP (Single Responsibility Principle) and KISS principles are maintained.
 
-### Tast 10 (sequantial)
+### Tastk 10 (sequantial)
+- **Objective:** implement connection with drive
+- **description:** create a implementation for make bakup over google drive in app space to make backups, add interface to setting time recurrent for buckups automaitcally, manual backup, backups is about images and DB sqlite local of app.
+
+### Tast 11 (sequantial)
 - **Objective:** Develop `UI` module jetpack compose
 - **Details:** this module contain componentes custom create for some interfaces, when a components its used in multiple times and it has a common setting that is complex so create custom comentent reusable that simplify use of it.
 
-### Task 11 (sequential)
+### Task 12 (sequential)
 - **Objective:** Develop a test, and compile process with github actions
 - **Details:** add 2 actions for github one of them to run test each time try to integrate in master the other branch if test file it does not integrate, second:when code was integrate in master in run a compile process of application in formate to upload in android console.
   
