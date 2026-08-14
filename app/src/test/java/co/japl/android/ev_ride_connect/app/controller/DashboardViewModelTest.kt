@@ -1,4 +1,4 @@
-package co.japl.android.ev_ride_connect.app.ui
+package co.japl.android.ev_ride_connect.app.controller
 
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort

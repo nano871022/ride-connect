@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import co.com.japl.ui.theme.MaterialThemeComposeUI
+import co.japl.android.ev_ride_connect.app.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.app.ui.DashboardScreen
-import co.japl.android.ev_ride_connect.app.ui.DashboardViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

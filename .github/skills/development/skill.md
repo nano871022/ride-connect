@@ -26,3 +26,10 @@ The primary objective is to write clean, decoupled, maintainable, and simple cod
     *   Do not hardcode class or action constants in companion objects directly inside service or component classes.
     *   Place constants in a dedicated settings/constants object or file.
     *   When referencing class names in actions, keys, or contexts, use dynamic class references (e.g., `Class::class.java.name` or `Class::class.qualifiedName`) rather than hardcoding string class paths.
+*   **Package & Architecture Organization (UI vs Controller):**
+    *   Strictly separate presentation components into dedicated packages:
+        *   Place Jetpack Compose composable UI functions and screens exclusively inside the `ui` package/folder.
+        *   Place ViewModels, state holders, and controller logic exclusively inside the `controller` package/folder.
+*   **External Module Guidelines (`:about` module):**
+    *   Do NOT create local source code, layout files, or folders for the `:about` module inside this repository.
+    *   The `:about` module is an external repository reference configured in `settings.gradle.kts` via `project(":about").projectDir = file("../japl-android-about-module")`.

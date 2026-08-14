@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.japl.android.ev_ride_connect.app.R
+import co.japl.android.ev_ride_connect.app.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
 
 @OptIn(ExperimentalMaterial3Api::class)
