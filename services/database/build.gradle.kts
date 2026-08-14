@@ -40,6 +40,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.podam)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.room.runtime)
 }

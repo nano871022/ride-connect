@@ -22,10 +22,13 @@ The primary objective is to write clean, decoupled, maintainable, and simple cod
     *   Never hardcode user-visible messages or text strings directly in source code.
     *   Always define strings in resource files (`strings.xml`).
     *   Provide string resources for both English (`values/strings.xml`) and Spanish (`values-es/strings.xml`).
-*   **Constants & Settings Management:**
-    *   Do not hardcode class or action constants in companion objects directly inside service or component classes.
-    *   Place constants in a dedicated settings/constants object or file.
-    *   When referencing class names in actions, keys, or contexts, use dynamic class references (e.g., `Class::class.java.name` or `Class::class.qualifiedName`) rather than hardcoding string class paths.
+*   **Constants & Utilities Management:**
+    *   **No Hardcoding:** Never hardcode constants, actions, keys, or status values directly inside UI or Controller components.
+    *   **Dedicated Constants/Settings Files:** Place constants in dedicated settings/constants objects or files. Use dynamic class references (e.g., `Class::class.java.name` or `Class::class.qualifiedName`) rather than hardcoding string class paths.
+    *   **Utility Extraction:** If code involves complex transformations, calculations, or formatting (e.g., date/time formatting, battery calculations) with potential for reuse or cluttering UI/Controller logic, extract it into a dedicated utility inside the `:utils` module (e.g., `DateUtils`, `BatteryCalculator`). UI components must remain clean and focused solely on layout rendering.
+*   **Architecture Decoupling & Layer Separation (Hexagonal Architecture):**
+    *   Strictly enforce layer separation: presentation layers (UI composables and ViewModels/Controllers in `:app`) must NEVER directly access database implementations, DAOs, Room entities, or low-level service adapters (`:services:database`, `:services:ble`, etc.).
+    *   All interactions from UI/Controller must strictly go through domain entities, Use Cases, and Output Ports provided by the `:core` module. Service modules implement these ports and are injected via Dependency Injection.
 *   **Package & Architecture Organization (UI vs Controller):**
     *   Strictly separate presentation components into dedicated packages:
         *   Place Jetpack Compose composable UI functions and screens exclusively inside the `ui` package/folder.
