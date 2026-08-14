@@ -20,7 +20,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VSETTC7PlusScooter"
+rootProject.name = "EVRideConnect"
 include(":app")
 include(":core")
 include(":services:ble")
