@@ -96,4 +96,10 @@
 - **Objective:** Develop a test, and compile process with github actions
 - **Details:** add 2 actions for github one of them to run test each time try to integrate in master the other branch if test file it does not integrate, second:when code was integrate in master in run a compile process of application in formate to upload in android console.
   
+### Task 13 (sequential)
+- **Objective:** update readme.md file and change log
+- **Detail:** update readme.md file with information about the project with all detail about it, and create changelog.md file with information about each version its create and deploy
 
+### Task 14 (sequential)
+- **Objective:** create a github action to update version of project
+- **Detail:** update version in build.gradle, add in changelog, create a detail checkik las merge made in master branch, create a recap about changes, and create a tag with version, its a running manual.
