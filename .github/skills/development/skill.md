@@ -22,3 +22,7 @@ The primary objective is to write clean, decoupled, maintainable, and simple cod
     *   Never hardcode user-visible messages or text strings directly in source code.
     *   Always define strings in resource files (`strings.xml`).
     *   Provide string resources for both English (`values/strings.xml`) and Spanish (`values-es/strings.xml`).
+*   **Constants & Settings Management:**
+    *   Do not hardcode class or action constants in companion objects directly inside service or component classes.
+    *   Place constants in a dedicated settings/constants object or file.
+    *   When referencing class names in actions, keys, or contexts, use dynamic class references (e.g., `Class::class.java.name` or `Class::class.qualifiedName`) rather than hardcoding string class paths.

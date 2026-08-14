@@ -38,15 +38,15 @@ class ScooterTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val action = intent?.action ?: ACTION_START_TRACKING
+        val action = intent?.action ?: TrackingSettings.ACTION_START_TRACKING
 
         when (action) {
-            ACTION_START_TRACKING -> {
+            TrackingSettings.ACTION_START_TRACKING -> {
                 val notification = createNotification()
-                startForeground(NOTIFICATION_ID, notification)
+                startForeground(TrackingSettings.NOTIFICATION_ID, notification)
                 trackingTracker.startTracking()
             }
-            ACTION_STOP_TRACKING -> {
+            TrackingSettings.ACTION_STOP_TRACKING -> {
                 serviceScope.launch {
                     trackingTracker.stopTracking()
                     stopForeground(STOP_FOREGROUND_REMOVE)
@@ -68,7 +68,7 @@ class ScooterTrackingService : Service() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                CHANNEL_ID,
+                TrackingSettings.CHANNEL_ID,
                 getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
@@ -80,19 +80,12 @@ class ScooterTrackingService : Service() {
     }
 
     private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, TrackingSettings.CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(getString(R.string.notification_content))
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
-    }
-
-    companion object {
-        const val CHANNEL_ID = "SCOOTER_TRACKING_CHANNEL"
-        const val NOTIFICATION_ID = 1001
-        const val ACTION_START_TRACKING = "co.japl.android.ev_ride_connect.action.START_TRACKING"
-        const val ACTION_STOP_TRACKING = "co.japl.android.ev_ride_connect.action.STOP_TRACKING"
     }
 }
