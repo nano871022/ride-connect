@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vsett.database"
+    namespace = "co.japl.android.ev_ride_connect.database"
     compileSdk = 34
 
     defaultConfig {
