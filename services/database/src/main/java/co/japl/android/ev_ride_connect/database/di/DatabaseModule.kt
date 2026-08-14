@@ -43,7 +43,7 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideGoogleDriveBackupPort(): GoogleDriveBackupPort {
-        return GoogleDriveBackupHelper()
+    fun provideGoogleDriveBackupPort(@ApplicationContext context: Context): GoogleDriveBackupPort {
+        return GoogleDriveBackupHelper(context)
     }
 }

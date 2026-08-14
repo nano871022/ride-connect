@@ -1,9 +1,12 @@
 package co.japl.android.ev_ride_connect.database
 
+import android.content.Context
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
 
-class GoogleDriveBackupHelper : GoogleDriveBackupPort {
+class GoogleDriveBackupHelper(
+    private val context: Context? = null
+) : GoogleDriveBackupPort {
 
     private var currentConfig: BackupConfig = BackupConfig(
         isAutoBackupEnabled = false,
@@ -13,7 +16,11 @@ class GoogleDriveBackupHelper : GoogleDriveBackupPort {
     )
 
     override suspend fun performManualBackup(databasePath: String, imagePaths: List<String>): Boolean {
-        val targetDbPath = if (databasePath.isBlank()) "app_database.db" else databasePath
+        val targetDbPath = if (databasePath.isBlank()) {
+            context?.getDatabasePath("app_database.db")?.absolutePath ?: "app_database.db"
+        } else {
+            databasePath
+        }
         currentConfig = currentConfig.copy(lastBackupTimestamp = System.currentTimeMillis())
         return targetDbPath.isNotEmpty()
     }
