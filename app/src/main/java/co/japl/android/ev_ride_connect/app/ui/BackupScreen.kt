@@ -17,7 +17,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -34,9 +33,8 @@ import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import co.japl.android.ev_ride_connect.database.GoogleDriveBackupSettings
+import co.japl.android.ev_ride_connect.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,8 +115,7 @@ private fun ManualBackupCard(
             )
 
             if (lastBackupTimestamp > 0) {
-                val formattedDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                    .format(Date(lastBackupTimestamp))
+                val formattedDate = DateUtils.formatTimestamp(lastBackupTimestamp)
                 Text(
                     text = stringResource(R.string.last_backup_time, formattedDate),
                     style = MaterialTheme.typography.bodyMedium
@@ -143,12 +140,13 @@ private fun ManualBackupCard(
             }
 
             backupStatus?.let { status ->
-                val message = if (status == "SUCCESS") {
+                val isSuccess = status == GoogleDriveBackupSettings.STATUS_SUCCESS
+                val message = if (isSuccess) {
                     stringResource(R.string.backup_success)
                 } else {
                     stringResource(R.string.backup_failure)
                 }
-                val color = if (status == "SUCCESS") {
+                val color = if (isSuccess) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.error

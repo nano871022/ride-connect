@@ -2,6 +2,7 @@ package co.japl.android.ev_ride_connect.app.controller
 
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.database.GoogleDriveBackupSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -48,7 +49,7 @@ class BackupViewModelTest {
 
         assertThat(fakeBackupPort.manualBackupCalled).isTrue()
         assertThat(viewModel.isBackingUp.value).isFalse()
-        assertThat(viewModel.backupStatus.value).isEqualTo("SUCCESS")
+        assertThat(viewModel.backupStatus.value).isEqualTo(GoogleDriveBackupSettings.STATUS_SUCCESS)
     }
 
     @Test

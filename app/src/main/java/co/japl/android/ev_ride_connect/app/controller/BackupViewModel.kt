@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.database.GoogleDriveBackupSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,7 +51,11 @@ class BackupViewModel @Inject constructor(
             _backupStatus.value = null
             val success = googleDriveBackupPort.performManualBackup(targetPath, imagePaths)
             _isBackingUp.value = false
-            _backupStatus.value = if (success) "SUCCESS" else "FAILURE"
+            _backupStatus.value = if (success) {
+                GoogleDriveBackupSettings.STATUS_SUCCESS
+            } else {
+                GoogleDriveBackupSettings.STATUS_FAILURE
+            }
             if (success) {
                 loadBackupConfig()
             }
