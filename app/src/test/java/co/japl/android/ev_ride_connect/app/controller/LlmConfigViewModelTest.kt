@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.app.controller
 
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
+import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,13 +19,15 @@ class LlmConfigViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeLlmConfigPort: FakeLlmConfigPort
+    private lateinit var fakeLlmClientPort: FakeLlmClientPort
     private lateinit var viewModel: LlmConfigViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeLlmConfigPort = FakeLlmConfigPort()
-        viewModel = LlmConfigViewModel(fakeLlmConfigPort)
+        fakeLlmClientPort = FakeLlmClientPort()
+        viewModel = LlmConfigViewModel(fakeLlmConfigPort, fakeLlmClientPort)
     }
 
     @After
@@ -55,17 +58,33 @@ class LlmConfigViewModelTest {
     }
 
     @Test
-    fun shouldSaveConfigAndClearInput() = runTest {
+    fun shouldSaveConfigWhenApiKeyIsValid() = runTest {
+        fakeLlmClientPort.shouldValidateSuccessfully = true
+
         viewModel.onModelSelected("Groq")
-        viewModel.onApiKeyChanged("groq-key-999")
+        viewModel.onApiKeyChanged("valid-groq-key")
         viewModel.saveConfig()
 
         testScheduler.runCurrent()
 
         assertThat(viewModel.apiKeyInput.value).isEmpty()
+        assertThat(viewModel.errorMessage.value).isNull()
         assertThat(viewModel.configs.value).hasSize(3)
         assertThat(viewModel.configs.value.last().modelName).isEqualTo("Groq")
-        assertThat(viewModel.configs.value.last().apiKey).isEqualTo("groq-key-999")
+    }
+
+    @Test
+    fun shouldNotSaveConfigWhenApiKeyIsInvalid() = runTest {
+        fakeLlmClientPort.shouldValidateSuccessfully = false
+
+        viewModel.onModelSelected("Groq")
+        viewModel.onApiKeyChanged("invalid-key")
+        viewModel.saveConfig()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.errorMessage.value).isEqualTo("INVALID_API_KEY")
+        assertThat(viewModel.configs.value).hasSize(2)
     }
 
     @Test
@@ -118,6 +137,18 @@ class LlmConfigViewModelTest {
                 return true
             }
             return false
+        }
+    }
+
+    private class FakeLlmClientPort : LlmClientPort {
+        var shouldValidateSuccessfully = true
+
+        override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean {
+            return shouldValidateSuccessfully
+        }
+
+        override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {
+            return "Response for $prompt"
         }
     }
 }

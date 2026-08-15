@@ -45,4 +45,6 @@
     <string name="llm_updated_at">Actualizado: %1$s</string>
     <string name="llm_empty_configurations">No hay configuraciones LLM guardadas.</string>
     <string name="llm_api_key_hidden">••••••••••••••••</string>
+    <string name="llm_validation_error">La API Key ingresada no es válida para el modelo seleccionado.</string>
+    <string name="llm_validating_key">Validando API Key...</string>
 </resources>

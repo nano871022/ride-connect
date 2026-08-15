@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.app.controller
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
+import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,8 @@ val AVAILABLE_LLM_MODELS = listOf("Gemini", "DeepSeek", "ChatGPT", "Groq", "Clau
 
 @HiltViewModel
 class LlmConfigViewModel @Inject constructor(
-    private val llmConfigPort: LlmConfigPort
+    private val llmConfigPort: LlmConfigPort,
+    private val llmClientPort: LlmClientPort
 ) : ViewModel() {
 
     private val _configs = MutableStateFlow<List<LlmConfig>>(emptyList())
@@ -29,6 +31,12 @@ class LlmConfigViewModel @Inject constructor(
 
     private val _apiKeyInput = MutableStateFlow("")
     val apiKeyInput: StateFlow<String> = _apiKeyInput.asStateFlow()
+
+    private val _isValidating = MutableStateFlow(false)
+    val isValidating: StateFlow<Boolean> = _isValidating.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     init {
         loadConfigs()
@@ -44,10 +52,12 @@ class LlmConfigViewModel @Inject constructor(
 
     fun onModelSelected(modelName: String) {
         _selectedModel.value = modelName
+        _errorMessage.value = null
     }
 
     fun onApiKeyChanged(apiKey: String) {
         _apiKeyInput.value = apiKey
+        _errorMessage.value = null
     }
 
     fun saveConfig() {
@@ -57,6 +67,16 @@ class LlmConfigViewModel @Inject constructor(
         if (apiKey.isEmpty()) return
 
         viewModelScope.launch {
+            _isValidating.value = true
+            _errorMessage.value = null
+            val isValid = llmClientPort.validateApiKey(modelName, apiKey)
+            _isValidating.value = false
+
+            if (!isValid) {
+                _errorMessage.value = "INVALID_API_KEY"
+                return@launch
+            }
+
             val newConfig = LlmConfig(
                 modelName = modelName,
                 apiKey = apiKey,

@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +52,8 @@ fun LlmConfigScreen(
     val configs by viewModel.configs.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val apiKeyInput by viewModel.apiKeyInput.collectAsState()
+    val isValidating by viewModel.isValidating.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     Scaffold(
         topBar = {
@@ -76,6 +77,8 @@ fun LlmConfigScreen(
             LlmConfigForm(
                 selectedModel = selectedModel,
                 apiKeyInput = apiKeyInput,
+                isValidating = isValidating,
+                errorMessage = errorMessage,
                 onModelSelected = { viewModel.onModelSelected(it) },
                 onApiKeyChanged = { viewModel.onApiKeyChanged(it) },
                 onSave = { viewModel.saveConfig() }
@@ -115,6 +118,8 @@ fun LlmConfigScreen(
 private fun LlmConfigForm(
     selectedModel: String,
     apiKeyInput: String,
+    isValidating: Boolean,
+    errorMessage: String?,
     onModelSelected: (String) -> Unit,
     onApiKeyChanged: (String) -> Unit,
     onSave: () -> Unit
@@ -175,15 +180,35 @@ private fun LlmConfigForm(
                 placeholder = { Text(stringResource(R.string.llm_api_key_placeholder)) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
+                isError = errorMessage != null,
                 singleLine = true
             )
 
-            Button(
-                onClick = onSave,
-                enabled = apiKeyInput.isNotBlank(),
-                modifier = Modifier.align(Alignment.End)
+            if (errorMessage != null) {
+                Text(
+                    text = stringResource(R.string.llm_validation_error),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Row(
+                modifier = Modifier.align(Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(stringResource(R.string.llm_save_button))
+                if (isValidating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
+
+                Button(
+                    onClick = onSave,
+                    enabled = apiKeyInput.isNotBlank() && !isValidating
+                ) {
+                    Text(stringResource(R.string.llm_save_button))
+                }
             }
         }
     }
