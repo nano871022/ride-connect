@@ -31,4 +31,18 @@
     <string name="backup_interval_hours">%1$d Hours</string>
     <string name="last_backup_time">Last Backup: %1$s</string>
     <string name="backup_app_folder">App Space Location</string>
+
+    <!-- LLM Configuration -->
+    <string name="llm_config_title">LLM API Key Settings</string>
+    <string name="llm_model_label">Select LLM Model</string>
+    <string name="llm_api_key_label">API Key</string>
+    <string name="llm_api_key_placeholder">Enter API Key</string>
+    <string name="llm_save_button">Save Configuration</string>
+    <string name="llm_configurations_header">Configured Models</string>
+    <string name="llm_status_active">Active</string>
+    <string name="llm_status_inactive">Inactive</string>
+    <string name="llm_created_at">Created: %1$s</string>
+    <string name="llm_updated_at">Updated: %1$s</string>
+    <string name="llm_empty_configurations">No LLM configurations saved yet.</string>
+    <string name="llm_api_key_hidden">••••••••••••••••</string>
 </resources>
