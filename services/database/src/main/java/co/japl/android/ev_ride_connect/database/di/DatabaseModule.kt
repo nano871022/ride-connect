@@ -3,10 +3,15 @@ package co.japl.android.ev_ride_connect.database.di
 import android.content.Context
 import androidx.room.Room
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.database.AppDatabase
 import co.japl.android.ev_ride_connect.database.GoogleDriveBackupHelper
+import co.japl.android.ev_ride_connect.database.LlmClientAdapter
+import co.japl.android.ev_ride_connect.database.RoomLlmConfigAdapter
 import co.japl.android.ev_ride_connect.database.RoomTripAdapter
+import co.japl.android.ev_ride_connect.database.dao.LlmConfigDao
 import co.japl.android.ev_ride_connect.database.dao.TripDao
 import dagger.Module
 import dagger.Provides
@@ -39,6 +44,24 @@ object DatabaseModule {
     @Singleton
     fun provideTripDatabasePort(tripDao: TripDao): TripDatabasePort {
         return RoomTripAdapter(tripDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLlmConfigDao(database: AppDatabase): LlmConfigDao {
+        return database.llmConfigDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLlmConfigPort(llmConfigDao: LlmConfigDao): LlmConfigPort {
+        return RoomLlmConfigAdapter(llmConfigDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLlmClientPort(): LlmClientPort {
+        return LlmClientAdapter()
     }
 
     @Provides

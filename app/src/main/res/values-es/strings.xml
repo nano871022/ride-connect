@@ -31,4 +31,20 @@
     <string name="backup_interval_hours">%1$d Horas</string>
     <string name="last_backup_time">Última Copia: %1$s</string>
     <string name="backup_app_folder">Ubicación en App Space</string>
+
+    <!-- Configuración LLM -->
+    <string name="llm_config_title">Configuración de API Key LLM</string>
+    <string name="llm_model_label">Seleccionar Modelo LLM</string>
+    <string name="llm_api_key_label">API Key</string>
+    <string name="llm_api_key_placeholder">Ingrese la API Key</string>
+    <string name="llm_save_button">Guardar Configuración</string>
+    <string name="llm_configurations_header">Modelos Configurados</string>
+    <string name="llm_status_active">Activo</string>
+    <string name="llm_status_inactive">Inactivo</string>
+    <string name="llm_created_at">Creado: %1$s</string>
+    <string name="llm_updated_at">Actualizado: %1$s</string>
+    <string name="llm_empty_configurations">No hay configuraciones LLM guardadas.</string>
+    <string name="llm_api_key_hidden">••••••••••••••••</string>
+    <string name="llm_validation_error">La API Key ingresada no es válida para el modelo seleccionado.</string>
+    <string name="llm_validating_key">Validando API Key...</string>
 </resources>
