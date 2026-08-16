@@ -24,5 +24,19 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run unit and integration tests
-        run: ./gradlew test
+      - name: Run unit tests and lint code analysis
+        run: ./gradlew test lint
+
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        if: !cancelled()
+        with:
+          name: test-results
+          path: '**/build/reports/tests/'
+
+      - name: Upload lint results artifact
+        uses: actions/upload-artifact@v4
+        if: !cancelled()
+        with:
+          name: lint-results
+          path: '**/build/reports/lint-results*'
