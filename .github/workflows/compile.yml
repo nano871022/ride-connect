@@ -24,11 +24,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Android App Bundle (.aab)
-        run: ./gradlew bundleRelease
+      - name: Build Android App Bundle (.aab) and APK (.apk)
+        run: ./gradlew bundleRelease assembleRelease
 
       - name: Upload Android App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-bundle
           path: app/build/outputs/bundle/release/*.aab
+
+      - name: Upload Android App APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
