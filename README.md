@@ -122,8 +122,8 @@ Standard DP3 battery indicators on Tuya scooters are often inaccurate. Ride-Conn
 ## ⚙️ CI/CD Workflows
 
 The repository includes automated GitHub Actions workflows under `.github/workflows/`:
-- **`test.yml`:** Runs `./gradlew test` on pull requests targeting `master`.
-- **`compile.yml`:** Builds release AAB bundle (`./gradlew bundleRelease`) on direct pushes to `master`.
+- **`test.yml`:** Runs `./gradlew test lint` on pull requests targeting `master` and uploads unit test results and lint code analysis reports as workflow artifacts.
+- **`compile.yml`:** Builds release AAB bundle and release APK (`./gradlew bundleRelease assembleRelease`) on direct pushes to `master` and uploads both as workflow artifacts.
 
 ---
 
