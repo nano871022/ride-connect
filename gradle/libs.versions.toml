@@ -15,8 +15,10 @@ assertj = "3.25.3"
 coroutines = "1.8.0"
 ksp = "1.9.23-1.0.20"
 hilt = "2.51.1"
+robolectric = "4.12.1"
 
 [libraries]
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
