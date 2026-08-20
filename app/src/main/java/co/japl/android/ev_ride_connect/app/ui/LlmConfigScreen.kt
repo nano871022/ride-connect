@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,6 +21,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -43,13 +43,14 @@ import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.AVAILABLE_LLM_MODELS
 import co.japl.android.ev_ride_connect.app.controller.LlmConfigViewModel
+import co.japl.android.ev_ride_connect.app.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LlmConfigScreen(
     viewModel: LlmConfigViewModel,
-    onNavigate: (AppScreen) -> Unit = {},
+    navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
     val configs by viewModel.configs.collectAsState()
@@ -79,28 +80,28 @@ fun LlmConfigScreen(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.DASHBOARD)
+                                    navigator?.navigateToDashboard()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.EV_CONFIG)
+                                    navigator?.navigateToEvConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.llm_config_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.LLM_CONFIG)
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.BACKUP)
+                                    navigator?.navigateToBackup()
                                 }
                             )
                         }

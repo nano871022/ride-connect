@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.EvConfigViewModel
+import co.japl.android.ev_ride_connect.app.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 
@@ -54,7 +55,7 @@ import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 @Composable
 fun EvConfigScreen(
     viewModel: EvConfigViewModel,
-    onNavigate: (AppScreen) -> Unit = {},
+    navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
     val evConfig by viewModel.evConfig.collectAsState()
@@ -85,28 +86,28 @@ fun EvConfigScreen(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.DASHBOARD)
+                                    navigator?.navigateToDashboard()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.EV_CONFIG)
+                                    navigator?.navigateToEvConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.llm_config_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.LLM_CONFIG)
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.BACKUP)
+                                    navigator?.navigateToBackup()
                                 }
                             )
                         }

@@ -43,20 +43,14 @@ import co.com.japl.ui.components.SegmentOption
 import co.com.japl.ui.components.SegmentedButtonGroup
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.DashboardViewModel
+import co.japl.android.ev_ride_connect.app.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
-
-enum class AppScreen {
-    DASHBOARD,
-    EV_CONFIG,
-    LLM_CONFIG,
-    BACKUP
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    onNavigate: (AppScreen) -> Unit = {},
+    navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
     val scooterState by viewModel.scooterState.collectAsState()
@@ -82,28 +76,28 @@ fun DashboardScreen(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.DASHBOARD)
+                                    navigator?.navigateToDashboard()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.EV_CONFIG)
+                                    navigator?.navigateToEvConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.llm_config_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.LLM_CONFIG)
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onNavigate(AppScreen.BACKUP)
+                                    navigator?.navigateToBackup()
                                 }
                             )
                         }
@@ -128,7 +122,7 @@ fun DashboardScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = { onNavigate(AppScreen.EV_CONFIG) },
+                onClick = { navigator?.navigateToEvConfig() },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
