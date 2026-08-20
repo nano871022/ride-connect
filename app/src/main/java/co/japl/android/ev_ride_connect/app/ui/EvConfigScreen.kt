@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +54,7 @@ import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 @Composable
 fun EvConfigScreen(
     viewModel: EvConfigViewModel,
+    onNavigate: (AppScreen) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val evConfig by viewModel.evConfig.collectAsState()
@@ -61,14 +63,59 @@ fun EvConfigScreen(
     val statusMessage by viewModel.statusMessage.collectAsState()
     val activeLlmConfigs by viewModel.activeLlmConfigs.collectAsState()
     val selectedLlmConfig by viewModel.selectedLlmConfig.collectAsState()
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.ev_config_title)) },
+                navigationIcon = {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.dashboard_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.DASHBOARD)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ev_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.EV_CONFIG)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.LLM_CONFIG)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.backup_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.BACKUP)
+                                }
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },

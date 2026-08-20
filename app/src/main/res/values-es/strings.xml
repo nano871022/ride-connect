@@ -77,4 +77,6 @@
     <string name="ev_save_button">Guardar Configuración</string>
     <string name="ev_load_ble_button">Cargar EV y Conectar BLE</string>
     <string name="ev_loaded_status">EV Cargado en el Sistema</string>
+    <string name="ev_llm_prompt_template">Identificar especificaciones para la consulta de EV: \"%1$s\". Responder con JSON que contenga las claves: brand, version, motors (arreglo de objetos con name y watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
+    <string name="nav_ev_config">Configurar EV</string>
 </resources>

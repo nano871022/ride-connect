@@ -1,7 +1,17 @@
 package co.japl.android.ev_ride_connect.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,19 +52,65 @@ fun BackupScreen(
     viewModel: BackupViewModel,
     databasePath: String = "",
     imagePaths: List<String> = emptyList(),
+    onNavigate: (AppScreen) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val backupConfig by viewModel.backupConfig.collectAsState()
     val isBackingUp by viewModel.isBackingUp.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.backup_title)) },
+                navigationIcon = {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.dashboard_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.DASHBOARD)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ev_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.EV_CONFIG)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.LLM_CONFIG)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.backup_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.BACKUP)
+                                }
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },

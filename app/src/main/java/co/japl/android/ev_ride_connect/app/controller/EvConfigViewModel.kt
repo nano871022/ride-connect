@@ -204,13 +204,10 @@ class EvConfigViewModel @Inject constructor(
     }
 
     private fun buildEvPrompt(userRequest: String): String {
-        return """
-            Identify specs for EV query: "$userRequest".
-            Respond with JSON containing keys:
-            brand, version, motors (array of objects with name and watts), manufactoryYear,
-            manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity,
-            brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.
-        """.trimIndent()
+        return String.format(
+            co.japl.android.ev_ride_connect.core.domain.EvConstants.EV_LLM_PROMPT_TEMPLATE.trimIndent(),
+            userRequest
+        )
     }
 
     private fun parseAndApplyEvInfo(userRequest: String, responseText: String) {

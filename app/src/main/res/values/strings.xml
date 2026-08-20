@@ -77,4 +77,6 @@
     <string name="ev_save_button">Save Configuration</string>
     <string name="ev_load_ble_button">Load EV &amp; Connect BLE</string>
     <string name="ev_loaded_status">EV Loaded into System</string>
+    <string name="ev_llm_prompt_template">Identify specs for EV query: \"%1$s\". Respond with JSON containing keys: brand, version, motors (array of objects with name and watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
+    <string name="nav_ev_config">Configure EV</string>
 </resources>

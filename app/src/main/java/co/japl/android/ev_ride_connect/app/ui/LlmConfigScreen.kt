@@ -12,7 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +49,7 @@ import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 @Composable
 fun LlmConfigScreen(
     viewModel: LlmConfigViewModel,
+    onNavigate: (AppScreen) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val configs by viewModel.configs.collectAsState()
@@ -54,14 +57,59 @@ fun LlmConfigScreen(
     val apiKeyInput by viewModel.apiKeyInput.collectAsState()
     val isValidating by viewModel.isValidating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.llm_config_title)) },
+                navigationIcon = {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.dashboard_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.DASHBOARD)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ev_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.EV_CONFIG)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.LLM_CONFIG)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.backup_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onNavigate(AppScreen.BACKUP)
+                                }
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },
