@@ -48,4 +48,22 @@ class LlmClientAdapterTest {
             }
         }.isInstanceOf(IllegalArgumentException::class.java)
     }
+
+    @Test
+    fun shouldThrowExceptionWhenGeminiApiKeyIsInvalid() = runTest {
+        assertThatThrownBy {
+            kotlinx.coroutines.runBlocking {
+                adapter.generateResponse("Gemini", "valid-key-9999", "buy vsett c7 plus")
+            }
+        }.isInstanceOf(RuntimeException::class.java)
+    }
+
+    @Test
+    fun shouldCallGeminiWhenApiKeyFromEnvIsPresent() = runTest {
+        val envKey = System.getenv("GEMINI_API_KEY")
+        if (!envKey.isNullOrBlank()) {
+            val response = adapter.generateResponse("Gemini", envKey, "buy vsett c7 plus")
+            assertThat(response).isNotEmpty()
+        }
+    }
 }

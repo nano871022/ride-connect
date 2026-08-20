@@ -39,6 +39,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+    implementation(libs.org.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)

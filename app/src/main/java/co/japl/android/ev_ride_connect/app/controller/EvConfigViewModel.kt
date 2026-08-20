@@ -232,6 +232,67 @@ class EvConfigViewModel @Inject constructor(
     }
 
     private fun parseEvJsonOrFallback(userRequest: String, responseText: String): EvConfig {
+        var cleanedText = responseText.trim()
+        if (cleanedText.contains("```json")) {
+            cleanedText = cleanedText.substringAfter("```json").substringBefore("```").trim()
+        } else if (cleanedText.startsWith("```")) {
+            cleanedText = cleanedText.substringAfter("```").substringBefore("```").trim()
+        }
+
+        try {
+            val json = org.json.JSONObject(cleanedText)
+            val brand = json.optString("brand", "")
+            val version = json.optString("version", "")
+            val manufactoryYear = json.opt("manufactoryYear")?.toString() ?: ""
+            val manufactoryCompany = json.optString("manufactoryCompany", "")
+            val batteryTechnology = json.optString("batteryTechnology", "")
+            val batteryVolts = json.opt("batteryVolts")?.toString() ?: ""
+            val batteryAmpers = json.opt("batteryAmpers")?.toString() ?: ""
+            val brakeQuantity = json.optInt("brakeQuantity", 0)
+            val brakeTechnology = json.optString("brakeTechnology", "")
+            val suspensionTechnology = json.optString("suspensionTechnology", "")
+            val chargePower = json.optString("chargePower", "")
+
+            val otherCharacteristics = when (val opt = json.opt("otherCharacteristics")) {
+                is org.json.JSONArray -> (0 until opt.length()).map { opt.get(it).toString() }.joinToString(", ")
+                null -> ""
+                else -> opt.toString()
+            }
+
+            val motorsList = mutableListOf<MotorSpec>()
+            val motorsArray = json.optJSONArray("motors")
+            if (motorsArray != null) {
+                for (i in 0 until motorsArray.length()) {
+                    val mObj = motorsArray.optJSONObject(i)
+                    if (mObj != null) {
+                        val mName = mObj.optString("name", "Motor ${i + 1}")
+                        val mWatts = mObj.optInt("watts", 0)
+                        motorsList.add(MotorSpec(mName, mWatts))
+                    }
+                }
+            }
+
+            if (brand.isNotBlank() || version.isNotBlank() || motorsList.isNotEmpty()) {
+                return EvConfig(
+                    brand = brand,
+                    version = version,
+                    motors = motorsList,
+                    manufactoryYear = manufactoryYear,
+                    manufactoryCompany = manufactoryCompany,
+                    batteryTechnology = batteryTechnology,
+                    batteryVolts = batteryVolts,
+                    batteryAmpers = batteryAmpers,
+                    brakeQuantity = brakeQuantity,
+                    brakeTechnology = brakeTechnology,
+                    suspensionTechnology = suspensionTechnology,
+                    chargePower = chargePower,
+                    otherCharacteristics = otherCharacteristics
+                )
+            }
+        } catch (e: Exception) {
+            // Fall through to regex or default
+        }
+
         fun extractKey(key: String): String {
             val regex = Regex(""""$key"\s*:\s*"([^"]*)"""", RegexOption.IGNORE_CASE)
             return regex.find(responseText)?.groupValues?.get(1) ?: ""

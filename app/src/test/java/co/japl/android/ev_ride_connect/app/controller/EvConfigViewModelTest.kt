@@ -125,6 +125,52 @@ class EvConfigViewModelTest {
     }
 
     @Test
+    fun shouldParseMarkdownWrappedLlmJsonResponse() = runTest {
+        testScheduler.runCurrent()
+
+        fakeLlmClientPort.customResponse = """
+            ```json
+            {
+              "brand": "VSETT",
+              "version": "C7 Plus",
+              "motors": [
+                {"name": "Rear Hub Motor", "watts": 350}
+              ],
+              "manufactoryYear": 2023,
+              "manufactoryCompany": "Ningbo Vsett Intelligent Technology Co., Ltd.",
+              "batteryTechnology": "Lithium-ion",
+              "batteryVolts": 36,
+              "batteryAmpers": 14.0,
+              "brakeQuantity": 2,
+              "brakeTechnology": "Hydraulic disc brakes",
+              "suspensionTechnology": "Front suspension fork",
+              "chargePower": "84W (42V 2A)",
+              "otherCharacteristics": [
+                "Dual battery system",
+                "LCD display"
+              ]
+            }
+            ```
+        """.trimIndent()
+
+        viewModel.onRequestChanged("buy vsett c7 plus")
+        viewModel.requestEvInfoFromLlm()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.statusMessage.value).isEqualTo("LLM_FETCH_SUCCESS")
+        val current = viewModel.evConfig.value
+        assertThat(current.brand).isEqualTo("VSETT")
+        assertThat(current.version).isEqualTo("C7 Plus")
+        assertThat(current.manufactoryYear).isEqualTo("2023")
+        assertThat(current.batteryVolts).isEqualTo("36")
+        assertThat(current.batteryAmpers).isEqualTo("14.0")
+        assertThat(current.otherCharacteristics).contains("Dual battery system", "LCD display")
+        assertThat(current.motors).hasSize(1)
+        assertThat(current.motors.first().watts).isEqualTo(350)
+    }
+
+    @Test
     fun shouldSetErrorWhenRequestPromptIsBlank() = runTest {
         viewModel.onRequestChanged("   ")
         viewModel.requestEvInfoFromLlm()
@@ -188,10 +234,12 @@ class EvConfigViewModelTest {
     }
 
     private class FakeLlmClientPort : LlmClientPort {
+        var customResponse: String? = null
+
         override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean = true
 
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {
-            return """
+            return customResponse ?: """
                 {
                   "brand": "VSETT",
                   "version": "C7 Plus",
