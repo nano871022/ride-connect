@@ -60,6 +60,10 @@ android {
             excludes += "/META-INDEX/LGPL2.1"
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
