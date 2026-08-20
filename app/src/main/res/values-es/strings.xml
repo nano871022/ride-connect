@@ -47,4 +47,34 @@
     <string name="llm_api_key_hidden">••••••••••••••••</string>
     <string name="llm_validation_error">La API Key ingresada no es válida para el modelo seleccionado.</string>
     <string name="llm_validating_key">Validando API Key...</string>
+
+    <!-- Configuración EV -->
+    <string name="ev_config_title">Configuración del Vehículo Eléctrico</string>
+    <string name="ev_request_label">Consulta / Solicitud de EV</string>
+    <string name="ev_request_placeholder">ej. Vsett c7 plus by emove colombia seller</string>
+    <string name="ev_request_ai_button">Obtener Especificaciones con IA</string>
+    <string name="ev_brand_label">Marca</string>
+    <string name="ev_version_label">Versión / Modelo</string>
+    <string name="ev_manufactory_year_label">Año de Fabricación</string>
+    <string name="ev_manufactory_company_label">Empresa Fabricante</string>
+    <string name="ev_bought_date_label">Fecha de Compra</string>
+    <string name="ev_motors_title">Motores</string>
+    <string name="ev_add_motor">Agregar Motor</string>
+    <string name="ev_motors_empty">Aún no se han agregado motores.</string>
+    <string name="ev_motor_name_label">Nombre del Motor</string>
+    <string name="ev_motor_watts_label">Potencia (Watts)</string>
+    <string name="ev_battery_section">Especificaciones de Batería</string>
+    <string name="ev_battery_tech_label">Tecnología de Batería</string>
+    <string name="ev_battery_volts_label">Voltios (V)</string>
+    <string name="ev_battery_ampers_label">Amperios (Ah)</string>
+    <string name="ev_brakes_section">Frenos y Suspensión</string>
+    <string name="ev_brake_quantity_label">Cantidad de Frenos</string>
+    <string name="ev_brake_tech_label">Tecnología de Frenos</string>
+    <string name="ev_suspension_tech_label">Tecnología de Suspensión</string>
+    <string name="ev_charging_section">Carga y Otros Detalles</string>
+    <string name="ev_charge_power_label">Potencia de Carga</string>
+    <string name="ev_other_characteristics_label">Otras Características</string>
+    <string name="ev_save_button">Guardar Configuración</string>
+    <string name="ev_load_ble_button">Cargar EV y Conectar BLE</string>
+    <string name="ev_loaded_status">EV Cargado en el Sistema</string>
 </resources>
