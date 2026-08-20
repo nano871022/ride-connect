@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +21,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -41,12 +43,14 @@ import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.AVAILABLE_LLM_MODELS
 import co.japl.android.ev_ride_connect.app.controller.LlmConfigViewModel
+import co.japl.android.ev_ride_connect.app.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LlmConfigScreen(
     viewModel: LlmConfigViewModel,
+    navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
     val configs by viewModel.configs.collectAsState()
@@ -54,14 +58,59 @@ fun LlmConfigScreen(
     val apiKeyInput by viewModel.apiKeyInput.collectAsState()
     val isValidating by viewModel.isValidating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.llm_config_title)) },
+                navigationIcon = {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.dashboard_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToDashboard()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ev_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToEvConfig()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToLlmConfig()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.backup_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToBackup()
+                                }
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },

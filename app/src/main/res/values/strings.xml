@@ -47,4 +47,36 @@
     <string name="llm_api_key_hidden">••••••••••••••••</string>
     <string name="llm_validation_error">The provided API key is invalid for the selected model.</string>
     <string name="llm_validating_key">Validating API Key...</string>
+
+    <!-- EV Configuration -->
+    <string name="ev_config_title">EV Configuration</string>
+    <string name="ev_request_label">EV Request / Query</string>
+    <string name="ev_request_placeholder">e.g. Vsett c7 plus by emove colombia seller</string>
+    <string name="ev_request_ai_button">Fetch Specs with AI</string>
+    <string name="ev_brand_label">Brand</string>
+    <string name="ev_version_label">Version / Model</string>
+    <string name="ev_manufactory_year_label">Manufactory Year</string>
+    <string name="ev_manufactory_company_label">Manufactory Company</string>
+    <string name="ev_bought_date_label">Bought Date</string>
+    <string name="ev_motors_title">Motors</string>
+    <string name="ev_add_motor">Add Motor</string>
+    <string name="ev_motors_empty">No motors added yet.</string>
+    <string name="ev_motor_name_label">Motor Name</string>
+    <string name="ev_motor_watts_label">Power (Watts)</string>
+    <string name="ev_battery_section">Battery Specs</string>
+    <string name="ev_battery_tech_label">Battery Technology</string>
+    <string name="ev_battery_volts_label">Volts (V)</string>
+    <string name="ev_battery_ampers_label">Amperes (Ah)</string>
+    <string name="ev_brakes_section">Brakes &amp; Suspension</string>
+    <string name="ev_brake_quantity_label">Brake Quantity</string>
+    <string name="ev_brake_tech_label">Brake Technology</string>
+    <string name="ev_suspension_tech_label">Suspension Technology</string>
+    <string name="ev_charging_section">Charging &amp; Details</string>
+    <string name="ev_charge_power_label">Charge Power</string>
+    <string name="ev_other_characteristics_label">Other Characteristics</string>
+    <string name="ev_save_button">Save Configuration</string>
+    <string name="ev_load_ble_button">Load EV &amp; Connect BLE</string>
+    <string name="ev_loaded_status">EV Loaded into System</string>
+    <string name="ev_llm_prompt_template">Identify specs for EV query: \"%1$s\". Respond with JSON containing keys: brand, version, motors (array of objects with name and watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
+    <string name="nav_ev_config">Configure EV</string>
 </resources>
