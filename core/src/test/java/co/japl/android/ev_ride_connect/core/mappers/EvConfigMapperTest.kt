@@ -52,12 +52,11 @@ class EvConfigMapperTest {
     }
 
     @Test
-    fun shouldFallbackToDefaultVsettWhenJsonIsInvalidAndUserQueryMentionsVsett() {
+    fun shouldReturnEmptyEvConfigWhenResponseIsInvalidJson() {
         val result = EvConfigMapper.fromLlmResponse("buy vsett c7 plus", "invalid response")
 
-        assertThat(result.brand).isEqualTo("VSETT")
-        assertThat(result.version).isEqualTo("C7 Plus")
-        assertThat(result.motors).hasSize(2)
-        assertThat(result.batteryVolts).isEqualTo("60V")
+        assertThat(result.brand).isEmpty()
+        assertThat(result.version).isEmpty()
+        assertThat(result.motors).isEmpty()
     }
 }

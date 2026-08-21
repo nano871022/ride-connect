@@ -66,7 +66,7 @@ object EvConfigMapper {
                 )
             }
         } catch (e: Exception) {
-            // Fall through to regex or default fallback
+            // Fall through to regex
         }
 
         fun extractKey(key: String): String {
@@ -115,27 +115,6 @@ object EvConfigMapper {
                 suspensionTechnology = suspensionTechnology,
                 chargePower = chargePower,
                 otherCharacteristics = otherCharacteristics
-            )
-        }
-
-        if (userRequest.lowercase().contains("vsett")) {
-            return EvConfig(
-                brand = "VSETT",
-                version = "C7 Plus",
-                motors = listOf(
-                    MotorSpec("Front Motor", 1000),
-                    MotorSpec("Rear Motor", 1000)
-                ),
-                manufactoryYear = "2023",
-                manufactoryCompany = "VSETT / eMove Colombia",
-                batteryTechnology = "Li-ion 13S",
-                batteryVolts = "60V",
-                batteryAmpers = "20.8Ah",
-                brakeQuantity = 2,
-                brakeTechnology = "Hydraulic Disc Brake",
-                suspensionTechnology = "Spring & Hydraulic Suspension",
-                chargePower = "67.2V 2A",
-                otherCharacteristics = "Electric Scooter distributed by eMove Colombia seller. Dual motor setup with Tuya BLE connectivity."
             )
         }
 
