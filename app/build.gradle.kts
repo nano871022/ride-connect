@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+    implementation(libs.org.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)

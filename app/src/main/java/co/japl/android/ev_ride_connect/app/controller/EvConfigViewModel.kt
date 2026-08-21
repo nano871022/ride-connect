@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
+import co.japl.android.ev_ride_connect.core.mappers.EvConfigMapper
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
@@ -211,7 +212,7 @@ class EvConfigViewModel @Inject constructor(
     }
 
     private fun parseAndApplyEvInfo(userRequest: String, responseText: String) {
-        val parsedConfig = parseEvJsonOrFallback(userRequest, responseText)
+        val parsedConfig = EvConfigMapper.fromLlmResponse(userRequest, responseText)
         _evConfig.update { current ->
             current.copy(
                 brand = if (parsedConfig.brand.isNotBlank()) parsedConfig.brand else current.brand,
@@ -229,79 +230,5 @@ class EvConfigViewModel @Inject constructor(
                 otherCharacteristics = if (parsedConfig.otherCharacteristics.isNotBlank()) parsedConfig.otherCharacteristics else current.otherCharacteristics
             )
         }
-    }
-
-    private fun parseEvJsonOrFallback(userRequest: String, responseText: String): EvConfig {
-        fun extractKey(key: String): String {
-            val regex = Regex(""""$key"\s*:\s*"([^"]*)"""", RegexOption.IGNORE_CASE)
-            return regex.find(responseText)?.groupValues?.get(1) ?: ""
-        }
-
-        fun extractIntKey(key: String): Int {
-            val regex = Regex(""""$key"\s*:\s*(\d+)""", RegexOption.IGNORE_CASE)
-            return regex.find(responseText)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        }
-
-        val brand = extractKey("brand")
-        val version = extractKey("version")
-        val manufactoryYear = extractKey("manufactoryYear")
-        val manufactoryCompany = extractKey("manufactoryCompany")
-        val batteryTechnology = extractKey("batteryTechnology")
-        val batteryVolts = extractKey("batteryVolts")
-        val batteryAmpers = extractKey("batteryAmpers")
-        val brakeQuantity = extractIntKey("brakeQuantity")
-        val brakeTechnology = extractKey("brakeTechnology")
-        val suspensionTechnology = extractKey("suspensionTechnology")
-        val chargePower = extractKey("chargePower")
-        val otherCharacteristics = extractKey("otherCharacteristics")
-
-        val motorsList = mutableListOf<MotorSpec>()
-        val motorRegex = Regex("""\{\s*"name"\s*:\s*"([^"]+)"\s*,\s*"watts"\s*:\s*(\d+)\s*\}""", RegexOption.IGNORE_CASE)
-        motorRegex.findAll(responseText).forEach { match ->
-            val mName = match.groupValues[1]
-            val mWatts = match.groupValues[2].toIntOrNull() ?: 0
-            motorsList.add(MotorSpec(mName, mWatts))
-        }
-
-        if (brand.isNotBlank() || version.isNotBlank() || motorsList.isNotEmpty()) {
-            return EvConfig(
-                brand = brand,
-                version = version,
-                motors = motorsList,
-                manufactoryYear = manufactoryYear,
-                manufactoryCompany = manufactoryCompany,
-                batteryTechnology = batteryTechnology,
-                batteryVolts = batteryVolts,
-                batteryAmpers = batteryAmpers,
-                brakeQuantity = brakeQuantity,
-                brakeTechnology = brakeTechnology,
-                suspensionTechnology = suspensionTechnology,
-                chargePower = chargePower,
-                otherCharacteristics = otherCharacteristics
-            )
-        }
-
-        if (userRequest.lowercase().contains("vsett")) {
-            return EvConfig(
-                brand = "VSETT",
-                version = "C7 Plus",
-                motors = listOf(
-                    MotorSpec("Front Motor", 1000),
-                    MotorSpec("Rear Motor", 1000)
-                ),
-                manufactoryYear = "2023",
-                manufactoryCompany = "VSETT / eMove Colombia",
-                batteryTechnology = "Li-ion 13S",
-                batteryVolts = "60V",
-                batteryAmpers = "20.8Ah",
-                brakeQuantity = 2,
-                brakeTechnology = "Hydraulic Disc Brake",
-                suspensionTechnology = "Spring & Hydraulic Suspension",
-                chargePower = "67.2V 2A",
-                otherCharacteristics = "Electric Scooter distributed by eMove Colombia seller. Dual motor setup with Tuya BLE connectivity."
-            )
-        }
-
-        return EvConfig()
     }
 }
