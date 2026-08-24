@@ -5,11 +5,10 @@ import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
-import co.japl.android.ev_ride_connect.core.mappers.EvConfigMapper
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +21,7 @@ import javax.inject.Inject
 class EvConfigViewModel @Inject constructor(
     private val evConfigPort: EvConfigPort,
     private val llmConfigPort: LlmConfigPort,
-    private val llmClientPort: LlmClientPort,
+    private val fetchEvInfoUseCase: FetchEvInfoUseCase,
     private val bleScooterPort: BleScooterPort
 ) : ViewModel() {
 
@@ -169,9 +168,8 @@ class EvConfigViewModel @Inject constructor(
             _llmErrorMessage.value = null
 
             try {
-                val prompt = buildEvPrompt(requestText)
-                val responseText = llmClientPort.generateResponse(config.modelName, config.apiKey, prompt)
-                parseAndApplyEvInfo(requestText, responseText)
+                val updatedConfig = fetchEvInfoUseCase.execute(requestText, config, _evConfig.value)
+                _evConfig.value = updatedConfig
                 _statusMessage.value = "LLM_FETCH_SUCCESS"
             } catch (e: Exception) {
                 _llmErrorMessage.value = e.localizedMessage ?: "LLM_FETCH_FAILED"
@@ -204,31 +202,4 @@ class EvConfigViewModel @Inject constructor(
         _llmErrorMessage.value = null
     }
 
-    private fun buildEvPrompt(userRequest: String): String {
-        return String.format(
-            co.japl.android.ev_ride_connect.core.domain.EvConstants.EV_LLM_PROMPT_TEMPLATE.trimIndent(),
-            userRequest
-        )
-    }
-
-    private fun parseAndApplyEvInfo(userRequest: String, responseText: String) {
-        val parsedConfig = EvConfigMapper.fromLlmResponse(userRequest, responseText)
-        _evConfig.update { current ->
-            current.copy(
-                brand = if (parsedConfig.brand.isNotBlank()) parsedConfig.brand else current.brand,
-                version = if (parsedConfig.version.isNotBlank()) parsedConfig.version else current.version,
-                motors = if (parsedConfig.motors.isNotEmpty()) parsedConfig.motors else current.motors,
-                manufactoryYear = if (parsedConfig.manufactoryYear.isNotBlank()) parsedConfig.manufactoryYear else current.manufactoryYear,
-                manufactoryCompany = if (parsedConfig.manufactoryCompany.isNotBlank()) parsedConfig.manufactoryCompany else current.manufactoryCompany,
-                batteryTechnology = if (parsedConfig.batteryTechnology.isNotBlank()) parsedConfig.batteryTechnology else current.batteryTechnology,
-                batteryVolts = if (parsedConfig.batteryVolts.isNotBlank()) parsedConfig.batteryVolts else current.batteryVolts,
-                batteryAmpers = if (parsedConfig.batteryAmpers.isNotBlank()) parsedConfig.batteryAmpers else current.batteryAmpers,
-                brakeQuantity = if (parsedConfig.brakeQuantity > 0) parsedConfig.brakeQuantity else current.brakeQuantity,
-                brakeTechnology = if (parsedConfig.brakeTechnology.isNotBlank()) parsedConfig.brakeTechnology else current.brakeTechnology,
-                suspensionTechnology = if (parsedConfig.suspensionTechnology.isNotBlank()) parsedConfig.suspensionTechnology else current.suspensionTechnology,
-                chargePower = if (parsedConfig.chargePower.isNotBlank()) parsedConfig.chargePower else current.chargePower,
-                otherCharacteristics = if (parsedConfig.otherCharacteristics.isNotBlank()) parsedConfig.otherCharacteristics else current.otherCharacteristics
-            )
-        }
-    }
 }

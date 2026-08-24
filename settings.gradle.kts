@@ -25,6 +25,7 @@ include(":app")
 include(":core")
 include(":services:ble")
 include(":services:database")
+include(":services:llm")
 include(":track")
 include(":utils")
 if (file("../japl-android-about-module").exists()) {

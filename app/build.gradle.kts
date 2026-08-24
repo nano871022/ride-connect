@@ -70,6 +70,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":services:ble"))
     implementation(project(":services:database"))
+    implementation(project(":services:llm"))
     implementation(project(":track"))
     implementation(project(":utils"))
     if (findProject(":about") != null) {

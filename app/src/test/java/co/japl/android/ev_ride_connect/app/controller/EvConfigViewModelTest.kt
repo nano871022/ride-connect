@@ -8,6 +8,7 @@ import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -39,10 +40,11 @@ class EvConfigViewModelTest {
         fakeLlmClientPort = FakeLlmClientPort()
         fakeBleScooterPort = FakeBleScooterPort()
 
+        val fetchEvInfoUseCase = FetchEvInfoUseCase(fakeLlmClientPort)
         viewModel = EvConfigViewModel(
             fakeEvConfigPort,
             fakeLlmConfigPort,
-            fakeLlmClientPort,
+            fetchEvInfoUseCase,
             fakeBleScooterPort
         )
     }
