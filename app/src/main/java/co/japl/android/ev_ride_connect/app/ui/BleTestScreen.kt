@@ -1,9 +1,14 @@
 package co.japl.android.ev_ride_connect.app.ui
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +52,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import co.japl.android.ev_ride_connect.app.R
 import co.japl.android.ev_ride_connect.app.controller.BleTestViewModel
 import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
@@ -63,6 +69,47 @@ fun BleTestScreen(
     val context = LocalContext.current
     val isConnected by viewModel.isConnected.collectAsState()
     val logs by viewModel.logs.collectAsState()
+
+    val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    } else {
+        arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.entries.all { it.value }
+        if (allGranted) {
+            viewModel.toggleConnection()
+        } else {
+            Toast.makeText(context, "Permissions required for BLE", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun checkAndToggleConnection() {
+        if (isConnected) {
+            viewModel.toggleConnection()
+            return
+        }
+
+        val allPermissionsGranted = permissionsToRequest.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+
+        if (allPermissionsGranted) {
+            viewModel.toggleConnection()
+        } else {
+            launcher.launch(permissionsToRequest)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -119,7 +166,7 @@ fun BleTestScreen(
                     }
 
                     Button(
-                        onClick = { viewModel.toggleConnection() },
+                        onClick = { checkAndToggleConnection() },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isConnected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                         )
