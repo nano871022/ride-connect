@@ -323,13 +323,12 @@ class TuyaBleAdapter(
                 return
             }
 
-            var service = gatt.getService(TuyaBleProtocol.TUYA_SERVICE_UUID)
-            if (service == null) {
-                logMessage("Primary Tuya service not found, trying alt service...")
-                service = gatt.getService(TuyaBleProtocol.ALT_SERVICE_UUID)
-            }
+            val discoveredServices = gatt.services ?: emptyList()
+            logMessage("Discovered ${discoveredServices.size} services: ${discoveredServices.map { it.uuid }}")
 
-            if (service == null) {
+            val (service, writeChar, notifyChar) = discoverCharacteristicsFromServices(discoveredServices)
+
+            if (service == null && writeChar == null && notifyChar == null) {
                 logError("Neither primary nor alt Tuya service found on device")
                 addLogEntry(
                     direction = BleLogDirection.RECEIVED,
@@ -340,11 +339,6 @@ class TuyaBleAdapter(
                 )
                 return
             }
-
-            val writeChar = service.getCharacteristic(TuyaBleProtocol.TUYA_WRITE_CHARACTERISTIC_UUID)
-                ?: service.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
-            val notifyChar = service.getCharacteristic(TuyaBleProtocol.TUYA_NOTIFY_CHARACTERISTIC_UUID)
-                ?: service.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
 
             this@TuyaBleAdapter.writeCharacteristic = writeChar
 
@@ -357,6 +351,8 @@ class TuyaBleAdapter(
                     isValid = false,
                     errorMessage = "Write characteristic missing from Tuya service"
                 )
+            } else {
+                logMessage("Found write characteristic: ${writeChar.uuid}")
             }
 
             if (notifyChar != null) {
@@ -517,6 +513,62 @@ class TuyaBleAdapter(
         } catch (_: Throwable) {
             // Log class might not be mocked in standard JVM unit test environments without Robolectric or try-catch
         }
+    }
+
+    internal fun discoverCharacteristicsFromServices(
+        discoveredServices: List<android.bluetooth.BluetoothGattService>
+    ): Triple<android.bluetooth.BluetoothGattService?, BluetoothGattCharacteristic?, BluetoothGattCharacteristic?> {
+        var service = discoveredServices.firstOrNull { it.uuid == TuyaBleProtocol.TUYA_SERVICE_UUID }
+        if (service == null) {
+            service = discoveredServices.firstOrNull { it.uuid == TuyaBleProtocol.ALT_SERVICE_UUID }
+        }
+
+        var writeChar: BluetoothGattCharacteristic? = null
+        var notifyChar: BluetoothGattCharacteristic? = null
+
+        if (service != null) {
+            writeChar = service.getCharacteristic(TuyaBleProtocol.TUYA_WRITE_CHARACTERISTIC_UUID)
+                ?: service.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
+                ?: service.characteristics?.firstOrNull { char ->
+                    (char.properties and (BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) != 0
+                }
+
+            notifyChar = service.getCharacteristic(TuyaBleProtocol.TUYA_NOTIFY_CHARACTERISTIC_UUID)
+                ?: service.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
+                ?: service.characteristics?.firstOrNull { char ->
+                    (char.properties and (BluetoothGattCharacteristic.PROPERTY_NOTIFY or BluetoothGattCharacteristic.PROPERTY_INDICATE)) != 0
+                }
+        }
+
+        if (writeChar == null) {
+            for (s in discoveredServices) {
+                val candidate = s.getCharacteristic(TuyaBleProtocol.TUYA_WRITE_CHARACTERISTIC_UUID)
+                    ?: s.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
+                    ?: s.characteristics?.firstOrNull { char ->
+                        (char.properties and (BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) != 0
+                    }
+                if (candidate != null) {
+                    writeChar = candidate
+                    break
+                }
+            }
+        }
+
+        if (notifyChar == null) {
+            for (s in discoveredServices) {
+                val candidate = s.getCharacteristic(TuyaBleProtocol.TUYA_NOTIFY_CHARACTERISTIC_UUID)
+                    ?: s.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
+                    ?: s.characteristics?.firstOrNull { char ->
+                        (char.properties and (BluetoothGattCharacteristic.PROPERTY_NOTIFY or BluetoothGattCharacteristic.PROPERTY_INDICATE)) != 0
+                    }
+                if (candidate != null) {
+                    notifyChar = candidate
+                    break
+                }
+            }
+        }
+
+        return Triple(service, writeChar, notifyChar)
     }
 
     private fun logError(msg: String, throwable: Throwable? = null) {
