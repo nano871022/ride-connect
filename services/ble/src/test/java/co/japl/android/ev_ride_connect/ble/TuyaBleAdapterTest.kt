@@ -166,4 +166,52 @@ class TuyaBleAdapterTest {
         assertThat(logs[0].parsedData).isEqualTo("DISCONNECT_REQUEST")
         assertThat(logs[0].isValid).isTrue()
     }
+
+    @Test
+    fun shouldDiscoverCharacteristicsByPropertiesWhenUuidsDoNotMatchStandardTuya() = runTest {
+        val customServiceUuid = java.util.UUID.fromString("00001234-0000-1000-8000-00805f9b34fb")
+        val customWriteUuid = java.util.UUID.fromString("00001235-0000-1000-8000-00805f9b34fb")
+        val customNotifyUuid = java.util.UUID.fromString("00001236-0000-1000-8000-00805f9b34fb")
+
+        val writeChar = object : android.bluetooth.BluetoothGattCharacteristic(
+            customWriteUuid,
+            PROPERTY_WRITE,
+            PERMISSION_WRITE
+        ) {
+            override fun getUuid(): java.util.UUID = customWriteUuid
+            override fun getProperties(): Int = PROPERTY_WRITE
+        }
+        val notifyChar = object : android.bluetooth.BluetoothGattCharacteristic(
+            customNotifyUuid,
+            PROPERTY_NOTIFY,
+            PERMISSION_READ
+        ) {
+            override fun getUuid(): java.util.UUID = customNotifyUuid
+            override fun getProperties(): Int = PROPERTY_NOTIFY
+        }
+
+        val service = object : android.bluetooth.BluetoothGattService(
+            customServiceUuid,
+            SERVICE_TYPE_PRIMARY
+        ) {
+            override fun getUuid(): java.util.UUID = customServiceUuid
+
+            override fun getCharacteristics(): List<android.bluetooth.BluetoothGattCharacteristic> =
+                listOf(writeChar, notifyChar)
+
+            override fun getCharacteristic(uuid: java.util.UUID?): android.bluetooth.BluetoothGattCharacteristic? =
+                when (uuid) {
+                    customWriteUuid -> writeChar
+                    customNotifyUuid -> notifyChar
+                    else -> null
+                }
+        }
+
+        val (_, discoveredWrite, discoveredNotify) = adapter.discoverCharacteristicsFromServices(listOf(service))
+
+        assertThat(discoveredWrite).isNotNull
+        assertThat(discoveredWrite?.uuid).isEqualTo(customWriteUuid)
+        assertThat(discoveredNotify).isNotNull
+        assertThat(discoveredNotify?.uuid).isEqualTo(customNotifyUuid)
+    }
 }
