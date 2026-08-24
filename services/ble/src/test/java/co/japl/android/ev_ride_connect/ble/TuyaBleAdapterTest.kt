@@ -143,4 +143,27 @@ class TuyaBleAdapterTest {
 
         assertThat(adapter.observeRawLogs().first()).isEmpty()
     }
+
+    @Test
+    fun shouldLogConnectionFailureWhenBluetoothAdapterIsNull() = runTest {
+        // TuyaBleAdapter created with null context has null bluetoothAdapter
+        adapter.connect("AA:BB:CC:DD:EE:FF")
+
+        val logs = adapter.observeRawLogs().first()
+        assertThat(logs).hasSize(1)
+        assertThat(logs[0].direction).isEqualTo(BleLogDirection.SENT)
+        assertThat(logs[0].isValid).isFalse()
+        assertThat(logs[0].errorMessage).contains("Bluetooth adapter is null")
+    }
+
+    @Test
+    fun shouldLogDisconnectRequestWhenDisconnectCalled() = runTest {
+        adapter.disconnect()
+
+        val logs = adapter.observeRawLogs().first()
+        assertThat(logs).hasSize(1)
+        assertThat(logs[0].direction).isEqualTo(BleLogDirection.SENT)
+        assertThat(logs[0].parsedData).isEqualTo("DISCONNECT_REQUEST")
+        assertThat(logs[0].isValid).isTrue()
+    }
 }
