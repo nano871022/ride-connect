@@ -168,6 +168,21 @@ class TuyaBleAdapterTest {
     }
 
     @Test
+    fun shouldRetainTargetMacAddressWhenConnectAttemptedWithNullContextAdapter() = runTest {
+        adapter.connect("DC:23:52:3D:A2:E4")
+
+        val logs = adapter.observeRawLogs().first()
+        assertThat(logs).hasSize(1)
+        assertThat(logs[0].errorMessage).contains("Bluetooth adapter is null")
+
+        // Subsequent connect() without argument uses saved MAC address
+        adapter.connect(null)
+        val secondLogs = adapter.observeRawLogs().first()
+        assertThat(secondLogs).hasSize(2)
+        assertThat(secondLogs[1].errorMessage).contains("Bluetooth adapter is null")
+    }
+
+    @Test
     fun shouldDiscoverCharacteristicsByPropertiesWhenUuidsDoNotMatchStandardTuya() = runTest {
         val customServiceUuid = java.util.UUID.fromString("00001234-0000-1000-8000-00805f9b34fb")
         val customWriteUuid = java.util.UUID.fromString("00001235-0000-1000-8000-00805f9b34fb")

@@ -32,6 +32,7 @@ class TuyaBleAdapter(
 
     companion object {
         private const val TAG = "TuyaBleAdapter"
+        private const val MAX_CONNECTION_RETRIES = 3
     }
 
     private val _scooterState = MutableStateFlow(
@@ -53,6 +54,8 @@ class TuyaBleAdapter(
 
     private var bluetoothGatt: BluetoothGatt? = null
     private var writeCharacteristic: BluetoothGattCharacteristic? = null
+    private var lastMacAddress: String? = null
+    private var connectionRetryCount: Int = 0
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
         context?.let {
@@ -113,18 +116,23 @@ class TuyaBleAdapter(
             return
         }
 
+        if (!macAddress.isNullOrBlank()) {
+            lastMacAddress = macAddress
+        }
+
         // Close previous GATT instance if present to avoid status 133 resource leaks
         bluetoothGatt?.close()
         bluetoothGatt = null
 
-        if (!macAddress.isNullOrBlank()) {
+        val targetMac = macAddress ?: lastMacAddress
+        if (!targetMac.isNullOrBlank()) {
             try {
-                logMessage("Connecting directly to MAC: $macAddress")
-                val device = adapter.getRemoteDevice(macAddress)
+                logMessage("Connecting directly to MAC: $targetMac")
+                val device = adapter.getRemoteDevice(targetMac)
                 addLogEntry(
                     direction = BleLogDirection.SENT,
                     rawBytesHex = "",
-                    parsedData = "CONNECTING_TO_MAC: $macAddress",
+                    parsedData = "CONNECTING_TO_MAC: $targetMac",
                     isValid = true
                 )
                 bluetoothGatt = device.connectGatt(
@@ -134,13 +142,13 @@ class TuyaBleAdapter(
                     android.bluetooth.BluetoothDevice.TRANSPORT_LE
                 )
             } catch (e: Exception) {
-                logError("Failed to connect to MAC $macAddress: ${e.message}", e)
+                logError("Failed to connect to MAC $targetMac: ${e.message}", e)
                 addLogEntry(
                     direction = BleLogDirection.SENT,
                     rawBytesHex = "",
-                    parsedData = "CONNECT_ERROR: $macAddress",
+                    parsedData = "CONNECT_ERROR: $targetMac",
                     isValid = false,
-                    errorMessage = "Failed to connect to device $macAddress: ${e.message}"
+                    errorMessage = "Failed to connect to device $targetMac: ${e.message}"
                 )
             }
         } else {
@@ -157,6 +165,8 @@ class TuyaBleAdapter(
             parsedData = "DISCONNECT_REQUEST",
             isValid = true
         )
+        lastMacAddress = null
+        connectionRetryCount = 0
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
@@ -199,6 +209,7 @@ class TuyaBleAdapter(
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 val device = result?.device ?: return
                 logMessage("Device found during scan: ${device.address} (${device.name})")
+                lastMacAddress = device.address
                 addLogEntry(
                     direction = BleLogDirection.RECEIVED,
                     rawBytesHex = "",
@@ -272,10 +283,30 @@ class TuyaBleAdapter(
                 if (bluetoothGatt == gatt) {
                     bluetoothGatt = null
                 }
+
+                val mac = lastMacAddress
+                if (connectionRetryCount < MAX_CONNECTION_RETRIES && !mac.isNullOrBlank()) {
+                    connectionRetryCount++
+                    logMessage("Scheduling connection retry ($connectionRetryCount/$MAX_CONNECTION_RETRIES) for MAC $mac")
+                    addLogEntry(
+                        direction = BleLogDirection.SENT,
+                        rawBytesHex = "",
+                        parsedData = "RETRYING_CONNECTION ($connectionRetryCount/$MAX_CONNECTION_RETRIES): $mac",
+                        isValid = true
+                    )
+                    val retryAction = Runnable { connect(mac) }
+                    try {
+                        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                        handler.postDelayed(retryAction, 500)
+                    } catch (_: Throwable) {
+                        retryAction.run()
+                    }
+                }
                 return
             }
 
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                connectionRetryCount = 0
                 logMessage("GATT Connected to ${gatt.device?.address}. Discovering services...")
                 _isConnected.value = true
                 addLogEntry(
@@ -299,6 +330,10 @@ class TuyaBleAdapter(
                 logMessage("GATT Disconnected from ${gatt.device?.address}")
                 _isConnected.value = false
                 writeCharacteristic = null
+                gatt.close()
+                if (bluetoothGatt == gatt) {
+                    bluetoothGatt = null
+                }
                 addLogEntry(
                     direction = BleLogDirection.RECEIVED,
                     rawBytesHex = "",
@@ -432,8 +467,21 @@ class TuyaBleAdapter(
         val encodedPacket = TuyaBleProtocol.encodeDpCommand(dpId, value)
         val hexString = encodedPacket.joinToString(" ") { "%02X".format(it) }
 
-        val gatt = bluetoothGatt
-        val characteristic = writeCharacteristic
+        var gatt = bluetoothGatt
+        var characteristic = writeCharacteristic
+
+        if (gatt == null && !_isConnected.value && !lastMacAddress.isNullOrBlank()) {
+            logMessage("Disconnected when sending command. Triggering auto-reconnect to $lastMacAddress")
+            addLogEntry(
+                direction = BleLogDirection.SENT,
+                rawBytesHex = "",
+                parsedData = "AUTO_RECONNECT_ATTEMPT: $lastMacAddress",
+                isValid = true
+            )
+            connect(lastMacAddress)
+            gatt = bluetoothGatt
+            characteristic = writeCharacteristic
+        }
 
         val (isValid, errorMsg) = when {
             gatt == null -> false to "BluetoothGatt is null (Not connected)"
