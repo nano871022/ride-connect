@@ -14,6 +14,7 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
+import android.util.Log
 import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
 import co.japl.android.ev_ride_connect.core.domain.BleLogEntry
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
@@ -28,6 +29,10 @@ import java.util.UUID
 class TuyaBleAdapter(
     private val context: Context? = null
 ) : BleScooterPort {
+
+    companion object {
+        private const val TAG = "TuyaBleAdapter"
+    }
 
     private val _scooterState = MutableStateFlow(
         ScooterState(
@@ -83,12 +88,52 @@ class TuyaBleAdapter(
 
     @SuppressLint("MissingPermission")
     override fun connect(macAddress: String?) {
-        val adapter = bluetoothAdapter ?: return
-        if (!adapter.isEnabled) return
+        logMessage("Initiating connection attempt (macAddress=$macAddress)")
+        val adapter = bluetoothAdapter
+        if (adapter == null) {
+            logError("Bluetooth adapter is null")
+            addLogEntry(
+                direction = BleLogDirection.SENT,
+                rawBytesHex = "",
+                parsedData = "CONNECT_ATTEMPT",
+                isValid = false,
+                errorMessage = "Bluetooth adapter is null or Context is missing"
+            )
+            return
+        }
+        if (!adapter.isEnabled) {
+            logError("Bluetooth is disabled")
+            addLogEntry(
+                direction = BleLogDirection.SENT,
+                rawBytesHex = "",
+                parsedData = "CONNECT_ATTEMPT",
+                isValid = false,
+                errorMessage = "Bluetooth adapter is disabled"
+            )
+            return
+        }
 
         if (!macAddress.isNullOrBlank()) {
-            val device = adapter.getRemoteDevice(macAddress)
-            bluetoothGatt = device.connectGatt(context, false, gattCallback)
+            try {
+                logMessage("Connecting directly to MAC: $macAddress")
+                val device = adapter.getRemoteDevice(macAddress)
+                addLogEntry(
+                    direction = BleLogDirection.SENT,
+                    rawBytesHex = "",
+                    parsedData = "CONNECTING_TO_MAC: $macAddress",
+                    isValid = true
+                )
+                bluetoothGatt = device.connectGatt(context, false, gattCallback)
+            } catch (e: Exception) {
+                logError("Failed to connect to MAC $macAddress: ${e.message}", e)
+                addLogEntry(
+                    direction = BleLogDirection.SENT,
+                    rawBytesHex = "",
+                    parsedData = "CONNECT_ERROR: $macAddress",
+                    isValid = false,
+                    errorMessage = "Failed to connect to device $macAddress: ${e.message}"
+                )
+            }
         } else {
             startScanAndConnect()
         }
@@ -96,6 +141,13 @@ class TuyaBleAdapter(
 
     @SuppressLint("MissingPermission")
     override fun disconnect() {
+        logMessage("Disconnect requested")
+        addLogEntry(
+            direction = BleLogDirection.SENT,
+            rawBytesHex = "",
+            parsedData = "DISCONNECT_REQUEST",
+            isValid = true
+        )
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
@@ -105,7 +157,26 @@ class TuyaBleAdapter(
 
     @SuppressLint("MissingPermission")
     private fun startScanAndConnect() {
-        val scanner = bluetoothAdapter?.bluetoothLeScanner ?: return
+        val scanner = bluetoothAdapter?.bluetoothLeScanner
+        if (scanner == null) {
+            logError("Bluetooth LE scanner is null")
+            addLogEntry(
+                direction = BleLogDirection.SENT,
+                rawBytesHex = "",
+                parsedData = "SCAN_START",
+                isValid = false,
+                errorMessage = "Bluetooth LE Scanner is null"
+            )
+            return
+        }
+
+        logMessage("Starting BLE scan for Tuya service: ${TuyaBleProtocol.TUYA_SERVICE_UUID}")
+        addLogEntry(
+            direction = BleLogDirection.SENT,
+            rawBytesHex = "",
+            parsedData = "START_BLE_SCAN (UUID: ${TuyaBleProtocol.TUYA_SERVICE_UUID})",
+            isValid = true
+        )
 
         val scanFilter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid(TuyaBleProtocol.TUYA_SERVICE_UUID))
@@ -118,44 +189,127 @@ class TuyaBleAdapter(
         val scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 val device = result?.device ?: return
+                logMessage("Device found during scan: ${device.address} (${device.name})")
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "DEVICE_DISCOVERED: ${device.address} (${device.name ?: "Unknown"})",
+                    isValid = true
+                )
                 scanner.stopScan(this)
                 bluetoothGatt = device.connectGatt(context, false, gattCallback)
             }
 
             override fun onScanFailed(errorCode: Int) {
+                logError("BLE scan failed with error code: $errorCode")
                 _isConnected.value = false
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "SCAN_FAILED",
+                    isValid = false,
+                    errorMessage = "BLE scan failed with error code: $errorCode"
+                )
             }
         }
 
         try {
             scanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
         } catch (e: Exception) {
+            logError("Exception starting BLE scan: ${e.message}", e)
             _isConnected.value = false
+            addLogEntry(
+                direction = BleLogDirection.SENT,
+                rawBytesHex = "",
+                parsedData = "SCAN_START_ERROR",
+                isValid = false,
+                errorMessage = "Failed to start BLE scan: ${e.message}"
+            )
         }
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            logMessage("onConnectionStateChange: status=$status, newState=$newState")
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                logError("GATT connection state change failed with status $status")
+                _isConnected.value = false
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "GATT_STATE_CHANGE_ERROR (Status: $status, State: $newState)",
+                    isValid = false,
+                    errorMessage = "GATT operation failed with status $status"
+                )
+                return
+            }
+
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                logMessage("GATT Connected to ${gatt.device?.address}. Discovering services...")
                 _isConnected.value = true
-                gatt.discoverServices()
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "GATT_CONNECTED: ${gatt.device?.address}",
+                    isValid = true
+                )
+                val started = gatt.discoverServices()
+                if (!started) {
+                    logError("Failed to initiate service discovery")
+                    addLogEntry(
+                        direction = BleLogDirection.SENT,
+                        rawBytesHex = "",
+                        parsedData = "DISCOVER_SERVICES_INIT_FAILED",
+                        isValid = false,
+                        errorMessage = "gatt.discoverServices() returned false"
+                    )
+                }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                logMessage("GATT Disconnected from ${gatt.device?.address}")
                 _isConnected.value = false
                 writeCharacteristic = null
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "GATT_DISCONNECTED: ${gatt.device?.address}",
+                    isValid = true
+                )
             }
         }
 
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            if (status != BluetoothGatt.GATT_SUCCESS) return
+            logMessage("onServicesDiscovered: status=$status")
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                logError("Service discovery failed with status $status")
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "SERVICES_DISCOVERY_FAILED (Status: $status)",
+                    isValid = false,
+                    errorMessage = "Service discovery failed with status $status"
+                )
+                return
+            }
 
             var service = gatt.getService(TuyaBleProtocol.TUYA_SERVICE_UUID)
             if (service == null) {
+                logMessage("Primary Tuya service not found, trying alt service...")
                 service = gatt.getService(TuyaBleProtocol.ALT_SERVICE_UUID)
             }
 
-            if (service == null) return
+            if (service == null) {
+                logError("Neither primary nor alt Tuya service found on device")
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "SERVICES_DISCOVERED",
+                    isValid = false,
+                    errorMessage = "No compatible Tuya service found on device (Checked: ${TuyaBleProtocol.TUYA_SERVICE_UUID}, ${TuyaBleProtocol.ALT_SERVICE_UUID})"
+                )
+                return
+            }
 
             val writeChar = service.getCharacteristic(TuyaBleProtocol.TUYA_WRITE_CHARACTERISTIC_UUID)
                 ?: service.getCharacteristic(TuyaBleProtocol.ALT_CHARACTERISTIC_UUID)
@@ -164,16 +318,51 @@ class TuyaBleAdapter(
 
             this@TuyaBleAdapter.writeCharacteristic = writeChar
 
+            if (writeChar == null) {
+                logError("Write characteristic not found in service")
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "CHARACTERISTICS_DISCOVERED",
+                    isValid = false,
+                    errorMessage = "Write characteristic missing from Tuya service"
+                )
+            }
+
             if (notifyChar != null) {
-                gatt.setCharacteristicNotification(notifyChar, true)
+                logMessage("Enabling notifications on characteristic ${notifyChar.uuid}")
+                val notificationSet = gatt.setCharacteristicNotification(notifyChar, true)
+                if (!notificationSet) {
+                    logError("Failed to set characteristic notification locally")
+                }
                 val descriptor = notifyChar.getDescriptor(
                     UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
                 )
                 if (descriptor != null) {
                     descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                    gatt.writeDescriptor(descriptor)
+                    val descWritten = gatt.writeDescriptor(descriptor)
+                    logMessage("Writing descriptor for notification: result=$descWritten")
+                } else {
+                    logError("Notification descriptor (0x2902) not found on notify characteristic")
                 }
+            } else {
+                logError("Notify characteristic not found in service")
+                addLogEntry(
+                    direction = BleLogDirection.RECEIVED,
+                    rawBytesHex = "",
+                    parsedData = "CHARACTERISTICS_DISCOVERED",
+                    isValid = false,
+                    errorMessage = "Notify characteristic missing from Tuya service"
+                )
             }
+
+            addLogEntry(
+                direction = BleLogDirection.RECEIVED,
+                rawBytesHex = "",
+                parsedData = "SERVICES_CONFIGURED (Write: ${writeChar?.uuid != null}, Notify: ${notifyChar?.uuid != null})",
+                isValid = writeChar != null && notifyChar != null,
+                errorMessage = if (writeChar == null || notifyChar == null) "Missing write or notify characteristic" else null
+            )
         }
 
         @Deprecated("Deprecated in Java / Android API")
@@ -199,14 +388,13 @@ class TuyaBleAdapter(
         val hexString = payload.joinToString(" ") { "%02X".format(it) }
         val isValid = decodedDps.isNotEmpty()
 
-        val logEntry = BleLogEntry(
+        addLogEntry(
             direction = BleLogDirection.RECEIVED,
             rawBytesHex = hexString,
             parsedData = if (isValid) decodedDps.toString() else "INVALID_PAYLOAD_OR_CHECKSUM",
             isValid = isValid,
             errorMessage = if (!isValid) "Header, checksum, or frame parsing failed" else null
         )
-        _rawLogs.update { it + logEntry }
 
         if (isValid) {
             onDataPointsReceived(decodedDps)
@@ -227,14 +415,13 @@ class TuyaBleAdapter(
             else -> true to null
         }
 
-        val logEntry = BleLogEntry(
+        addLogEntry(
             direction = BleLogDirection.SENT,
             rawBytesHex = hexString,
             parsedData = "DP ID: $dpId, Value: $value",
             isValid = isValid,
             errorMessage = errorMsg
         )
-        _rawLogs.update { it + logEntry }
 
         if (isValid && gatt != null && characteristic != null) {
             characteristic.value = encodedPacket
@@ -274,6 +461,43 @@ class TuyaBleAdapter(
                 )
             }
             else -> currentState
+        }
+    }
+
+    private fun addLogEntry(
+        direction: BleLogDirection,
+        rawBytesHex: String,
+        parsedData: String,
+        isValid: Boolean,
+        errorMessage: String? = null
+    ) {
+        val logEntry = BleLogEntry(
+            direction = direction,
+            rawBytesHex = rawBytesHex,
+            parsedData = parsedData,
+            isValid = isValid,
+            errorMessage = errorMessage
+        )
+        _rawLogs.update { it + logEntry }
+    }
+
+    private fun logMessage(msg: String) {
+        try {
+            Log.d(TAG, msg)
+        } catch (_: Throwable) {
+            // Log class might not be mocked in standard JVM unit test environments without Robolectric or try-catch
+        }
+    }
+
+    private fun logError(msg: String, throwable: Throwable? = null) {
+        try {
+            if (throwable != null) {
+                Log.e(TAG, msg, throwable)
+            } else {
+                Log.e(TAG, msg)
+            }
+        } catch (_: Throwable) {
+            // Log class might not be mocked in standard JVM unit test environments without Robolectric or try-catch
         }
     }
 }
