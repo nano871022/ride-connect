@@ -14,6 +14,10 @@ class LlmClientPortTest {
                 return apiKey.startsWith("valid-")
             }
 
+            override suspend fun fetchAvailableModels(modelName: String, apiKey: String): List<String> {
+                return listOf("$modelName-v1", "$modelName-v2")
+            }
+
             override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {
                 return "Response for $prompt using $modelName"
             }
@@ -24,5 +28,8 @@ class LlmClientPortTest {
 
         val response = fakePort.generateResponse("Gemini", "valid-key-123", "Hello")
         assertThat(response).isEqualTo("Response for Hello using Gemini")
+
+        val models = fakePort.fetchAvailableModels("Gemini", "valid-key-123")
+        assertThat(models).containsExactly("Gemini-v1", "Gemini-v2")
     }
 }

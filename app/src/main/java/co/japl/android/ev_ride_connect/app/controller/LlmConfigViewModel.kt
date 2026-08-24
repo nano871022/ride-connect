@@ -32,6 +32,15 @@ class LlmConfigViewModel @Inject constructor(
     private val _apiKeyInput = MutableStateFlow("")
     val apiKeyInput: StateFlow<String> = _apiKeyInput.asStateFlow()
 
+    private val _availableVersions = MutableStateFlow<List<String>>(emptyList())
+    val availableVersions: StateFlow<List<String>> = _availableVersions.asStateFlow()
+
+    private val _selectedVersion = MutableStateFlow("")
+    val selectedVersion: StateFlow<String> = _selectedVersion.asStateFlow()
+
+    private val _isFetchingVersions = MutableStateFlow(false)
+    val isFetchingVersions: StateFlow<Boolean> = _isFetchingVersions.asStateFlow()
+
     private val _isValidating = MutableStateFlow(false)
     val isValidating: StateFlow<Boolean> = _isValidating.asStateFlow()
 
@@ -53,11 +62,41 @@ class LlmConfigViewModel @Inject constructor(
     fun onModelSelected(modelName: String) {
         _selectedModel.value = modelName
         _errorMessage.value = null
+        _availableVersions.value = emptyList()
+        _selectedVersion.value = ""
+        if (_apiKeyInput.value.isNotBlank()) {
+            fetchAvailableVersions()
+        }
     }
 
     fun onApiKeyChanged(apiKey: String) {
         _apiKeyInput.value = apiKey
         _errorMessage.value = null
+    }
+
+    fun onVersionSelected(version: String) {
+        _selectedVersion.value = version
+    }
+
+    fun fetchAvailableVersions() {
+        val modelName = _selectedModel.value
+        val apiKey = _apiKeyInput.value.trim()
+        if (apiKey.isEmpty()) return
+
+        viewModelScope.launch {
+            _isFetchingVersions.value = true
+            try {
+                val versions = llmClientPort.fetchAvailableModels(modelName, apiKey)
+                _availableVersions.value = versions
+                if (versions.isNotEmpty() && (_selectedVersion.value.isBlank() || !versions.contains(_selectedVersion.value))) {
+                    _selectedVersion.value = versions.first()
+                }
+            } catch (_: Exception) {
+                _availableVersions.value = emptyList()
+            } finally {
+                _isFetchingVersions.value = false
+            }
+        }
     }
 
     fun saveConfig() {
@@ -79,11 +118,14 @@ class LlmConfigViewModel @Inject constructor(
 
             val newConfig = LlmConfig(
                 modelName = modelName,
+                selectedVersion = _selectedVersion.value,
                 apiKey = apiKey,
                 isActive = true
             )
             llmConfigPort.saveConfig(newConfig)
             _apiKeyInput.value = ""
+            _availableVersions.value = emptyList()
+            _selectedVersion.value = ""
             loadConfigs()
         }
     }

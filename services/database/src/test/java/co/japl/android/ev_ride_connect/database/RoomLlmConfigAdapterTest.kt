@@ -25,6 +25,7 @@ class RoomLlmConfigAdapterTest {
     fun shouldSaveConfigAndReturnGeneratedId() = runTest {
         val config = LlmConfig(
             modelName = "Gemini",
+            selectedVersion = "gemini-1.5-flash",
             apiKey = "sample-key-123",
             isActive = true
         )
@@ -35,6 +36,7 @@ class RoomLlmConfigAdapterTest {
         assertThat(fakeLlmConfigDao.configs).hasSize(1)
         val savedEntity = fakeLlmConfigDao.configs.first()
         assertThat(savedEntity.modelName).isEqualTo("Gemini")
+        assertThat(savedEntity.selectedVersion).isEqualTo("gemini-1.5-flash")
         assertThat(savedEntity.apiKey).isEqualTo("sample-key-123")
         assertThat(savedEntity.createdAt).isNotEmpty()
         assertThat(savedEntity.updatedAt).isNotEmpty()
@@ -42,8 +44,8 @@ class RoomLlmConfigAdapterTest {
 
     @Test
     fun shouldGetAllConfigs() = runTest {
-        val entity1 = LlmConfigEntity(1L, "Gemini", "key1", "2025-01-01", "2025-01-01", true)
-        val entity2 = LlmConfigEntity(2L, "DeepSeek", "key2", "2025-01-01", "2025-01-01", false)
+        val entity1 = LlmConfigEntity(1L, "Gemini", "gemini-1.5-flash", "key1", "2025-01-01", "2025-01-01", true)
+        val entity2 = LlmConfigEntity(2L, "DeepSeek", "deepseek-chat", "key2", "2025-01-01", "2025-01-01", false)
         fakeLlmConfigDao.configs.addAll(listOf(entity1, entity2))
 
         val result = adapter.getAllConfigs()
@@ -54,8 +56,8 @@ class RoomLlmConfigAdapterTest {
 
     @Test
     fun shouldGetActiveConfigsOnly() = runTest {
-        val entity1 = LlmConfigEntity(1L, "Gemini", "key1", "2025-01-01", "2025-01-01", true)
-        val entity2 = LlmConfigEntity(2L, "DeepSeek", "key2", "2025-01-01", "2025-01-01", false)
+        val entity1 = LlmConfigEntity(1L, "Gemini", "gemini-1.5-flash", "key1", "2025-01-01", "2025-01-01", true)
+        val entity2 = LlmConfigEntity(2L, "DeepSeek", "deepseek-chat", "key2", "2025-01-01", "2025-01-01", false)
         fakeLlmConfigDao.configs.addAll(listOf(entity1, entity2))
 
         val result = adapter.getActiveConfigs()
@@ -66,7 +68,7 @@ class RoomLlmConfigAdapterTest {
 
     @Test
     fun shouldToggleActiveStatus() = runTest {
-        val entity = LlmConfigEntity(1L, "ChatGPT", "key3", "2025-01-01", "2025-01-01", true)
+        val entity = LlmConfigEntity(1L, "ChatGPT", "gpt-4o", "key3", "2025-01-01", "2025-01-01", true)
         fakeLlmConfigDao.configs.add(entity)
 
         val updated = adapter.toggleActiveStatus(1L, false)

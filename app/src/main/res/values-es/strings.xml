@@ -47,6 +47,10 @@
     <string name="llm_api_key_hidden">••••••••••••••••</string>
     <string name="llm_validation_error">La API Key ingresada no es válida para el modelo seleccionado.</string>
     <string name="llm_validating_key">Validando API Key...</string>
+    <string name="llm_version_label">Versión del Modelo</string>
+    <string name="llm_fetch_versions_button">Obtener Versiones</string>
+    <string name="llm_fetching_versions">Obteniendo versiones...</string>
+    <string name="llm_version_display">Versión: %1$s</string>
 
     <!-- Configuración EV -->
     <string name="ev_config_title">Configuración del Vehículo Eléctrico</string>

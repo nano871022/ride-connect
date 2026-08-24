@@ -16,7 +16,8 @@ class FetchEvInfoUseCase @Inject constructor(
             EvConstants.EV_LLM_PROMPT_TEMPLATE.trimIndent(),
             requestText
         )
-        val responseText = llmClientPort.generateResponse(config.modelName, config.apiKey, prompt)
+        val targetModel = config.selectedVersion.ifBlank { config.modelName }
+        val responseText = llmClientPort.generateResponse(targetModel, config.apiKey, prompt)
         val parsedConfig = EvConfigMapper.fromLlmResponse(requestText, responseText)
 
         return currentEvConfig.copy(

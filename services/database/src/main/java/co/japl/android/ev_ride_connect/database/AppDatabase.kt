@@ -9,7 +9,7 @@ import co.japl.android.ev_ride_connect.database.entities.EvConfigEntity
 import co.japl.android.ev_ride_connect.database.entities.LlmConfigEntity
 import co.japl.android.ev_ride_connect.database.entities.TripEntity
 
-@Database(entities = [TripEntity::class, LlmConfigEntity::class, EvConfigEntity::class], version = 3, exportSchema = false)
+@Database(entities = [TripEntity::class, LlmConfigEntity::class, EvConfigEntity::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun llmConfigDao(): LlmConfigDao

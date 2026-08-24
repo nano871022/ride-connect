@@ -27,6 +27,7 @@ class RoomLlmConfigAdapter(
         val entity = LlmConfigEntity(
             id = config.id,
             modelName = config.modelName,
+            selectedVersion = config.selectedVersion,
             apiKey = config.apiKey,
             createdAt = createdAt,
             updatedAt = updatedAt,
@@ -45,6 +46,7 @@ class RoomLlmConfigAdapter(
         return LlmConfig(
             id = id,
             modelName = modelName,
+            selectedVersion = selectedVersion,
             apiKey = apiKey,
             createdAt = createdAt,
             updatedAt = updatedAt,
