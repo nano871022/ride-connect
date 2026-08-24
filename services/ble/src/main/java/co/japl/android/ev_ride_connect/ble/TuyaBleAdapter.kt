@@ -206,13 +206,24 @@ class TuyaBleAdapter(
                     isValid = true
                 )
                 scanner.stopScan(this)
-                bluetoothGatt?.close()
-                bluetoothGatt = device.connectGatt(
-                    context,
-                    false,
-                    gattCallback,
-                    android.bluetooth.BluetoothDevice.TRANSPORT_LE
-                )
+
+                val connectAction = Runnable {
+                    bluetoothGatt?.close()
+                    bluetoothGatt = device.connectGatt(
+                        context,
+                        false,
+                        gattCallback,
+                        android.bluetooth.BluetoothDevice.TRANSPORT_LE
+                    )
+                }
+
+                try {
+                    val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                    handler.postDelayed(connectAction, 300)
+                } catch (_: Throwable) {
+                    // Fallback for JVM unit test environment where Looper/Handler may not be mocked
+                    connectAction.run()
+                }
             }
 
             override fun onScanFailed(errorCode: Int) {
