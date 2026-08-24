@@ -1,5 +1,6 @@
 package co.japl.android.ev_ride_connect.ble
 
+import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -116,7 +117,7 @@ class TuyaBleAdapterTest {
     }
 
     @Test
-    fun shouldEmitCommandWhenSendCommandCalled() = runTest {
+    fun shouldEmitCommandAndRecordSentLogWhenSendCommandCalled() = runTest {
         val sentCommands = mutableListOf<Pair<Int, Any>>()
         val listener: (Int, Any) -> Unit = { dpId, value ->
             sentCommands.add(dpId to value)
@@ -126,5 +127,20 @@ class TuyaBleAdapterTest {
         adapter.sendCommand(dpId = 1, value = true)
 
         assertThat(sentCommands).containsExactly(1 to true)
+
+        val logs = adapter.observeRawLogs().first()
+        assertThat(logs).hasSize(1)
+        assertThat(logs[0].direction).isEqualTo(BleLogDirection.SENT)
+        assertThat(logs[0].parsedData).contains("DP ID: 1, Value: true")
+    }
+
+    @Test
+    fun shouldClearLogsWhenClearLogsCalled() = runTest {
+        adapter.sendCommand(dpId = 1, value = true)
+        assertThat(adapter.observeRawLogs().first()).isNotEmpty
+
+        adapter.clearLogs()
+
+        assertThat(adapter.observeRawLogs().first()).isEmpty()
     }
 }

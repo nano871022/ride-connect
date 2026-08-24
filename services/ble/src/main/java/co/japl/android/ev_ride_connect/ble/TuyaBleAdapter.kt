@@ -14,6 +14,8 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
+import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
+import co.japl.android.ev_ride_connect.core.domain.BleLogEntry
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.utils.BatteryCalculator
@@ -40,6 +42,7 @@ class TuyaBleAdapter(
     )
 
     private val _isConnected = MutableStateFlow(false)
+    private val _rawLogs = MutableStateFlow<List<BleLogEntry>>(emptyList())
 
     private var onSendCommandListener: ((Int, Any) -> Unit)? = null
 
@@ -59,6 +62,14 @@ class TuyaBleAdapter(
 
     override fun observeConnectionState(): Flow<Boolean> {
         return _isConnected.asStateFlow()
+    }
+
+    override fun observeRawLogs(): Flow<List<BleLogEntry>> {
+        return _rawLogs.asStateFlow()
+    }
+
+    override fun clearLogs() {
+        _rawLogs.value = emptyList()
     }
 
     override fun sendCommand(dpId: Int, value: Any) {
@@ -185,19 +196,50 @@ class TuyaBleAdapter(
 
     private fun handleReceivedPayload(payload: ByteArray) {
         val decodedDps = TuyaBleProtocol.decodeDpFrame(payload)
-        if (decodedDps.isNotEmpty()) {
+        val hexString = payload.joinToString(" ") { "%02X".format(it) }
+        val isValid = decodedDps.isNotEmpty()
+
+        val logEntry = BleLogEntry(
+            direction = BleLogDirection.RECEIVED,
+            rawBytesHex = hexString,
+            parsedData = if (isValid) decodedDps.toString() else "INVALID_PAYLOAD_OR_CHECKSUM",
+            isValid = isValid,
+            errorMessage = if (!isValid) "Header, checksum, or frame parsing failed" else null
+        )
+        _rawLogs.update { it + logEntry }
+
+        if (isValid) {
             onDataPointsReceived(decodedDps)
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun writeDpCommand(dpId: Int, value: Any) {
-        val gatt = bluetoothGatt ?: return
-        val characteristic = writeCharacteristic ?: return
-
         val encodedPacket = TuyaBleProtocol.encodeDpCommand(dpId, value)
-        characteristic.value = encodedPacket
-        gatt.writeCharacteristic(characteristic)
+        val hexString = encodedPacket.joinToString(" ") { "%02X".format(it) }
+
+        val gatt = bluetoothGatt
+        val characteristic = writeCharacteristic
+
+        val (isValid, errorMsg) = when {
+            gatt == null -> false to "BluetoothGatt is null (Not connected)"
+            characteristic == null -> false to "Write characteristic is null"
+            else -> true to null
+        }
+
+        val logEntry = BleLogEntry(
+            direction = BleLogDirection.SENT,
+            rawBytesHex = hexString,
+            parsedData = "DP ID: $dpId, Value: $value",
+            isValid = isValid,
+            errorMessage = errorMsg
+        )
+        _rawLogs.update { it + logEntry }
+
+        if (isValid && gatt != null && characteristic != null) {
+            characteristic.value = encodedPacket
+            gatt.writeCharacteristic(characteristic)
+        }
     }
 
     fun onDataPointReceived(dpId: Int, value: Any) {

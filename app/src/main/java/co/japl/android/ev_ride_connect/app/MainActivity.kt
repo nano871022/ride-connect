@@ -9,12 +9,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.app.controller.BackupViewModel
+import co.japl.android.ev_ride_connect.app.controller.BleTestViewModel
 import co.japl.android.ev_ride_connect.app.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.app.controller.EvConfigViewModel
 import co.japl.android.ev_ride_connect.app.controller.LlmConfigViewModel
 import co.japl.android.ev_ride_connect.app.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.app.navigation.AppScreen
 import co.japl.android.ev_ride_connect.app.ui.BackupScreen
+import co.japl.android.ev_ride_connect.app.ui.BleTestScreen
 import co.japl.android.ev_ride_connect.app.ui.DashboardScreen
 import co.japl.android.ev_ride_connect.app.ui.EvConfigScreen
 import co.japl.android.ev_ride_connect.app.ui.LlmConfigScreen
@@ -27,6 +29,7 @@ class MainActivity : ComponentActivity() {
     private val evConfigViewModel: EvConfigViewModel by viewModels()
     private val llmConfigViewModel: LlmConfigViewModel by viewModels()
     private val backupViewModel: BackupViewModel by viewModels()
+    private val bleTestViewModel: BleTestViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +54,9 @@ class MainActivity : ComponentActivity() {
                     AppScreen.BACKUP -> BackupScreen(
                         viewModel = backupViewModel,
                         navigator = navigator
+                    )
+                    AppScreen.BLE_TEST -> BleTestScreen(
+                        viewModel = bleTestViewModel
                     )
                 }
             }
