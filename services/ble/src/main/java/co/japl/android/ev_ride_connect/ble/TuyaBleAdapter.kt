@@ -113,6 +113,10 @@ class TuyaBleAdapter(
             return
         }
 
+        // Close previous GATT instance if present to avoid status 133 resource leaks
+        bluetoothGatt?.close()
+        bluetoothGatt = null
+
         if (!macAddress.isNullOrBlank()) {
             try {
                 logMessage("Connecting directly to MAC: $macAddress")
@@ -123,7 +127,12 @@ class TuyaBleAdapter(
                     parsedData = "CONNECTING_TO_MAC: $macAddress",
                     isValid = true
                 )
-                bluetoothGatt = device.connectGatt(context, false, gattCallback)
+                bluetoothGatt = device.connectGatt(
+                    context,
+                    false,
+                    gattCallback,
+                    android.bluetooth.BluetoothDevice.TRANSPORT_LE
+                )
             } catch (e: Exception) {
                 logError("Failed to connect to MAC $macAddress: ${e.message}", e)
                 addLogEntry(
@@ -197,7 +206,13 @@ class TuyaBleAdapter(
                     isValid = true
                 )
                 scanner.stopScan(this)
-                bluetoothGatt = device.connectGatt(context, false, gattCallback)
+                bluetoothGatt?.close()
+                bluetoothGatt = device.connectGatt(
+                    context,
+                    false,
+                    gattCallback,
+                    android.bluetooth.BluetoothDevice.TRANSPORT_LE
+                )
             }
 
             override fun onScanFailed(errorCode: Int) {
@@ -242,6 +257,10 @@ class TuyaBleAdapter(
                     isValid = false,
                     errorMessage = "GATT operation failed with status $status"
                 )
+                gatt.close()
+                if (bluetoothGatt == gatt) {
+                    bluetoothGatt = null
+                }
                 return
             }
 
