@@ -100,6 +100,13 @@ fun DashboardScreen(
                                     navigator?.navigateToBackup()
                                 }
                             )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ble_test_title)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToBleTest()
+                                }
+                            )
                         }
                     }
                 },

@@ -83,4 +83,23 @@
     <string name="ev_loaded_status">EV Cargado en el Sistema</string>
     <string name="ev_llm_prompt_template">Identificar especificaciones para la consulta de EV: \"%1$s\". Responder con JSON que contenga las claves: brand, version, motors (arreglo de objetos con name y watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
     <string name="nav_ev_config">Configurar EV</string>
+
+    <!-- Prueba BLE -->
+    <string name="ble_test_title">Diagnóstico de Comunicación BLE</string>
+    <string name="ble_connect_button">Conectar BLE</string>
+    <string name="ble_disconnect_button">Desconectar BLE</string>
+    <string name="ble_connected_status">Conectado</string>
+    <string name="ble_disconnected_status">Desconectado</string>
+    <string name="ble_quick_commands">Comandos de Diagnóstico</string>
+    <string name="ble_cmd_dp1_lock">DP1: Alternar Bloqueo</string>
+    <string name="ble_cmd_dp2_mode">DP2: Cambiar Modo</string>
+    <string name="ble_cmd_dp4_light">DP4: Alternar Luz</string>
+    <string name="ble_cmd_dp7_query">DP7: Consultar Batería</string>
+    <string name="ble_logs_title">Registro de Tramas</string>
+    <string name="ble_clear_logs">Limpiar Log</string>
+    <string name="ble_copy_logs">Copiar Log de Prueba</string>
+    <string name="ble_logs_copied">Log de Prueba BLE copiado al portapapeles</string>
+    <string name="ble_no_logs">Aún no se han registrado tramas BLE.</string>
+    <string name="ble_valid_tag">VÁLIDO</string>
+    <string name="ble_invalid_tag">INVÁLIDO</string>
 </resources>
