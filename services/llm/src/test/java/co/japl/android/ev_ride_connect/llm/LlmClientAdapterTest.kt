@@ -35,6 +35,22 @@ class LlmClientAdapterTest {
     }
 
     @Test
+    fun shouldFetchAvailableModelsForProvider() = runTest {
+        val models = adapter.fetchAvailableModels("Gemini", "valid-api-key-12345")
+        assertThat(models).isNotEmpty()
+        assertThat(models).contains("gemini-1.5-flash")
+    }
+
+    @Test
+    fun shouldFetchAvailableModelsForOtherProviders() = runTest {
+        val deepseekModels = adapter.fetchAvailableModels("DeepSeek", "valid-api-key-12345")
+        assertThat(deepseekModels).contains("deepseek-chat")
+
+        val chatgptModels = adapter.fetchAvailableModels("ChatGPT", "valid-api-key-12345")
+        assertThat(chatgptModels).contains("gpt-4o")
+    }
+
+    @Test
     fun shouldGenerateResponseForValidKey() = runTest {
         val response = adapter.generateResponse("DeepSeek", "valid-key-9999", "Explain physics")
         assertThat(response).contains("Response from DeepSeek: Explain physics")

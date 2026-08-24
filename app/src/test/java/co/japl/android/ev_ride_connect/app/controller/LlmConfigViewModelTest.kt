@@ -58,11 +58,30 @@ class LlmConfigViewModelTest {
     }
 
     @Test
+    fun shouldFetchAvailableVersionsAndSelectFirst() = runTest {
+        viewModel.onModelSelected("Gemini")
+        viewModel.onApiKeyChanged("valid-gemini-key")
+        viewModel.fetchAvailableVersions()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.availableVersions.value).contains("gemini-1.5-flash", "gemini-2.0-flash")
+        assertThat(viewModel.selectedVersion.value).isEqualTo("gemini-1.5-flash")
+    }
+
+    @Test
+    fun shouldUpdateSelectedVersion() = runTest {
+        viewModel.onVersionSelected("gemini-2.0-flash")
+        assertThat(viewModel.selectedVersion.value).isEqualTo("gemini-2.0-flash")
+    }
+
+    @Test
     fun shouldSaveConfigWhenApiKeyIsValid() = runTest {
         fakeLlmClientPort.shouldValidateSuccessfully = true
 
         viewModel.onModelSelected("Groq")
         viewModel.onApiKeyChanged("valid-groq-key")
+        viewModel.onVersionSelected("llama-3.3-70b-versatile")
         viewModel.saveConfig()
 
         testScheduler.runCurrent()
@@ -71,6 +90,7 @@ class LlmConfigViewModelTest {
         assertThat(viewModel.errorMessage.value).isNull()
         assertThat(viewModel.configs.value).hasSize(3)
         assertThat(viewModel.configs.value.last().modelName).isEqualTo("Groq")
+        assertThat(viewModel.configs.value.last().selectedVersion).isEqualTo("llama-3.3-70b-versatile")
     }
 
     @Test
@@ -110,8 +130,8 @@ class LlmConfigViewModelTest {
 
     private class FakeLlmConfigPort : LlmConfigPort {
         val configs = mutableListOf(
-            LlmConfig(1L, "Gemini", "key-gemini", "2025-01-01", "2025-01-01", true),
-            LlmConfig(2L, "DeepSeek", "key-deepseek", "2025-01-01", "2025-01-01", false)
+            LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "key-gemini", createdAt = "2025-01-01", updatedAt = "2025-01-01", isActive = true),
+            LlmConfig(id = 2L, modelName = "DeepSeek", selectedVersion = "deepseek-chat", apiKey = "key-deepseek", createdAt = "2025-01-01", updatedAt = "2025-01-01", isActive = false)
         )
         private var autoId = 3L
 
@@ -145,6 +165,10 @@ class LlmConfigViewModelTest {
 
         override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean {
             return shouldValidateSuccessfully
+        }
+
+        override suspend fun fetchAvailableModels(modelName: String, apiKey: String): List<String> {
+            return listOf("gemini-1.5-flash", "gemini-2.0-flash")
         }
 
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {

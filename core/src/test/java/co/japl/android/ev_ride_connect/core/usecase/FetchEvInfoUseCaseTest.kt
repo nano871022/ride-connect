@@ -15,12 +15,16 @@ class FetchEvInfoUseCaseTest {
 
     private class FakeLlmClientPort : LlmClientPort {
         var lastPrompt: String? = null
+        var lastModelUsed: String? = null
         var responseToReturn: String = ""
 
         override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean = true
 
+        override suspend fun fetchAvailableModels(modelName: String, apiKey: String): List<String> = listOf("gemini-1.5-flash")
+
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {
             lastPrompt = prompt
+            lastModelUsed = modelName
             return responseToReturn
         }
     }
@@ -52,11 +56,12 @@ class FetchEvInfoUseCaseTest {
         """.trimIndent()
 
         val currentConfig = EvConfig(brand = "OldBrand")
-        val llmConfig = LlmConfig(id = 1, modelName = "Gemini", apiKey = "test-key-123", isActive = true)
+        val llmConfig = LlmConfig(id = 1, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "test-key-123", isActive = true)
 
         val updatedConfig = useCase.execute("VSETT 10+", llmConfig, currentConfig)
 
         assertThat(mockLlmClientPort.lastPrompt).contains("VSETT 10+")
+        assertThat(mockLlmClientPort.lastModelUsed).isEqualTo("gemini-1.5-flash")
         assertThat(updatedConfig.brand).isEqualTo("VSETT")
         assertThat(updatedConfig.version).isEqualTo("10+")
         assertThat(updatedConfig.motors).hasSize(1)

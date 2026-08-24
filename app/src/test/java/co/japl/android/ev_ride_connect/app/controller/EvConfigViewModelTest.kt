@@ -220,7 +220,7 @@ class EvConfigViewModelTest {
 
     private class FakeLlmConfigPort : LlmConfigPort {
         val configs = mutableListOf(
-            LlmConfig(1L, "Gemini", "valid-gemini-key", "2025-01-01", "2025-01-01", true)
+            LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "valid-gemini-key", createdAt = "2025-01-01", updatedAt = "2025-01-01", isActive = true)
         )
 
         override suspend fun getAllConfigs(): List<LlmConfig> = configs
@@ -239,6 +239,8 @@ class EvConfigViewModelTest {
         var customResponse: String? = null
 
         override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean = true
+
+        override suspend fun fetchAvailableModels(modelName: String, apiKey: String): List<String> = listOf("gemini-1.5-flash")
 
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {
             return customResponse ?: """

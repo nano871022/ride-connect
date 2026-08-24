@@ -47,6 +47,10 @@
     <string name="llm_api_key_hidden">••••••••••••••••</string>
     <string name="llm_validation_error">The provided API key is invalid for the selected model.</string>
     <string name="llm_validating_key">Validating API Key...</string>
+    <string name="llm_version_label">Model Version</string>
+    <string name="llm_fetch_versions_button">Fetch Versions</string>
+    <string name="llm_fetching_versions">Fetching versions...</string>
+    <string name="llm_version_display">Version: %1$s</string>
 
     <!-- EV Configuration -->
     <string name="ev_config_title">EV Configuration</string>

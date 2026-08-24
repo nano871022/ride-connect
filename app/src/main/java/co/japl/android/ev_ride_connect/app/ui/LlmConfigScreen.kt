@@ -56,6 +56,9 @@ fun LlmConfigScreen(
     val configs by viewModel.configs.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val apiKeyInput by viewModel.apiKeyInput.collectAsState()
+    val availableVersions by viewModel.availableVersions.collectAsState()
+    val selectedVersion by viewModel.selectedVersion.collectAsState()
+    val isFetchingVersions by viewModel.isFetchingVersions.collectAsState()
     val isValidating by viewModel.isValidating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
@@ -126,10 +129,15 @@ fun LlmConfigScreen(
             LlmConfigForm(
                 selectedModel = selectedModel,
                 apiKeyInput = apiKeyInput,
+                availableVersions = availableVersions,
+                selectedVersion = selectedVersion,
+                isFetchingVersions = isFetchingVersions,
                 isValidating = isValidating,
                 errorMessage = errorMessage,
                 onModelSelected = { viewModel.onModelSelected(it) },
                 onApiKeyChanged = { viewModel.onApiKeyChanged(it) },
+                onFetchVersions = { viewModel.fetchAvailableVersions() },
+                onVersionSelected = { viewModel.onVersionSelected(it) },
                 onSave = { viewModel.saveConfig() }
             )
 
@@ -167,13 +175,19 @@ fun LlmConfigScreen(
 private fun LlmConfigForm(
     selectedModel: String,
     apiKeyInput: String,
+    availableVersions: List<String>,
+    selectedVersion: String,
+    isFetchingVersions: Boolean,
     isValidating: Boolean,
     errorMessage: String?,
     onModelSelected: (String) -> Unit,
     onApiKeyChanged: (String) -> Unit,
+    onFetchVersions: () -> Unit,
+    onVersionSelected: (String) -> Unit,
     onSave: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expandedModel by remember { mutableStateOf(false) }
+    var expandedVersion by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -200,14 +214,14 @@ private fun LlmConfigForm(
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = null,
-                            modifier = Modifier.clickable { expanded = !expanded }
+                            modifier = Modifier.clickable { expandedModel = !expandedModel }
                         )
                     }
                 )
 
                 DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
+                    expanded = expandedModel,
+                    onDismissRequest = { expandedModel = false },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     AVAILABLE_LLM_MODELS.forEach { modelName ->
@@ -215,7 +229,7 @@ private fun LlmConfigForm(
                             text = { Text(modelName) },
                             onClick = {
                                 onModelSelected(modelName)
-                                expanded = false
+                                expandedModel = false
                             }
                         )
                     }
@@ -241,22 +255,78 @@ private fun LlmConfigForm(
                 )
             }
 
-            Row(
-                modifier = Modifier.align(Alignment.End),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (isValidating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp)
+            if (availableVersions.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.llm_version_label),
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = selectedVersion,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                modifier = Modifier.clickable { expandedVersion = !expandedVersion }
+                            )
+                        }
                     )
+
+                    DropdownMenu(
+                        expanded = expandedVersion,
+                        onDismissRequest = { expandedVersion = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        availableVersions.forEach { version ->
+                            DropdownMenuItem(
+                                text = { Text(version) },
+                                onClick = {
+                                    onVersionSelected(version)
+                                    expandedVersion = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onFetchVersions,
+                    enabled = apiKeyInput.isNotBlank() && !isFetchingVersions
+                ) {
+                    if (isFetchingVersions) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
+                    Text(stringResource(R.string.llm_fetch_versions_button))
                 }
 
-                Button(
-                    onClick = onSave,
-                    enabled = apiKeyInput.isNotBlank() && !isValidating
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(stringResource(R.string.llm_save_button))
+                    if (isValidating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
+
+                    Button(
+                        onClick = onSave,
+                        enabled = apiKeyInput.isNotBlank() && !isValidating
+                    ) {
+                        Text(stringResource(R.string.llm_save_button))
+                    }
                 }
             }
         }
@@ -286,7 +356,7 @@ private fun LlmConfigItemRow(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = config.modelName,
+                    text = if (config.selectedVersion.isNotBlank()) "${config.modelName} (${config.selectedVersion})" else config.modelName,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(

@@ -10,6 +10,8 @@ data class LlmConfigEntity(
     val id: Long = 0,
     @ColumnInfo(name = "model_name")
     val modelName: String,
+    @ColumnInfo(name = "selected_version")
+    val selectedVersion: String = "",
     @ColumnInfo(name = "api_key")
     val apiKey: String,
     @ColumnInfo(name = "created_at")
