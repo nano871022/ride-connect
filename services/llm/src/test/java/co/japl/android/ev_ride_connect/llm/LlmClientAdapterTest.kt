@@ -1,4 +1,4 @@
-package co.japl.android.ev_ride_connect.database
+package co.japl.android.ev_ride_connect.llm
 
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat

@@ -1,4 +1,4 @@
-package co.japl.android.ev_ride_connect.database
+package co.japl.android.ev_ride_connect.llm
 
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import kotlinx.coroutines.Dispatchers
@@ -8,9 +8,24 @@ import java.io.BufferedReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Properties
 import javax.inject.Inject
 
 class LlmClientAdapter @Inject constructor() : LlmClientPort {
+
+    private val properties = Properties().apply {
+        try {
+            val stream = LlmClientAdapter::class.java.classLoader?.getResourceAsStream("settings.properties")
+                ?: LlmClientAdapter::class.java.getResourceAsStream("/settings.properties")
+            stream?.use { load(it) }
+        } catch (_: Exception) {}
+    }
+
+    private val connectTimeout: Int
+        get() = properties.getProperty("connect.timeout")?.toIntOrNull() ?: 15000
+
+    private val readTimeout: Int
+        get() = properties.getProperty("read.timeout")?.toIntOrNull() ?: 15000
 
     override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean {
         if (apiKey.isBlank()) return false
@@ -39,8 +54,8 @@ class LlmClientAdapter @Inject constructor() : LlmClientPort {
         conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
         conn.setRequestProperty("Accept", "application/json")
         conn.doOutput = true
-        conn.connectTimeout = 15000
-        conn.readTimeout = 15000
+        conn.connectTimeout = connectTimeout
+        conn.readTimeout = readTimeout
 
         val escapedPrompt = JSONObject.quote(prompt)
         val jsonInputString = """

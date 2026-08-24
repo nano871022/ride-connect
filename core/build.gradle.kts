@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.org.json)
+    implementation(libs.javax.inject)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.podam)
