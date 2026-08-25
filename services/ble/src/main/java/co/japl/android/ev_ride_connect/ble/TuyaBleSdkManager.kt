@@ -244,8 +244,8 @@ class TuyaBleSdkManager(
         val rawDeviceUuid = properties.getProperty("tuya.device.uuid") ?: ""
         val rawAuthKey = properties.getProperty("tuya.auth.key") ?: ""
 
-        val appKey = resolveEnvValue(rawAppKey, "TUYA_APP_KEY")
-        val appSecret = resolveEnvValue(rawAppSecret, "TUYA_APP_SECRET")
+        val appKey = resolveEnvValue(rawAppKey, "TUYA_APP_KEY", "TUYA_DEV_APP_KEY")
+        val appSecret = resolveEnvValue(rawAppSecret, "TUYA_APP_SECRET", "TUYA_DEV_APP_SECRET")
         val deviceUuid = resolveEnvValue(rawDeviceUuid, "TUYA_DEVICE_UUID").ifBlank { null }
         val authKey = resolveEnvValue(rawAuthKey, "TUYA_AUTH_KEY").ifBlank { null }
 
@@ -257,15 +257,21 @@ class TuyaBleSdkManager(
         )
     }
 
-    private fun resolveEnvValue(rawValue: String, envVarName: String): String {
+    private fun resolveEnvValue(rawValue: String, primaryEnvVar: String, fallbackEnvVar: String? = null): String {
         val value = rawValue.trim()
         if (value.startsWith("\${") && value.endsWith("}")) {
             val varName = value.substring(2, value.length - 1)
-            val envValue = System.getenv(varName) ?: System.getenv(envVarName) ?: ""
+            val envValue = System.getenv(varName)
+                ?: System.getenv(primaryEnvVar)
+                ?: fallbackEnvVar?.let { System.getenv(it) }
+                ?: ""
             return envValue.trim()
         }
         if (value.isBlank()) {
-            return (System.getenv(envVarName) ?: "").trim()
+            val envValue = System.getenv(primaryEnvVar)
+                ?: fallbackEnvVar?.let { System.getenv(it) }
+                ?: ""
+            return envValue.trim()
         }
         return value
     }
