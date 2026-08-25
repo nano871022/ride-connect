@@ -26,10 +26,10 @@ android {
         create("release") {
             val keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: "ride-connect-sha.jks"
             val keystoreFile = rootProject.file(keystoreFilePath).takeIf { it.exists() } ?: file(keystoreFilePath)
-            if (keystoreFile.exists()) {
+            if (keystoreFile.exists() && keystoreFile.length() > 0) {
                 storeFile = keystoreFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS") ?: "ride-connect-sha"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "ride-connect"
                 keyPassword = System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
             }
         }
@@ -40,7 +40,7 @@ android {
             isMinifyEnabled = false
             val keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: "ride-connect-sha.jks"
             val keystoreFile = rootProject.file(keystoreFilePath).takeIf { it.exists() } ?: file(keystoreFilePath)
-            signingConfig = if (keystoreFile.exists() && System.getenv("KEYSTORE_PASSWORD") != null) {
+            signingConfig = if (keystoreFile.exists() && keystoreFile.length() > 0 && System.getenv("KEYSTORE_PASSWORD") != null) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
