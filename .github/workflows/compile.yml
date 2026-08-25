@@ -35,6 +35,10 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEY_PASS_JKS_FIRM_ANDROID_BUNDLE }}
           KEY_ALIAS: ride-connect-sha
           KEY_PASSWORD: ${{ secrets.KEY_PASS_JKS_FIRM_ANDROID_BUNDLE }}
+          TUYA_APP_KEY: ${{ secrets.TUYA_DEV_APP_KEY }}
+          TUYA_APP_SECRET: ${{ secrets.TUYA_DEV_APP_SECRET }}
+          TUYA_DEV_APP_KEY: ${{ secrets.TUYA_DEV_APP_KEY }}
+          TUYA_DEV_APP_SECRET: ${{ secrets.TUYA_DEV_APP_SECRET }}
         run: ./gradlew bundleRelease assembleRelease
 
       - name: Upload Android App Bundle artifact
