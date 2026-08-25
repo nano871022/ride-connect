@@ -104,7 +104,16 @@ class TuyaBleAdapter(
             return
         }
 
-        logMessage("Initiating connection attempt (macAddress=$macAddress)")
+        if (isInternalAttempt && (!isConnecting || lastMacAddress == null)) {
+            logMessage("Aborting internal retry attempt as connection was cancelled or MAC cleared.")
+            return
+        }
+
+        if (!isInternalAttempt) {
+            connectionRetryCount = 0
+        }
+
+        logMessage("Initiating connection attempt (macAddress=$macAddress, isInternalAttempt=$isInternalAttempt)")
         val adapter = bluetoothAdapter
         if (adapter == null) {
             isConnecting = false
@@ -246,7 +255,11 @@ class TuyaBleAdapter(
                 scanner.stopScan(this)
 
                 val connectAction = Runnable {
-                    bluetoothGatt?.close()
+                    if (!isConnecting || lastMacAddress == null) return@Runnable
+                    bluetoothGatt?.let { gatt ->
+                        try { gatt.disconnect() } catch (_: Exception) {}
+                        try { gatt.close() } catch (_: Exception) {}
+                    }
                     bluetoothGatt = device.connectGatt(
                         context,
                         false,
@@ -319,7 +332,7 @@ class TuyaBleAdapter(
                 }
 
                 val mac = lastMacAddress
-                if (connectionRetryCount < MAX_CONNECTION_RETRIES && !mac.isNullOrBlank()) {
+                if (isConnecting && connectionRetryCount < MAX_CONNECTION_RETRIES && !mac.isNullOrBlank()) {
                     connectionRetryCount++
                     val retryDelayMs = getRetryDelayMs(connectionRetryCount)
                     logMessage("Scheduling connection retry ($connectionRetryCount/$MAX_CONNECTION_RETRIES) with delay ${retryDelayMs}ms for MAC $mac")
@@ -439,7 +452,9 @@ class TuyaBleAdapter(
                     UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
                 )
                 if (descriptor != null) {
+                    @Suppress("DEPRECATION")
                     descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    @Suppress("DEPRECATION")
                     val descWritten = gatt.writeDescriptor(descriptor)
                     logMessage("Writing descriptor for notification: result=$descWritten")
                 } else {
@@ -470,6 +485,7 @@ class TuyaBleAdapter(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            @Suppress("DEPRECATION")
             val value = characteristic.value ?: return
             handleReceivedPayload(value)
         }
@@ -537,7 +553,9 @@ class TuyaBleAdapter(
         )
 
         if (isValid && gatt != null && characteristic != null) {
+            @Suppress("DEPRECATION")
             characteristic.value = encodedPacket
+            @Suppress("DEPRECATION")
             gatt.writeCharacteristic(characteristic)
         }
     }
