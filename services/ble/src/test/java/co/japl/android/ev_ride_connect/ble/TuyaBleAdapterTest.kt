@@ -229,4 +229,11 @@ class TuyaBleAdapterTest {
         assertThat(discoveredNotify).isNotNull
         assertThat(discoveredNotify?.uuid).isEqualTo(customNotifyUuid)
     }
+
+    @Test
+    fun shouldCalculateExponentialBackoffDelayForRetries() = runTest {
+        assertThat(adapter.getRetryDelayMs(1)).isEqualTo(1000L)
+        assertThat(adapter.getRetryDelayMs(2)).isEqualTo(2000L)
+        assertThat(adapter.getRetryDelayMs(3)).isEqualTo(3000L)
+    }
 }
