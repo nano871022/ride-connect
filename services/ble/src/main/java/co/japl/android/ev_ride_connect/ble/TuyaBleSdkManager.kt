@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.ble
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import java.util.Properties
 
 /**
  * Contract interface for Tuya BLE SDK delegate operations.
@@ -89,6 +90,7 @@ class TuyaBleSdkManager(
 ) {
     companion object {
         private const val TAG = "TuyaBleSdkManager"
+        private const val SETTINGS_FILE = "settings.properties"
         private const val META_APPKEY = "TUYA_SMART_APPKEY"
         private const val META_SECRET = "TUYA_SMART_SECRET"
     }
@@ -100,11 +102,19 @@ class TuyaBleSdkManager(
     private var activeDeviceMac: String? = null
 
     init {
-        context?.let { ctx ->
-            val manifestConfig = loadConfigFromManifest(ctx)
-            if (manifestConfig.isConfigured()) {
-                initialize(manifestConfig)
-            }
+        val buildConfigConfig = loadConfigFromBuildConfig()
+        val propertiesConfig = loadConfigFromSettingsProperties()
+        val manifestConfig = context?.let { loadConfigFromManifest(it) } ?: TuyaSdkConfig()
+
+        val effectiveConfig = when {
+            buildConfigConfig.isConfigured() -> buildConfigConfig
+            propertiesConfig.isConfigured() -> propertiesConfig
+            manifestConfig.isConfigured() -> manifestConfig
+            else -> TuyaSdkConfig()
+        }
+
+        if (effectiveConfig.isConfigured()) {
+            initialize(effectiveConfig)
         }
     }
 
@@ -207,6 +217,57 @@ class TuyaBleSdkManager(
             logMessage("Received Tuya DP data map: $dpMap")
             listener?.onDpDataReceived(dpMap)
         }
+    }
+
+    private fun loadConfigFromBuildConfig(): TuyaSdkConfig {
+        return try {
+            val appKey = BuildConfig.TUYA_APP_KEY
+            val appSecret = BuildConfig.TUYA_APP_SECRET
+            TuyaSdkConfig(appKey = appKey, appSecret = appSecret)
+        } catch (_: Throwable) {
+            TuyaSdkConfig()
+        }
+    }
+
+    internal fun loadConfigFromSettingsProperties(): TuyaSdkConfig {
+        val properties = Properties()
+        try {
+            val stream = TuyaBleSdkManager::class.java.classLoader?.getResourceAsStream(SETTINGS_FILE)
+                ?: TuyaBleSdkManager::class.java.getResourceAsStream("/$SETTINGS_FILE")
+            stream?.use { properties.load(it) }
+        } catch (e: Exception) {
+            logError("Failed to load $SETTINGS_FILE for Tuya BLE SDK: ${e.message}")
+        }
+
+        val rawAppKey = properties.getProperty("tuya.app.key") ?: ""
+        val rawAppSecret = properties.getProperty("tuya.app.secret") ?: ""
+        val rawDeviceUuid = properties.getProperty("tuya.device.uuid") ?: ""
+        val rawAuthKey = properties.getProperty("tuya.auth.key") ?: ""
+
+        val appKey = resolveEnvValue(rawAppKey, "TUYA_APP_KEY")
+        val appSecret = resolveEnvValue(rawAppSecret, "TUYA_APP_SECRET")
+        val deviceUuid = resolveEnvValue(rawDeviceUuid, "TUYA_DEVICE_UUID").ifBlank { null }
+        val authKey = resolveEnvValue(rawAuthKey, "TUYA_AUTH_KEY").ifBlank { null }
+
+        return TuyaSdkConfig(
+            appKey = appKey,
+            appSecret = appSecret,
+            deviceUuid = deviceUuid,
+            authKey = authKey
+        )
+    }
+
+    private fun resolveEnvValue(rawValue: String, envVarName: String): String {
+        val value = rawValue.trim()
+        if (value.startsWith("\${") && value.endsWith("}")) {
+            val varName = value.substring(2, value.length - 1)
+            val envValue = System.getenv(varName) ?: System.getenv(envVarName) ?: ""
+            return envValue.trim()
+        }
+        if (value.isBlank()) {
+            return (System.getenv(envVarName) ?: "").trim()
+        }
+        return value
     }
 
     private fun loadConfigFromManifest(context: Context): TuyaSdkConfig {
