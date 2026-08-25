@@ -22,10 +22,29 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: "ride-connect-sha.jks"
+            val keystoreFile = rootProject.file(keystoreFilePath).takeIf { it.exists() } ?: file(keystoreFilePath)
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS") ?: "ride-connect-sha"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            val keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: "ride-connect-sha.jks"
+            val keystoreFile = rootProject.file(keystoreFilePath).takeIf { it.exists() } ?: file(keystoreFilePath)
+            signingConfig = if (keystoreFile.exists() && System.getenv("KEYSTORE_PASSWORD") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
