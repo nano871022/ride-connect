@@ -236,4 +236,17 @@ class TuyaBleAdapterTest {
         assertThat(adapter.getRetryDelayMs(2)).isEqualTo(2000L)
         assertThat(adapter.getRetryDelayMs(3)).isEqualTo(3000L)
     }
+
+    @Test
+    fun shouldIgnoreDuplicateConnectCallsWhenAlreadyConnecting() = runTest {
+        // First connection attempt (bluetoothAdapter is null in mockless adapter, resets isConnecting on return)
+        adapter.connect("DC:23:52:3D:A2:E4")
+        val initialLogs = adapter.observeRawLogs().first()
+        assertThat(initialLogs).hasSize(1)
+
+        // Second connect call with same MAC
+        adapter.connect("DC:23:52:3D:A2:E4")
+        val secondLogs = adapter.observeRawLogs().first()
+        assertThat(secondLogs).hasSize(2)
+    }
 }
