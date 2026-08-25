@@ -30,6 +30,10 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":utils"))
 
+    // Tuya Smart BLE SDK dependency reference:
+    // Uncomment the following line when building in an online environment with access to Tuya Maven repository:
+    // implementation(libs.tuya.smart.ble)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 

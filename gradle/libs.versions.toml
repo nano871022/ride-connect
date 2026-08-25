@@ -17,8 +17,10 @@ ksp = "2.3.11"
 hilt = "2.60.1"
 robolectric = "4.12.1"
 json = "20240303"
+tuyaBle = "3.2.0"
 
 [libraries]
+tuya-smart-ble = { group = "com.tuya.smart", name = "tuyasmart-ble-sdk", version.ref = "tuyaBle" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
