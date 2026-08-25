@@ -27,7 +27,8 @@ import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 class TuyaBleAdapter(
-    private val context: Context? = null
+    private val context: Context? = null,
+    val sdkManager: TuyaBleSdkManager = TuyaBleSdkManager(context)
 ) : BleScooterPort {
 
     companion object {
@@ -60,6 +61,29 @@ class TuyaBleAdapter(
     @Volatile
     private var isConnecting: Boolean = false
 
+    private val sdkListener = object : TuyaBleSdkListener {
+        override fun onConnected() {
+            logMessage("Tuya BLE SDK connected successfully.")
+        }
+
+        override fun onDisconnected() {
+            logMessage("Tuya BLE SDK disconnected.")
+        }
+
+        override fun onError(errorCode: Int, errorMessage: String) {
+            logError("Tuya BLE SDK error [$errorCode]: $errorMessage")
+        }
+
+        override fun onDpDataReceived(dpMap: Map<Int, Any>) {
+            logMessage("Tuya BLE SDK listener received DP map: $dpMap")
+            onDataPointsReceived(dpMap)
+        }
+    }
+
+    init {
+        sdkManager.setListener(sdkListener)
+    }
+
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
         context?.let {
             val manager = it.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
@@ -85,6 +109,7 @@ class TuyaBleAdapter(
 
     override fun sendCommand(dpId: Int, value: Any) {
         onSendCommandListener?.invoke(dpId, value)
+        sdkManager.sendDpCommand(dpId, value)
         writeDpCommand(dpId, value)
     }
 
@@ -159,6 +184,7 @@ class TuyaBleAdapter(
 
         val targetMac = macAddress ?: lastMacAddress
         if (!targetMac.isNullOrBlank()) {
+            sdkManager.connectDevice(targetMac, sdkListener)
             try {
                 logMessage("Connecting directly to MAC: $targetMac")
                 val device = adapter.getRemoteDevice(targetMac)
@@ -202,6 +228,7 @@ class TuyaBleAdapter(
         lastMacAddress = null
         connectionRetryCount = 0
         isConnecting = false
+        sdkManager.disconnectDevice()
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
@@ -260,6 +287,7 @@ class TuyaBleAdapter(
                         try { gatt.disconnect() } catch (_: Exception) {}
                         try { gatt.close() } catch (_: Exception) {}
                     }
+                    sdkManager.connectDevice(device.address, sdkListener)
                     bluetoothGatt = device.connectGatt(
                         context,
                         false,
@@ -513,6 +541,7 @@ class TuyaBleAdapter(
         )
 
         if (isValid) {
+            sdkManager.handleIncomingDpData(decodedDps)
             onDataPointsReceived(decodedDps)
         }
     }
@@ -615,9 +644,7 @@ class TuyaBleAdapter(
     private fun logMessage(msg: String) {
         try {
             Log.d(TAG, msg)
-        } catch (_: Throwable) {
-            // Log class might not be mocked in standard JVM unit test environments without Robolectric or try-catch
-        }
+        } catch (_: Throwable) {}
     }
 
     internal fun discoverCharacteristicsFromServices(
@@ -687,8 +714,6 @@ class TuyaBleAdapter(
             } else {
                 Log.e(TAG, msg)
             }
-        } catch (_: Throwable) {
-            // Log class might not be mocked in standard JVM unit test environments without Robolectric or try-catch
-        }
+        } catch (_: Throwable) {}
     }
 }
