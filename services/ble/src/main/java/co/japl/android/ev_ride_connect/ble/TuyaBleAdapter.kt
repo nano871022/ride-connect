@@ -57,6 +57,9 @@ class TuyaBleAdapter(
     private var lastMacAddress: String? = null
     private var connectionRetryCount: Int = 0
 
+    @Volatile
+    private var isConnecting: Boolean = false
+
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
         context?.let {
             val manager = it.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
@@ -91,9 +94,20 @@ class TuyaBleAdapter(
 
     @SuppressLint("MissingPermission")
     override fun connect(macAddress: String?) {
+        connectInternal(macAddress, isInternalAttempt = false)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun connectInternal(macAddress: String?, isInternalAttempt: Boolean) {
+        if (isConnecting && !isInternalAttempt) {
+            logMessage("Connection already in progress. Ignoring duplicate connect request.")
+            return
+        }
+
         logMessage("Initiating connection attempt (macAddress=$macAddress)")
         val adapter = bluetoothAdapter
         if (adapter == null) {
+            isConnecting = false
             logError("Bluetooth adapter is null")
             addLogEntry(
                 direction = BleLogDirection.SENT,
@@ -105,6 +119,7 @@ class TuyaBleAdapter(
             return
         }
         if (!adapter.isEnabled) {
+            isConnecting = false
             logError("Bluetooth is disabled")
             addLogEntry(
                 direction = BleLogDirection.SENT,
@@ -115,6 +130,8 @@ class TuyaBleAdapter(
             )
             return
         }
+
+        isConnecting = true
 
         if (!macAddress.isNullOrBlank()) {
             lastMacAddress = macAddress
@@ -149,6 +166,7 @@ class TuyaBleAdapter(
                     android.bluetooth.BluetoothDevice.TRANSPORT_LE
                 )
             } catch (e: Exception) {
+                isConnecting = false
                 logError("Failed to connect to MAC $targetMac: ${e.message}", e)
                 addLogEntry(
                     direction = BleLogDirection.SENT,
@@ -174,6 +192,7 @@ class TuyaBleAdapter(
         )
         lastMacAddress = null
         connectionRetryCount = 0
+        isConnecting = false
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
@@ -185,6 +204,7 @@ class TuyaBleAdapter(
     private fun startScanAndConnect() {
         val scanner = bluetoothAdapter?.bluetoothLeScanner
         if (scanner == null) {
+            isConnecting = false
             logError("Bluetooth LE scanner is null")
             addLogEntry(
                 direction = BleLogDirection.SENT,
@@ -246,6 +266,7 @@ class TuyaBleAdapter(
 
             override fun onScanFailed(errorCode: Int) {
                 logError("BLE scan failed with error code: $errorCode")
+                isConnecting = false
                 _isConnected.value = false
                 addLogEntry(
                     direction = BleLogDirection.RECEIVED,
@@ -261,6 +282,7 @@ class TuyaBleAdapter(
             scanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
         } catch (e: Exception) {
             logError("Exception starting BLE scan: ${e.message}", e)
+            isConnecting = false
             _isConnected.value = false
             addLogEntry(
                 direction = BleLogDirection.SENT,
@@ -307,19 +329,22 @@ class TuyaBleAdapter(
                         parsedData = "RETRYING_CONNECTION ($connectionRetryCount/$MAX_CONNECTION_RETRIES): $mac",
                         isValid = true
                     )
-                    val retryAction = Runnable { connect(mac) }
+                    val retryAction = Runnable { connectInternal(mac, isInternalAttempt = true) }
                     try {
                         val handler = android.os.Handler(android.os.Looper.getMainLooper())
                         handler.postDelayed(retryAction, retryDelayMs)
                     } catch (_: Throwable) {
                         retryAction.run()
                     }
+                } else {
+                    isConnecting = false
                 }
                 return
             }
 
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 connectionRetryCount = 0
+                isConnecting = false
                 logMessage("GATT Connected to ${gatt.device?.address}. Discovering services...")
                 _isConnected.value = true
                 addLogEntry(
@@ -342,6 +367,7 @@ class TuyaBleAdapter(
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 logMessage("GATT Disconnected from ${gatt.device?.address}")
                 _isConnected.value = false
+                isConnecting = false
                 writeCharacteristic = null
                 gatt.close()
                 if (bluetoothGatt == gatt) {
@@ -483,7 +509,7 @@ class TuyaBleAdapter(
         var gatt = bluetoothGatt
         var characteristic = writeCharacteristic
 
-        if (gatt == null && !_isConnected.value && !lastMacAddress.isNullOrBlank()) {
+        if (gatt == null && !_isConnected.value && !isConnecting && !lastMacAddress.isNullOrBlank()) {
             logMessage("Disconnected when sending command. Triggering auto-reconnect to $lastMacAddress")
             addLogEntry(
                 direction = BleLogDirection.SENT,
@@ -491,7 +517,7 @@ class TuyaBleAdapter(
                 parsedData = "AUTO_RECONNECT_ATTEMPT: $lastMacAddress",
                 isValid = true
             )
-            connect(lastMacAddress)
+            connectInternal(lastMacAddress, isInternalAttempt = true)
             gatt = bluetoothGatt
             characteristic = writeCharacteristic
         }
