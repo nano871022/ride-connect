@@ -120,8 +120,15 @@ class TuyaBleAdapter(
             lastMacAddress = macAddress
         }
 
-        // Close previous GATT instance if present to avoid status 133 resource leaks
-        bluetoothGatt?.close()
+        // Cleanly disconnect and close previous GATT instance if present to avoid status 133 resource leaks
+        bluetoothGatt?.let { gatt ->
+            try {
+                gatt.disconnect()
+            } catch (_: Exception) {}
+            try {
+                gatt.close()
+            } catch (_: Exception) {}
+        }
         bluetoothGatt = null
 
         val targetMac = macAddress ?: lastMacAddress
@@ -279,7 +286,12 @@ class TuyaBleAdapter(
                     isValid = false,
                     errorMessage = "GATT operation failed with status $status"
                 )
-                gatt.close()
+                try {
+                    gatt.disconnect()
+                } catch (_: Exception) {}
+                try {
+                    gatt.close()
+                } catch (_: Exception) {}
                 if (bluetoothGatt == gatt) {
                     bluetoothGatt = null
                 }
@@ -287,7 +299,8 @@ class TuyaBleAdapter(
                 val mac = lastMacAddress
                 if (connectionRetryCount < MAX_CONNECTION_RETRIES && !mac.isNullOrBlank()) {
                     connectionRetryCount++
-                    logMessage("Scheduling connection retry ($connectionRetryCount/$MAX_CONNECTION_RETRIES) for MAC $mac")
+                    val retryDelayMs = getRetryDelayMs(connectionRetryCount)
+                    logMessage("Scheduling connection retry ($connectionRetryCount/$MAX_CONNECTION_RETRIES) with delay ${retryDelayMs}ms for MAC $mac")
                     addLogEntry(
                         direction = BleLogDirection.SENT,
                         rawBytesHex = "",
@@ -297,7 +310,7 @@ class TuyaBleAdapter(
                     val retryAction = Runnable { connect(mac) }
                     try {
                         val handler = android.os.Handler(android.os.Looper.getMainLooper())
-                        handler.postDelayed(retryAction, 500)
+                        handler.postDelayed(retryAction, retryDelayMs)
                     } catch (_: Throwable) {
                         retryAction.run()
                     }
@@ -617,6 +630,10 @@ class TuyaBleAdapter(
         }
 
         return Triple(service, writeChar, notifyChar)
+    }
+
+    internal fun getRetryDelayMs(retryCount: Int): Long {
+        return retryCount * 1000L
     }
 
     private fun logError(msg: String, throwable: Throwable? = null) {
