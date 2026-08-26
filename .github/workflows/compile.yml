@@ -29,6 +29,9 @@ jobs:
           mkdir -p app
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/ride-connect-sha.jks
+          elif [ -n "${{ secrets.PROPERTIES_TOKEN }}" ]; then
+            curl -sLf -H "Authorization: Bearer ${{ secrets.PROPERTIES_TOKEN }}" -H "Accept: application/vnd.github.v3.raw" "https://api.github.com/repos/nano871022/japl-properties/contents/ride-connect/ride-connect-sha.jks?ref=main" -o app/ride-connect-sha.jks || \
+            curl -sLf -H "Authorization: Bearer ${{ secrets.PROPERTIES_TOKEN }}" "https://raw.githubusercontent.com/nano871022/japl-properties/main/ride-connect/ride-connect-sha.jks" -o app/ride-connect-sha.jks
           else
             curl -sLf https://raw.githubusercontent.com/nano871022/japl-properties/main/ride-connect/ride-connect-sha.jks -o app/ride-connect-sha.jks || true
           fi
