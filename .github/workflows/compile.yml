@@ -9,6 +9,7 @@ jobs:
   compile:
     name: Build Android App Bundle
     runs-on: ubuntu-latest
+    environment: 'PROD'
 
     steps:
       - name: Checkout repository
