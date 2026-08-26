@@ -7,7 +7,7 @@ plugins {
 }
 
 val settingsProperties = Properties().apply {
-    val file = rootProject.file("services/ble/src/main/resources/settings.properties")
+    val file = rootProject.file("services/ble/src/main/resources/tuya_ble_settings.properties")
     if (file.exists()) {
         file.inputStream().use { load(it) }
     }

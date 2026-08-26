@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "co.japl.android.ev_ride_connect.app"
+    namespace = "co.japl.android.ev_ride_connect"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "co.japl.android.ev_ride_connect.app"
+        applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

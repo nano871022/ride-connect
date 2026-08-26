@@ -15,8 +15,8 @@ class LlmClientAdapter @Inject constructor() : LlmClientPort {
 
     private val properties = Properties().apply {
         try {
-            val stream = LlmClientAdapter::class.java.classLoader?.getResourceAsStream("settings.properties")
-                ?: LlmClientAdapter::class.java.getResourceAsStream("/settings.properties")
+            val stream = LlmClientAdapter::class.java.classLoader?.getResourceAsStream("llm_settings.properties")
+                ?: LlmClientAdapter::class.java.getResourceAsStream("/llm_settings.properties")
             stream?.use { load(it) }
         } catch (_: Exception) {}
     }

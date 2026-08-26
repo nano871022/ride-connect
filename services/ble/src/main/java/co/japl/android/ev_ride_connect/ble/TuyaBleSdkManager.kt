@@ -90,7 +90,7 @@ class TuyaBleSdkManager(
 ) {
     companion object {
         private const val TAG = "TuyaBleSdkManager"
-        private const val SETTINGS_FILE = "settings.properties"
+        private const val SETTINGS_FILE = "tuya_ble_settings.properties"
         private const val META_APPKEY = "TUYA_SMART_APPKEY"
         private const val META_SECRET = "TUYA_SMART_SECRET"
     }
