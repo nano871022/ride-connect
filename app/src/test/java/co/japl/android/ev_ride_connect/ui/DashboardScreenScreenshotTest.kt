@@ -5,6 +5,8 @@ import androidx.compose.ui.test.onNodeWithText
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
+import co.japl.android.ev_ride_connect.core.domain.Trip
+import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +43,10 @@ class DashboardScreenScreenshotTest {
 
         val fakeTripPort = object : TripDatabasePort {
             override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+            override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
+            override suspend fun getAllTrips(): List<Trip> = emptyList()
+            override suspend fun getTripById(tripId: Long): Trip? = null
+            override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
         }
 
         val viewModel = DashboardViewModel(fakeBlePort, fakeTripPort)
