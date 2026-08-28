@@ -36,7 +36,7 @@ jobs:
       - name: Copy Keystore
         run: |
           mkdir -p app
-          cp properties/ride-connect/ride-connect-sha.jks app/ride-connect-sha.jks
+          cp properties/ride-connect/ride-connect.jks app/ride-connect-sha.jks
 
       - name: Build Android App Bundle (.aab) and APK (.apk)
         env:
