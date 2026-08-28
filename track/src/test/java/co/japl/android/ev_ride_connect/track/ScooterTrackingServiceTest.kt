@@ -1,6 +1,8 @@
 package co.japl.android.ev_ride_connect.track
 
 import co.japl.android.ev_ride_connect.core.domain.ScooterState
+import co.japl.android.ev_ride_connect.core.domain.Trip
+import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,6 +108,22 @@ class ScooterTrackingServiceTest {
 
         override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {
             savedTrips.add(distance to batteryConsumed)
+        }
+
+        override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
+            return 1L
+        }
+
+        override suspend fun getAllTrips(): List<Trip> {
+            return emptyList()
+        }
+
+        override suspend fun getTripById(tripId: Long): Trip? {
+            return null
+        }
+
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
+            return emptyList()
         }
     }
 }

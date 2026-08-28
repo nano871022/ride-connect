@@ -13,6 +13,7 @@ import co.japl.android.ev_ride_connect.controller.BleTestViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
 import co.japl.android.ev_ride_connect.controller.LlmConfigViewModel
+import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.navigation.AppScreen
 import co.japl.android.ev_ride_connect.ui.BackupScreen
@@ -20,6 +21,8 @@ import co.japl.android.ev_ride_connect.ui.BleTestScreen
 import co.japl.android.ev_ride_connect.ui.DashboardScreen
 import co.japl.android.ev_ride_connect.ui.EvConfigScreen
 import co.japl.android.ev_ride_connect.ui.LlmConfigScreen
+import co.japl.android.ev_ride_connect.ui.TripDetailScreen
+import co.japl.android.ev_ride_connect.ui.TripScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -30,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private val llmConfigViewModel: LlmConfigViewModel by viewModels()
     private val backupViewModel: BackupViewModel by viewModels()
     private val bleTestViewModel: BleTestViewModel by viewModels()
+    private val tripViewModel: TripViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +61,14 @@ class MainActivity : ComponentActivity() {
                     )
                     AppScreen.BLE_TEST -> BleTestScreen(
                         viewModel = bleTestViewModel
+                    )
+                    AppScreen.TRIP -> TripScreen(
+                        viewModel = tripViewModel,
+                        navigator = navigator
+                    )
+                    AppScreen.TRIP_DETAIL -> TripDetailScreen(
+                        viewModel = tripViewModel,
+                        navigator = navigator
                     )
                 }
             }

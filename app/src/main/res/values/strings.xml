@@ -102,4 +102,26 @@
     <string name="ble_no_logs">No BLE frames recorded yet.</string>
     <string name="ble_valid_tag">VALID</string>
     <string name="ble_invalid_tag">INVALID</string>
+
+    <!-- Trip Tracking -->
+    <string name="trip_title">Trip Tracking</string>
+    <string name="trip_start_button">Start Trip</string>
+    <string name="trip_stop_button">Finish Trip</string>
+    <string name="trip_timer_label">Elapsed Time</string>
+    <string name="trip_distance_label">Distance</string>
+    <string name="trip_avg_speed_label">Avg Speed</string>
+    <string name="trip_gps_interval_label">GPS Sampling Interval</string>
+    <string name="trip_interval_seconds">%1$d sec</string>
+    <string name="trip_battery_warning">Warning: Short GPS sampling intervals will consume more mobile battery power.</string>
+    <string name="trip_history_title">Trip History</string>
+    <string name="trip_empty_history">No trips recorded yet.</string>
+    <string name="trip_detail_title">Trip Detail</string>
+    <string name="trip_detail_summary">Trip Summary</string>
+    <string name="trip_detail_points_title">Location Samples</string>
+    <string name="trip_point_order">Sample #%1$d</string>
+    <string name="trip_point_coords">Lat: %1$.4f, Lon: %2$.4f</string>
+    <string name="trip_point_speed">Speed: %1$.1f km/h</string>
+    <string name="trip_point_distance">Distance: %1$.2f km</string>
+    <string name="trip_back_button">Back</string>
+    <string name="nav_trip">Trip Tracking</string>
 </resources>

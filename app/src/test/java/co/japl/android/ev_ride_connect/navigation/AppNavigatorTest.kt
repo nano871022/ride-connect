@@ -42,4 +42,17 @@ class AppNavigatorTest {
         navigator.navigateToDashboard()
         assertThat(navigator.currentScreen.value).isEqualTo(AppScreen.DASHBOARD)
     }
+
+    @Test
+    fun shouldNavigateToTrip() {
+        navigator.navigateToTrip()
+        assertThat(navigator.currentScreen.value).isEqualTo(AppScreen.TRIP)
+    }
+
+    @Test
+    fun shouldNavigateToTripDetail() {
+        navigator.navigateToTripDetail(123L)
+        assertThat(navigator.currentScreen.value).isEqualTo(AppScreen.TRIP_DETAIL)
+        assertThat(navigator.selectedTripId.value).isEqualTo(123L)
+    }
 }

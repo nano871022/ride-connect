@@ -20,4 +20,11 @@ class DateUtilsTest {
         assertThat(DateUtils.formatTimestamp(0L, Locale.US)).isEmpty()
         assertThat(DateUtils.formatTimestamp(-1L, Locale.US)).isEmpty()
     }
+
+    @Test
+    fun shouldFormatDurationSecondsCorrectly() {
+        assertThat(DateUtils.formatDurationSeconds(65)).isEqualTo("01:05")
+        assertThat(DateUtils.formatDurationSeconds(3665)).isEqualTo("01:01:05")
+        assertThat(DateUtils.formatDurationSeconds(0)).isEqualTo("00:00")
+    }
 }
