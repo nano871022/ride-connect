@@ -102,4 +102,26 @@
     <string name="ble_no_logs">Aún no se han registrado tramas BLE.</string>
     <string name="ble_valid_tag">VÁLIDO</string>
     <string name="ble_invalid_tag">INVÁLIDO</string>
+
+    <!-- Trip Tracking -->
+    <string name="trip_title">Seguimiento de Viaje</string>
+    <string name="trip_start_button">Iniciar</string>
+    <string name="trip_stop_button">Finalizar</string>
+    <string name="trip_timer_label">Tiempo Transcurrido</string>
+    <string name="trip_distance_label">Distancia</string>
+    <string name="trip_avg_speed_label">Velocidad Promedio</string>
+    <string name="trip_gps_interval_label">Intervalo de Ubicación GPS</string>
+    <string name="trip_interval_seconds">%1$d seg</string>
+    <string name="trip_battery_warning">Advertencia: Configurar un intervalo muy corto consumirá mayor batería del dispositivo móvil.</string>
+    <string name="trip_history_title">Histórico de Viajes</string>
+    <string name="trip_empty_history">No se han registrado viajes aún.</string>
+    <string name="trip_detail_title">Detalle del Viaje</string>
+    <string name="trip_detail_summary">Resumen del Viaje</string>
+    <string name="trip_detail_points_title">Muestras de Ubicación</string>
+    <string name="trip_point_order">Muestra #%1$d</string>
+    <string name="trip_point_coords">Lat: %1$.4f, Lon: %2$.4f</string>
+    <string name="trip_point_speed">Velocidad: %1$.1f km/h</string>
+    <string name="trip_point_distance">Distancia: %1$.2f km</string>
+    <string name="trip_back_button">Volver</string>
+    <string name="nav_trip">Seguimiento de Viaje</string>
 </resources>

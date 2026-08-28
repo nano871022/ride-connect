@@ -9,13 +9,18 @@ enum class AppScreen {
     EV_CONFIG,
     LLM_CONFIG,
     BACKUP,
-    BLE_TEST
+    BLE_TEST,
+    TRIP,
+    TRIP_DETAIL
 }
 
 class AppNavigator(initialScreen: AppScreen = AppScreen.DASHBOARD) {
 
     private val _currentScreen = MutableStateFlow(initialScreen)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
+
+    private val _selectedTripId = MutableStateFlow<Long?>(null)
+    val selectedTripId: StateFlow<Long?> = _selectedTripId.asStateFlow()
 
     fun navigateTo(screen: AppScreen) {
         _currentScreen.value = screen
@@ -39,5 +44,14 @@ class AppNavigator(initialScreen: AppScreen = AppScreen.DASHBOARD) {
 
     fun navigateToBleTest() {
         navigateTo(AppScreen.BLE_TEST)
+    }
+
+    fun navigateToTrip() {
+        navigateTo(AppScreen.TRIP)
+    }
+
+    fun navigateToTripDetail(tripId: Long) {
+        _selectedTripId.value = tripId
+        navigateTo(AppScreen.TRIP_DETAIL)
     }
 }

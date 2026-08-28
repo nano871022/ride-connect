@@ -80,6 +80,13 @@ fun DashboardScreen(
                                 }
                             )
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_trip)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToTrip()
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
                                     menuExpanded = false
@@ -128,6 +135,20 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Button(
+                onClick = { navigator?.navigateToTrip() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.nav_trip),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
             Button(
                 onClick = { navigator?.navigateToEvConfig() },
                 modifier = Modifier.fillMaxWidth(),

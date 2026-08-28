@@ -8,8 +8,13 @@ import co.japl.android.ev_ride_connect.database.dao.TripDao
 import co.japl.android.ev_ride_connect.database.entities.EvConfigEntity
 import co.japl.android.ev_ride_connect.database.entities.LlmConfigEntity
 import co.japl.android.ev_ride_connect.database.entities.TripEntity
+import co.japl.android.ev_ride_connect.database.entities.TripGpsEntity
 
-@Database(entities = [TripEntity::class, LlmConfigEntity::class, EvConfigEntity::class], version = 4, exportSchema = false)
+@Database(
+    entities = [TripEntity::class, TripGpsEntity::class, LlmConfigEntity::class, EvConfigEntity::class],
+    version = 5,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun llmConfigDao(): LlmConfigDao
