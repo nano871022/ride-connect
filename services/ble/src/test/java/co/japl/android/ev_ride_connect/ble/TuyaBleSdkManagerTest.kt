@@ -23,7 +23,9 @@ class TuyaBleSdkManagerTest {
     fun shouldInitializeSuccessfullyWhenValidCredentialsProvided() {
         val config = TuyaSdkConfig(
             appKey = "testAppKey123",
-            appSecret = "testAppSecret456"
+            appSecret = "testAppSecret456",
+            deviceUuid = "uuid123456",
+            authKey = "authKey789"
         )
 
         val result = sdkManager.initialize(config)
@@ -31,6 +33,8 @@ class TuyaBleSdkManagerTest {
         assertThat(result).isTrue()
         assertThat(sdkManager.isInitialized()).isTrue()
         assertThat(sdkManager.getConfig().appKey).isEqualTo("testAppKey123")
+        assertThat(sdkManager.getConfig().deviceUuid).isEqualTo("uuid123456")
+        assertThat(sdkManager.getConfig().authKey).isEqualTo("authKey789")
     }
 
     @Test

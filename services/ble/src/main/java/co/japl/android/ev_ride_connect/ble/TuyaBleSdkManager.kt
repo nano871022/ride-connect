@@ -106,15 +106,19 @@ class TuyaBleSdkManager(
         val propertiesConfig = loadConfigFromSettingsProperties()
         val manifestConfig = context?.let { loadConfigFromManifest(it) } ?: TuyaSdkConfig()
 
-        val effectiveConfig = when {
-            buildConfigConfig.isConfigured() -> buildConfigConfig
-            propertiesConfig.isConfigured() -> propertiesConfig
-            manifestConfig.isConfigured() -> manifestConfig
-            else -> TuyaSdkConfig()
+        val (effectiveConfig, source) = when {
+            buildConfigConfig.isConfigured() -> buildConfigConfig to "BuildConfig"
+            propertiesConfig.isConfigured() -> propertiesConfig to "tuya_ble_settings.properties / Env"
+            manifestConfig.isConfigured() -> manifestConfig to "AndroidManifest"
+            else -> TuyaSdkConfig() to "None"
         }
+
+        logMessage("Configuration evaluation source: $source -> AppKey: ${maskSecret(effectiveConfig.appKey)}, AppSecret: ${maskSecret(effectiveConfig.appSecret)}, DeviceUUID: ${maskSecret(effectiveConfig.deviceUuid)}, AuthKey: ${maskSecret(effectiveConfig.authKey)}")
 
         if (effectiveConfig.isConfigured()) {
             initialize(effectiveConfig)
+        } else {
+            logError("No valid Tuya SDK credentials configured from BuildConfig, properties, or Manifest.")
         }
     }
 
@@ -124,12 +128,12 @@ class TuyaBleSdkManager(
     fun initialize(sdkConfig: TuyaSdkConfig): Boolean {
         this.config = sdkConfig
         if (!sdkConfig.isConfigured()) {
-            logError("Tuya SDK initialization failed: AppKey or AppSecret is missing.")
+            logError("Tuya SDK initialization failed: AppKey or AppSecret is missing. AppKey present: ${sdkConfig.appKey.isNotBlank()}, AppSecret present: ${sdkConfig.appSecret.isNotBlank()}")
             isInitialized = false
             return false
         }
 
-        logMessage("Initializing Tuya BLE SDK with AppKey: ${sdkConfig.appKey.take(4)}****")
+        logMessage("Initializing Tuya BLE SDK -> AppKey: ${maskSecret(sdkConfig.appKey)}, DeviceUUID: ${maskSecret(sdkConfig.deviceUuid)}, AuthKey present: ${!sdkConfig.authKey.isNullOrBlank()}")
         isInitialized = context?.let { ctx ->
             sdkBridge.initializeSdk(sdkConfig.appKey, sdkConfig.appSecret, ctx)
         } ?: true
@@ -167,13 +171,16 @@ class TuyaBleSdkManager(
         }
 
         activeDeviceMac = macAddress
-        logMessage("Initiating Tuya BLE SDK connection to MAC: $macAddress (isInitialized=$isInitialized)")
+        logMessage("Initiating Tuya BLE SDK connection to MAC: $macAddress (isInitialized=$isInitialized, DeviceUUID: ${maskSecret(config.deviceUuid)}, AuthKey present: ${!config.authKey.isNullOrBlank()})")
 
         if (!isInitialized) {
-            logMessage("Tuya SDK credentials unconfigured. Operating in BLE GATT fallback mode.")
+            logMessage("Tuya SDK credentials unconfigured. Operating in direct BLE GATT fallback mode.")
         }
 
         val success = sdkBridge.connectBleDevice(macAddress, config.deviceUuid)
+        if (!success) {
+            logError("Tuya BLE SDK bridge failed to connect to device MAC: $macAddress")
+        }
         isConnected = success
         if (success) {
             this.listener?.onConnected()
@@ -296,6 +303,11 @@ class TuyaBleSdkManager(
         try {
             Log.d(TAG, msg)
         } catch (_: Throwable) {}
+    }
+
+    private fun maskSecret(value: String?): String {
+        if (value.isNullOrBlank()) return "<EMPTY>"
+        return if (value.length > 4) "${value.take(4)}...(${value.length} chars)" else "***"
     }
 
     private fun logError(msg: String) {
