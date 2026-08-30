@@ -338,16 +338,17 @@ class TuyaBleAdapter(
     private val gattCallback = object : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            logMessage("onConnectionStateChange: status=$status, newState=$newState")
+            val statusDesc = explainGattStatus(status)
+            logMessage("onConnectionStateChange: status=$status ($statusDesc), newState=$newState")
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                logError("GATT connection state change failed with status $status")
+                logError("GATT connection state change failed with status $status ($statusDesc), newState=$newState")
                 _isConnected.value = false
                 addLogEntry(
                     direction = BleLogDirection.RECEIVED,
                     rawBytesHex = "",
-                    parsedData = "GATT_STATE_CHANGE_ERROR (Status: $status, State: $newState)",
+                    parsedData = "GATT_STATE_CHANGE_ERROR (Status: $status [$statusDesc], State: $newState)",
                     isValid = false,
-                    errorMessage = "GATT operation failed with status $status"
+                    errorMessage = "GATT operation failed with status $status ($statusDesc)"
                 )
                 try {
                     gatt.disconnect()
@@ -425,18 +426,20 @@ class TuyaBleAdapter(
 
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            logMessage("onServicesDiscovered: status=$status")
+            val statusDesc = explainGattStatus(status)
+            logMessage("onServicesDiscovered: status=$status ($statusDesc)")
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                logError("Service discovery failed with status $status")
+                logError("Service discovery failed with status $status ($statusDesc)")
                 addLogEntry(
                     direction = BleLogDirection.RECEIVED,
                     rawBytesHex = "",
-                    parsedData = "SERVICES_DISCOVERY_FAILED (Status: $status)",
+                    parsedData = "SERVICES_DISCOVERY_FAILED (Status: $status [$statusDesc])",
                     isValid = false,
-                    errorMessage = "Service discovery failed with status $status"
+                    errorMessage = "Service discovery failed with status $status ($statusDesc)"
                 )
                 return
             }
+
 
             val discoveredServices = gatt.services ?: emptyList()
             logMessage("Discovered ${discoveredServices.size} services: ${discoveredServices.map { it.uuid }}")
@@ -705,6 +708,20 @@ class TuyaBleAdapter(
 
     internal fun getRetryDelayMs(retryCount: Int): Long {
         return retryCount * 1000L
+    }
+
+    private fun explainGattStatus(status: Int): String {
+        return when (status) {
+            BluetoothGatt.GATT_SUCCESS -> "GATT_SUCCESS (0)"
+            8 -> "GATT_CONN_TIMEOUT (8) - Device out of range, disconnected, or advertising ceased"
+            19 -> "GATT_CONN_TERMINATE_PEER_USER (19) - Remote device terminated connection"
+            22 -> "GATT_CONN_TERMINATE_LOCAL_HOST (22) - Local host terminated connection"
+            62 -> "GATT_CONN_FAIL_ESTABLISH (62) - Could not establish connection"
+            133 -> "GATT_ERROR / STATUS_133 (133) - Android BLE stack error / device busy or unclosed GATT handles"
+            137 -> "GATT_AUTH_FAIL (137) - Tuya security / encryption handshake authentication failure"
+            257 -> "GATT_FAILURE (257) - Generic GATT failure"
+            else -> "GATT_STATUS_UNKNOWN ($status)"
+        }
     }
 
     private fun logError(msg: String, throwable: Throwable? = null) {
