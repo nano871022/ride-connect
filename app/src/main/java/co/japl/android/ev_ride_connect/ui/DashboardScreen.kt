@@ -4,15 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -23,8 +24,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -36,15 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import co.com.japl.ui.components.DualMetricCard
-import co.com.japl.ui.components.MetricCard
-import co.com.japl.ui.components.SegmentOption
-import co.com.japl.ui.components.SegmentedButtonGroup
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,8 +52,9 @@ fun DashboardScreen(
     navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
-    val scooterState by viewModel.scooterState.collectAsState()
+    val latestEvData by viewModel.latestEvData.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -87,6 +87,13 @@ fun DashboardScreen(
                                 }
                             )
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_ev_data)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToEvData()
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
                                     menuExpanded = false
@@ -105,13 +112,6 @@ fun DashboardScreen(
                                 onClick = {
                                     menuExpanded = false
                                     navigator?.navigateToBackup()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.ble_test_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToBleTest()
                                 }
                             )
                         }
@@ -163,103 +163,156 @@ fun DashboardScreen(
                 )
             }
 
-            MetricCard(
-                value = "${scooterState.currentSpeed}",
-                unit = stringResource(R.string.speed_unit)
-            )
-
-            DualMetricCard(
-                primaryTitle = stringResource(R.string.battery_title),
-                primaryValue = "${scooterState.batteryPercentage}%",
-                secondaryTitle = stringResource(R.string.voltage_label),
-                secondaryValue = "${scooterState.realtimeVoltage / 10.0} V"
-            )
-
-            DualMetricCard(
-                primaryTitle = stringResource(R.string.odometer_title),
-                primaryValue = "${scooterState.totalOdometer} ${stringResource(R.string.odometer_unit)}",
-                secondaryTitle = "",
-                secondaryValue = ""
-            )
-
-            ControlsCard(
-                scooterState = scooterState,
-                onToggleLock = { viewModel.toggleLock() },
-                onToggleLight = { viewModel.toggleLight() },
-                onSelectSpeedMode = { mode -> viewModel.setSpeedMode(mode) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ControlsCard(
-    scooterState: ScooterState,
-    onToggleLock: () -> Unit,
-    onToggleLight: () -> Unit,
-    onSelectSpeedMode: (Int) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.speed_mode_title),
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            val modeOptions = listOf(
-                SegmentOption(1, stringResource(R.string.speed_mode_eco)),
-                SegmentOption(2, stringResource(R.string.speed_mode_drive)),
-                SegmentOption(3, stringResource(R.string.speed_mode_sport))
-            )
-
-            SegmentedButtonGroup(
-                options = modeOptions,
-                selectedOption = scooterState.speedMode,
-                onOptionSelected = onSelectSpeedMode
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
+            Button(
+                onClick = { navigator?.navigateToEvData() },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                )
             ) {
-                Button(
-                    onClick = onToggleLock,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        if (scooterState.isLocked) {
-                            stringResource(R.string.unlock_button)
-                        } else {
-                            stringResource(R.string.lock_button)
-                        }
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.nav_ev_data),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
 
-                Button(
-                    onClick = onToggleLight,
-                    modifier = Modifier.weight(1f)
+            // Odometer (Km) Card with Update button
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "${stringResource(R.string.light_title)}: ${
-                            if (scooterState.isLightOn) {
-                                stringResource(R.string.light_on)
-                            } else {
-                                stringResource(R.string.light_off)
-                            }
-                        }"
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.km_label),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${latestEvData?.km ?: 0} ${stringResource(R.string.km_unit)}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(onClick = { showUpdateDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.update_km_title)
+                        )
+                    }
+                }
+            }
+
+            // Battery Level Card with Update button
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.battery_level_label),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${latestEvData?.batteryLevel ?: 0}${stringResource(R.string.battery_postfix)}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(onClick = { showUpdateDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.update_battery_title)
+                        )
+                    }
                 }
             }
         }
     }
+
+    if (showUpdateDialog) {
+        EvDataUpdateDialog(
+            initialKm = latestEvData?.km ?: 0L,
+            initialBatteryLevel = latestEvData?.batteryLevel ?: 0,
+            onDismiss = { showUpdateDialog = false },
+            onSave = { km, batteryLevel ->
+                viewModel.saveEvData(km, batteryLevel)
+                showUpdateDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun EvDataUpdateDialog(
+    initialKm: Long,
+    initialBatteryLevel: Short,
+    onDismiss: () -> Unit,
+    onSave: (Long, Short) -> Unit
+) {
+    var kmInput by remember { mutableStateOf(initialKm.toString()) }
+    var batteryInput by remember { mutableStateOf(initialBatteryLevel.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.update_ev_data_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = kmInput,
+                    onValueChange = { kmInput = it.filter { char -> char.isDigit() } },
+                    label = { Text(stringResource(R.string.enter_km)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = batteryInput,
+                    onValueChange = {
+                        val filtered = it.filter { char -> char.isDigit() }
+                        val num = filtered.toIntOrNull()
+                        if (filtered.isEmpty() || (num != null && num in 0..100)) {
+                            batteryInput = filtered
+                        }
+                    },
+                    label = { Text(stringResource(R.string.enter_battery)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    suffix = { Text(stringResource(R.string.battery_postfix)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val km = kmInput.toLongOrNull() ?: 0L
+                    val battery = batteryInput.toShortOrNull() ?: 0
+                    onSave(km, battery)
+                }
+            ) {
+                Text(stringResource(R.string.save_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        }
+    )
 }

@@ -9,17 +9,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
-import co.japl.android.ev_ride_connect.controller.BleTestViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
+import co.japl.android.ev_ride_connect.controller.EvDataViewModel
 import co.japl.android.ev_ride_connect.controller.LlmConfigViewModel
 import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.navigation.AppScreen
 import co.japl.android.ev_ride_connect.ui.BackupScreen
-import co.japl.android.ev_ride_connect.ui.BleTestScreen
 import co.japl.android.ev_ride_connect.ui.DashboardScreen
 import co.japl.android.ev_ride_connect.ui.EvConfigScreen
+import co.japl.android.ev_ride_connect.ui.EvDataScreen
 import co.japl.android.ev_ride_connect.ui.LlmConfigScreen
 import co.japl.android.ev_ride_connect.ui.TripDetailScreen
 import co.japl.android.ev_ride_connect.ui.TripScreen
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
     private val evConfigViewModel: EvConfigViewModel by viewModels()
     private val llmConfigViewModel: LlmConfigViewModel by viewModels()
     private val backupViewModel: BackupViewModel by viewModels()
-    private val bleTestViewModel: BleTestViewModel by viewModels()
+    private val evDataViewModel: EvDataViewModel by viewModels()
     private val tripViewModel: TripViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
                         viewModel = backupViewModel,
                         navigator = navigator
                     )
-                    AppScreen.BLE_TEST -> BleTestScreen(
-                        viewModel = bleTestViewModel
+                    AppScreen.EV_DATA -> EvDataScreen(
+                        viewModel = evDataViewModel,
+                        navigator = navigator
                     )
                     AppScreen.TRIP -> TripScreen(
                         viewModel = tripViewModel,

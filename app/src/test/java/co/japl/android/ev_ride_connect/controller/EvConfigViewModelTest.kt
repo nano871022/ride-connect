@@ -3,16 +3,12 @@ package co.japl.android.ev_ride_connect.controller
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -29,7 +25,6 @@ class EvConfigViewModelTest {
     private lateinit var fakeEvConfigPort: FakeEvConfigPort
     private lateinit var fakeLlmConfigPort: FakeLlmConfigPort
     private lateinit var fakeLlmClientPort: FakeLlmClientPort
-    private lateinit var fakeBleScooterPort: FakeBleScooterPort
     private lateinit var viewModel: EvConfigViewModel
 
     @Before
@@ -38,14 +33,12 @@ class EvConfigViewModelTest {
         fakeEvConfigPort = FakeEvConfigPort()
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeLlmClientPort = FakeLlmClientPort()
-        fakeBleScooterPort = FakeBleScooterPort()
 
         val fetchEvInfoUseCase = FetchEvInfoUseCase(fakeLlmClientPort)
         viewModel = EvConfigViewModel(
             fakeEvConfigPort,
             fakeLlmConfigPort,
-            fetchEvInfoUseCase,
-            fakeBleScooterPort
+            fetchEvInfoUseCase
         )
     }
 
@@ -194,15 +187,14 @@ class EvConfigViewModelTest {
     }
 
     @Test
-    fun shouldLoadEvAndConnectBle() = runTest {
+    fun shouldLoadEv() = runTest {
         viewModel.onBrandChanged("VSETT C7 Plus")
-        viewModel.loadEvAndConnectBle()
+        viewModel.loadEv()
 
         testScheduler.runCurrent()
 
-        assertThat(viewModel.statusMessage.value).isEqualTo("EV_LOADED_BLE_CONNECTED")
+        assertThat(viewModel.statusMessage.value).isEqualTo("EV_LOADED")
         assertThat(viewModel.evConfig.value.isLoaded).isTrue()
-        assertThat(fakeBleScooterPort.lastSentDpId).isEqualTo(1)
     }
 
     private class FakeEvConfigPort : EvConfigPort {
@@ -260,30 +252,6 @@ class EvConfigViewModelTest {
                   "otherCharacteristics": "Dual motor electric scooter."
                 }
             """.trimIndent()
-        }
-    }
-
-    private class FakeBleScooterPort : BleScooterPort {
-        var lastSentDpId: Int? = null
-        var lastSentValue: Any? = null
-
-        override fun observeScooterState(): Flow<ScooterState> {
-            return MutableStateFlow(
-                ScooterState(
-                    isLocked = false,
-                    speedMode = 0,
-                    currentSpeed = 0,
-                    realtimeVoltage = 0,
-                    batteryPercentage = 0,
-                    totalOdometer = 0,
-                    isLightOn = false
-                )
-            )
-        }
-
-        override fun sendCommand(dpId: Int, value: Any) {
-            lastSentDpId = dpId
-            lastSentValue = value
         }
     }
 }

@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -28,8 +30,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import co.com.japl.ui.components.DualMetricCard
 import co.com.japl.ui.components.SegmentOption
@@ -68,12 +73,17 @@ fun TripScreen(
     val currentDistance by viewModel.currentDistance.collectAsState()
     val currentAverageSpeed by viewModel.currentAverageSpeed.collectAsState()
 
+    val showStartBatteryDialog by viewModel.showStartBatteryDialog.collectAsState()
+    val showEndBatteryDialog by viewModel.showEndBatteryDialog.collectAsState()
+    val latestBatteryLevel by viewModel.latestBatteryLevel.collectAsState()
+    val calculatedNewKm by viewModel.calculatedNewKm.collectAsState()
+
     var menuExpanded by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
-        viewModel.startTrip()
+        viewModel.onStartTripRequested()
     }
 
     Scaffold(
@@ -107,6 +117,13 @@ fun TripScreen(
                                 }
                             )
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_ev_data)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    navigator?.navigateToEvData()
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
                                     menuExpanded = false
@@ -125,13 +142,6 @@ fun TripScreen(
                                 onClick = {
                                     menuExpanded = false
                                     navigator?.navigateToBackup()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.ble_test_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToBleTest()
                                 }
                             )
                         }
@@ -206,7 +216,7 @@ fun TripScreen(
                         }
                     } else {
                         Button(
-                            onClick = { viewModel.stopTrip() },
+                            onClick = { viewModel.onStopTripRequested() },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
@@ -304,6 +314,82 @@ fun TripScreen(
             }
         }
     }
+
+    if (showStartBatteryDialog) {
+        TripBatteryDialog(
+            title = stringResource(R.string.start_trip_battery_title),
+            initialBattery = latestBatteryLevel,
+            onDismiss = { viewModel.cancelStartTrip() },
+            onConfirm = { batteryLevel -> viewModel.confirmStartTrip(batteryLevel) }
+        )
+    }
+
+    if (showEndBatteryDialog) {
+        TripBatteryDialog(
+            title = stringResource(R.string.end_trip_battery_title),
+            subtitle = "${stringResource(R.string.km_label)}: $calculatedNewKm ${stringResource(R.string.km_unit)}",
+            initialBattery = latestBatteryLevel,
+            onDismiss = { viewModel.cancelStopTrip() },
+            onConfirm = { batteryLevel -> viewModel.confirmStopTrip(batteryLevel) }
+        )
+    }
+}
+
+@Composable
+fun TripBatteryDialog(
+    title: String,
+    subtitle: String? = null,
+    initialBattery: Short,
+    onDismiss: () -> Unit,
+    onConfirm: (Short) -> Unit
+) {
+    var batteryInput by remember { mutableStateOf(initialBattery.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                OutlinedTextField(
+                    value = batteryInput,
+                    onValueChange = {
+                        val filtered = it.filter { char -> char.isDigit() }
+                        val num = filtered.toIntOrNull()
+                        if (filtered.isEmpty() || (num != null && num in 0..100)) {
+                            batteryInput = filtered
+                        }
+                    },
+                    label = { Text(stringResource(R.string.enter_battery)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    suffix = { Text(stringResource(R.string.battery_postfix)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val battery = batteryInput.toShortOrNull() ?: 0
+                    onConfirm(battery)
+                }
+            ) {
+                Text(stringResource(R.string.save_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        }
+    )
 }
 
 @Composable

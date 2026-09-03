@@ -19,6 +19,26 @@
     <string name="speed_mode_drive">DRIVE</string>
     <string name="speed_mode_sport">SPORT</string>
 
+    <!-- EV Data -->
+    <string name="ev_data_title">EV Data History</string>
+    <string name="km_label">Distance Traveled</string>
+    <string name="km_unit">km</string>
+    <string name="battery_level_label">Battery Level</string>
+    <string name="battery_postfix">%</string>
+    <string name="update_ev_data_title">Update Vehicle Data</string>
+    <string name="update_km_title">Update Odometer</string>
+    <string name="update_battery_title">Update Battery Level</string>
+    <string name="enter_km">Enter Km</string>
+    <string name="enter_battery">Enter Battery Level (%)</string>
+    <string name="start_trip_battery_title">Initial Battery Level</string>
+    <string name="end_trip_battery_title">Final Battery Level</string>
+    <string name="save_button">Save</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="update_button">Update</string>
+    <string name="ev_code_label">Vehicle Code</string>
+    <string name="no_data">No records found</string>
+    <string name="nav_ev_data">EV History</string>
+
     <!-- Backup -->
     <string name="backup_title">Google Drive Backup</string>
     <string name="backup_now">Backup Now</string>
@@ -83,25 +103,6 @@
     <string name="ev_loaded_status">EV Loaded into System</string>
     <string name="ev_llm_prompt_template">Identify specs for EV query: \"%1$s\". Respond with JSON containing keys: brand, version, motors (array of objects with name and watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
     <string name="nav_ev_config">Configure EV</string>
-
-    <!-- BLE Test -->
-    <string name="ble_test_title">BLE Communication Diagnostic</string>
-    <string name="ble_connect_button">Connect BLE</string>
-    <string name="ble_disconnect_button">Disconnect BLE</string>
-    <string name="ble_connected_status">Connected</string>
-    <string name="ble_disconnected_status">Disconnected</string>
-    <string name="ble_quick_commands">Diagnostic Commands</string>
-    <string name="ble_cmd_dp1_lock">DP1: Toggle Lock</string>
-    <string name="ble_cmd_dp2_mode">DP2: Cycle Mode</string>
-    <string name="ble_cmd_dp4_light">DP4: Toggle Light</string>
-    <string name="ble_cmd_dp7_query">DP7: Query Battery</string>
-    <string name="ble_logs_title">Frames Log</string>
-    <string name="ble_clear_logs">Clear Log</string>
-    <string name="ble_copy_logs">Copy Test Log</string>
-    <string name="ble_logs_copied">BLE Test Log copied to clipboard</string>
-    <string name="ble_no_logs">No BLE frames recorded yet.</string>
-    <string name="ble_valid_tag">VALID</string>
-    <string name="ble_invalid_tag">INVALID</string>
 
     <!-- Trip Tracking -->
     <string name="trip_title">Trip Tracking</string>

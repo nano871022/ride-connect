@@ -9,7 +9,7 @@ enum class AppScreen {
     EV_CONFIG,
     LLM_CONFIG,
     BACKUP,
-    BLE_TEST,
+    EV_DATA,
     TRIP,
     TRIP_DETAIL
 }
@@ -42,8 +42,8 @@ class AppNavigator(initialScreen: AppScreen = AppScreen.DASHBOARD) {
         navigateTo(AppScreen.BACKUP)
     }
 
-    fun navigateToBleTest() {
-        navigateTo(AppScreen.BLE_TEST)
+    fun navigateToEvData() {
+        navigateTo(AppScreen.EV_DATA)
     }
 
     fun navigateToTrip() {

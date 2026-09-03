@@ -9,7 +9,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -23,9 +22,6 @@ import javax.inject.Inject
 class ScooterTrackingService : Service() {
 
     @Inject
-    lateinit var bleScooterPort: BleScooterPort
-
-    @Inject
     lateinit var tripDatabasePort: TripDatabasePort
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -33,7 +29,7 @@ class ScooterTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        trackingTracker = ScooterTrackingTracker(bleScooterPort, tripDatabasePort, serviceScope)
+        trackingTracker = ScooterTrackingTracker(tripDatabasePort, serviceScope)
         createNotificationChannel()
     }
 

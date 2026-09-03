@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
@@ -21,8 +20,7 @@ import javax.inject.Inject
 class EvConfigViewModel @Inject constructor(
     private val evConfigPort: EvConfigPort,
     private val llmConfigPort: LlmConfigPort,
-    private val fetchEvInfoUseCase: FetchEvInfoUseCase,
-    private val bleScooterPort: BleScooterPort
+    private val fetchEvInfoUseCase: FetchEvInfoUseCase
 ) : ViewModel() {
 
     private val _evConfig = MutableStateFlow(EvConfig())
@@ -187,13 +185,12 @@ class EvConfigViewModel @Inject constructor(
         }
     }
 
-    fun loadEvAndConnectBle() {
+    fun loadEv() {
         viewModelScope.launch {
             val updated = _evConfig.value.copy(isLoaded = true)
             val id = evConfigPort.saveEvConfig(updated)
             _evConfig.value = updated.copy(id = id)
-            bleScooterPort.sendCommand(1, false)
-            _statusMessage.value = "EV_LOADED_BLE_CONNECTED"
+            _statusMessage.value = "EV_LOADED"
         }
     }
 
@@ -201,5 +198,4 @@ class EvConfigViewModel @Inject constructor(
         _statusMessage.value = null
         _llmErrorMessage.value = null
     }
-
 }
