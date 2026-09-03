@@ -225,6 +225,8 @@ class EvConfigViewModelTest {
         }
 
         override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
+
+        override suspend fun deleteConfig(id: Long): Boolean = true
     }
 
     private class FakeLlmClientPort : LlmClientPort {

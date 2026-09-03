@@ -6,8 +6,10 @@ import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
+import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +42,15 @@ class DashboardScreenScreenshotTest {
             override suspend fun saveEvConfig(config: EvConfig): Long = 1L
         }
 
-        val viewModel = DashboardViewModel(fakeEvDataPort, fakeEvConfigPort)
+        val fakeLlmConfigPort = object : LlmConfigPort {
+            override suspend fun getAllConfigs(): List<LlmConfig> = listOf(LlmConfig(id = 1L, apiKey = "test-key", isActive = true))
+            override suspend fun getActiveConfigs(): List<LlmConfig> = listOf(LlmConfig(id = 1L, apiKey = "test-key", isActive = true))
+            override suspend fun saveConfig(config: LlmConfig): Long = 1L
+            override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
+            override suspend fun deleteConfig(id: Long): Boolean = true
+        }
+
+        val viewModel = DashboardViewModel(fakeEvDataPort, fakeEvConfigPort, fakeLlmConfigPort)
 
         composeTestRule.setContent {
             MaterialThemeComposeUI {

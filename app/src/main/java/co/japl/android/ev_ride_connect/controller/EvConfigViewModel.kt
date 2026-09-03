@@ -41,6 +41,9 @@ class EvConfigViewModel @Inject constructor(
     private val _selectedLlmConfig = MutableStateFlow<LlmConfig?>(null)
     val selectedLlmConfig: StateFlow<LlmConfig?> = _selectedLlmConfig.asStateFlow()
 
+    private val _isSearchDialogVisible = MutableStateFlow(false)
+    val isSearchDialogVisible: StateFlow<Boolean> = _isSearchDialogVisible.asStateFlow()
+
     init {
         loadSavedConfig()
         loadActiveLlmConfigs()
@@ -155,26 +158,36 @@ class EvConfigViewModel @Inject constructor(
             return
         }
 
-        val config = _selectedLlmConfig.value ?: _activeLlmConfigs.value.firstOrNull()
-        if (config == null || config.apiKey.isBlank()) {
-            _llmErrorMessage.value = "NO_ACTIVE_LLM_CONFIG"
-            return
-        }
-
         viewModelScope.launch {
+            _isSearchDialogVisible.value = true
             _isLoadingLlm.value = true
             _llmErrorMessage.value = null
+
+            val configs = llmConfigPort.getActiveConfigs()
+            val config = configs.maxByOrNull { it.id } ?: configs.firstOrNull()
+
+            if (config == null || config.apiKey.isBlank()) {
+                _llmErrorMessage.value = "NO_ACTIVE_LLM_CONFIG"
+                _isLoadingLlm.value = false
+                return@launch
+            }
 
             try {
                 val updatedConfig = fetchEvInfoUseCase.execute(requestText, config, _evConfig.value)
                 _evConfig.value = updatedConfig
                 _statusMessage.value = "LLM_FETCH_SUCCESS"
+                _isSearchDialogVisible.value = false
             } catch (e: Exception) {
                 _llmErrorMessage.value = e.localizedMessage ?: "LLM_FETCH_FAILED"
             } finally {
                 _isLoadingLlm.value = false
             }
         }
+    }
+
+    fun dismissSearchDialog() {
+        _isSearchDialogVisible.value = false
+        _llmErrorMessage.value = null
     }
 
     fun saveEvConfig() {

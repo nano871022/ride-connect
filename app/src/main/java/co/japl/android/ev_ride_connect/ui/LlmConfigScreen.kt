@@ -12,7 +12,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,10 +28,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -61,7 +68,10 @@ fun LlmConfigScreen(
     val isFetchingVersions by viewModel.isFetchingVersions.collectAsState()
     val isValidating by viewModel.isValidating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    var menuExpanded by remember { mutableStateOf(false) }
+    val editingConfigId by viewModel.editingConfigId.collectAsState()
+    val validationSuccessMessage by viewModel.validationSuccessMessage.collectAsState()
+    var leftMenuExpanded by remember { mutableStateOf(false) }
+    var settingsMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -69,41 +79,70 @@ fun LlmConfigScreen(
                 title = { Text(stringResource(R.string.llm_config_title)) },
                 navigationIcon = {
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(onClick = { leftMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Settings Menu"
+                                contentDescription = "Navigation Menu"
                             )
                         }
                         DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
+                            expanded = leftMenuExpanded,
+                            onDismissRequest = { leftMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToDashboard()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_trip)) },
+                                onClick = {
+                                    leftMenuExpanded = false
+                                    navigator?.navigateToTrip()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_ev_data)) },
+                                onClick = {
+                                    leftMenuExpanded = false
+                                    navigator?.navigateToEvData()
+                                }
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { settingsMenuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = settingsMenuExpanded,
+                            onDismissRequest = { settingsMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    settingsMenuExpanded = false
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToBackup()
                                 }
                             )
@@ -113,7 +152,8 @@ fun LlmConfigScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },
@@ -134,10 +174,14 @@ fun LlmConfigScreen(
                 isFetchingVersions = isFetchingVersions,
                 isValidating = isValidating,
                 errorMessage = errorMessage,
+                editingConfigId = editingConfigId,
+                validationSuccessMessage = validationSuccessMessage,
                 onModelSelected = { viewModel.onModelSelected(it) },
                 onApiKeyChanged = { viewModel.onApiKeyChanged(it) },
                 onFetchVersions = { viewModel.fetchAvailableVersions() },
                 onVersionSelected = { viewModel.onVersionSelected(it) },
+                onValidate = { viewModel.validateApiKeyAndModel() },
+                onCancelEdit = { viewModel.onCancelEdit() },
                 onSave = { viewModel.saveConfig() }
             )
 
@@ -162,7 +206,10 @@ fun LlmConfigScreen(
                             config = config,
                             onToggleActive = { isActive ->
                                 viewModel.toggleActiveStatus(config.id, isActive)
-                            }
+                            },
+                            onEdit = { viewModel.onEditConfig(config) },
+                            onDuplicate = { viewModel.onDuplicateConfig(config) },
+                            onDelete = { viewModel.deleteConfig(config.id) }
                         )
                     }
                 }
@@ -180,10 +227,14 @@ private fun LlmConfigForm(
     isFetchingVersions: Boolean,
     isValidating: Boolean,
     errorMessage: String?,
+    editingConfigId: Long,
+    validationSuccessMessage: String?,
     onModelSelected: (String) -> Unit,
     onApiKeyChanged: (String) -> Unit,
     onFetchVersions: () -> Unit,
     onVersionSelected: (String) -> Unit,
+    onValidate: () -> Unit,
+    onCancelEdit: () -> Unit,
     onSave: () -> Unit
 ) {
     var expandedModel by remember { mutableStateOf(false) }
@@ -199,10 +250,26 @@ private fun LlmConfigForm(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(R.string.llm_model_label),
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (editingConfigId != 0L) {
+                        stringResource(R.string.llm_edit_title, editingConfigId)
+                    } else {
+                        stringResource(R.string.llm_model_label)
+                    },
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                if (editingConfigId != 0L) {
+                    TextButton(onClick = onCancelEdit) {
+                        Text(stringResource(R.string.llm_cancel_edit))
+                    }
+                }
+            }
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
@@ -255,6 +322,14 @@ private fun LlmConfigForm(
                 )
             }
 
+            if (validationSuccessMessage != null) {
+                Text(
+                    text = stringResource(R.string.llm_validation_success),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             if (availableVersions.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.llm_version_label),
@@ -294,26 +369,39 @@ private fun LlmConfigForm(
                 }
             }
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = onFetchVersions,
-                    enabled = apiKeyInput.isNotBlank() && !isFetchingVersions
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isFetchingVersions) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
+                    Button(
+                        onClick = onFetchVersions,
+                        enabled = apiKeyInput.isNotBlank() && !isFetchingVersions
+                    ) {
+                        if (isFetchingVersions) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        }
+                        Text(stringResource(R.string.llm_fetch_versions_button))
                     }
-                    Text(stringResource(R.string.llm_fetch_versions_button))
+
+                    OutlinedButton(
+                        onClick = onValidate,
+                        enabled = apiKeyInput.isNotBlank() && !isValidating
+                    ) {
+                        Text(stringResource(R.string.llm_validate_button))
+                    }
                 }
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (isValidating) {
                         CircularProgressIndicator(
@@ -336,67 +424,129 @@ private fun LlmConfigForm(
 @Composable
 private fun LlmConfigItemRow(
     config: LlmConfig,
-    onToggleActive: (Boolean) -> Unit
+    onToggleActive: (Boolean) -> Unit,
+    onEdit: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (config.selectedVersion.isNotBlank()) "${config.modelName} (${config.selectedVersion})" else config.modelName,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = stringResource(R.string.llm_api_key_hidden),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (config.createdAt.isNotBlank()) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
-                        text = stringResource(R.string.llm_created_at, config.createdAt),
-                        style = MaterialTheme.typography.labelSmall,
+                        text = if (config.selectedVersion.isNotBlank()) "${config.modelName} (${config.selectedVersion})" else config.modelName,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = stringResource(R.string.llm_api_key_hidden),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (config.createdAt.isNotBlank()) {
+                        Text(
+                            text = stringResource(R.string.llm_created_at, config.createdAt),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (config.updatedAt.isNotBlank()) {
+                        Text(
+                            text = stringResource(R.string.llm_updated_at, config.updatedAt),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-                if (config.updatedAt.isNotBlank()) {
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = stringResource(R.string.llm_updated_at, config.updatedAt),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = if (config.isActive) {
+                            stringResource(R.string.llm_status_active)
+                        } else {
+                            stringResource(R.string.llm_status_inactive)
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Switch(
+                        checked = config.isActive,
+                        onCheckedChange = onToggleActive
                     )
                 }
             }
 
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (config.isActive) {
-                        stringResource(R.string.llm_status_active)
-                    } else {
-                        stringResource(R.string.llm_status_inactive)
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Switch(
-                    checked = config.isActive,
-                    onCheckedChange = onToggleActive
-                )
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit"
+                    )
+                }
+                IconButton(onClick = onDuplicate) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Duplicate"
+                    )
+                }
+                IconButton(onClick = { showDeleteConfirm = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.llm_delete_title)) },
+            text = { Text(stringResource(R.string.llm_delete_confirm_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteConfirm = false
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.llm_delete_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
     }
 }

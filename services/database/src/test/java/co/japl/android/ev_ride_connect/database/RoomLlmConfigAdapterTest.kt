@@ -77,6 +77,17 @@ class RoomLlmConfigAdapterTest {
         assertThat(fakeLlmConfigDao.configs.first().isActive).isFalse()
     }
 
+    @Test
+    fun shouldDeleteConfig() = runTest {
+        val entity = LlmConfigEntity(1L, "ChatGPT", "gpt-4o", "key3", "2025-01-01", "2025-01-01", true)
+        fakeLlmConfigDao.configs.add(entity)
+
+        val deleted = adapter.deleteConfig(1L)
+
+        assertThat(deleted).isTrue()
+        assertThat(fakeLlmConfigDao.configs).isEmpty()
+    }
+
     private class FakeLlmConfigDao : LlmConfigDao {
         val configs = mutableListOf<LlmConfigEntity>()
         private var autoId = 1L
@@ -118,6 +129,11 @@ class RoomLlmConfigAdapterTest {
                 return 1
             }
             return 0
+        }
+
+        override suspend fun deleteConfigById(id: Long): Int {
+            val removed = configs.removeIf { it.id == id }
+            return if (removed) 1 else 0
         }
     }
 }

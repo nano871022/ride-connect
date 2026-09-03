@@ -1,6 +1,9 @@
 package co.japl.android.ev_ride_connect.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -53,7 +58,9 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val latestEvData by viewModel.latestEvData.collectAsState()
-    var menuExpanded by remember { mutableStateOf(false) }
+    val showApiKeyPrompt by viewModel.showApiKeyPrompt.collectAsState()
+    var leftMenuExpanded by remember { mutableStateOf(false) }
+    var settingsMenuExpanded by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -62,55 +69,70 @@ fun DashboardScreen(
                 title = { Text(stringResource(R.string.dashboard_title)) },
                 navigationIcon = {
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(onClick = { leftMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Settings Menu"
+                                contentDescription = "Navigation Menu"
                             )
                         }
                         DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
+                            expanded = leftMenuExpanded,
+                            onDismissRequest = { leftMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToDashboard()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.nav_trip)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToTrip()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.nav_ev_data)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToEvData()
+                                }
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { settingsMenuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = settingsMenuExpanded,
+                            onDismissRequest = { settingsMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    settingsMenuExpanded = false
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToBackup()
                                 }
                             )
@@ -120,7 +142,8 @@ fun DashboardScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },
@@ -256,6 +279,66 @@ fun DashboardScreen(
             }
         )
     }
+
+    if (showApiKeyPrompt) {
+        StartupApiKeyDialog(
+            onConfigure = {
+                viewModel.dismissApiKeyPrompt()
+                navigator?.navigateToLlmConfig()
+            },
+            onDismiss = { viewModel.dismissApiKeyPrompt() }
+        )
+    }
+}
+
+@Composable
+private fun StartupApiKeyDialog(
+    onConfigure: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val videoUrl = "https://www.youtube.com/watch?v=vkX6XTxZBbk"
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.startup_api_key_title)) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.startup_api_key_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = stringResource(R.string.startup_api_key_video_label),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Text(
+                    text = videoUrl,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfigure) {
+                Text(stringResource(R.string.startup_api_key_configure_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        }
+    )
 }
 
 @Composable

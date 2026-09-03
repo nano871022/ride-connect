@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -48,7 +49,8 @@ fun EvDataScreen(
     modifier: Modifier = Modifier
 ) {
     val evDataList by viewModel.evDataList.collectAsState()
-    var menuExpanded by remember { mutableStateOf(false) }
+    var leftMenuExpanded by remember { mutableStateOf(false) }
+    var settingsMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -56,55 +58,70 @@ fun EvDataScreen(
                 title = { Text(stringResource(R.string.ev_data_title)) },
                 navigationIcon = {
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(onClick = { leftMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Settings Menu"
+                                contentDescription = "Navigation Menu"
                             )
                         }
                         DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
+                            expanded = leftMenuExpanded,
+                            onDismissRequest = { leftMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToDashboard()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.nav_trip)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToTrip()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.nav_ev_data)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToEvData()
+                                }
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { settingsMenuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = settingsMenuExpanded,
+                            onDismissRequest = { settingsMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    settingsMenuExpanded = false
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToBackup()
                                 }
                             )
@@ -114,7 +131,8 @@ fun EvDataScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },

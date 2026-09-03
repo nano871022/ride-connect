@@ -47,6 +47,12 @@ class LlmConfigViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _editingConfigId = MutableStateFlow<Long>(0L)
+    val editingConfigId: StateFlow<Long> = _editingConfigId.asStateFlow()
+
+    private val _validationSuccessMessage = MutableStateFlow<String?>(null)
+    val validationSuccessMessage: StateFlow<String?> = _validationSuccessMessage.asStateFlow()
+
     init {
         loadConfigs()
     }
@@ -72,10 +78,67 @@ class LlmConfigViewModel @Inject constructor(
     fun onApiKeyChanged(apiKey: String) {
         _apiKeyInput.value = apiKey
         _errorMessage.value = null
+        _validationSuccessMessage.value = null
     }
 
     fun onVersionSelected(version: String) {
         _selectedVersion.value = version
+    }
+
+    fun onEditConfig(config: LlmConfig) {
+        _editingConfigId.value = config.id
+        _selectedModel.value = config.modelName.ifBlank { AVAILABLE_LLM_MODELS.first() }
+        _apiKeyInput.value = config.apiKey
+        _selectedVersion.value = config.selectedVersion
+        _errorMessage.value = null
+        _validationSuccessMessage.value = null
+    }
+
+    fun onDuplicateConfig(config: LlmConfig) {
+        _editingConfigId.value = 0L
+        _selectedModel.value = config.modelName.ifBlank { AVAILABLE_LLM_MODELS.first() }
+        _apiKeyInput.value = config.apiKey
+        _selectedVersion.value = config.selectedVersion
+        _errorMessage.value = null
+        _validationSuccessMessage.value = null
+    }
+
+    fun onCancelEdit() {
+        _editingConfigId.value = 0L
+        _apiKeyInput.value = ""
+        _selectedVersion.value = ""
+        _availableVersions.value = emptyList()
+        _errorMessage.value = null
+        _validationSuccessMessage.value = null
+    }
+
+    fun deleteConfig(configId: Long) {
+        viewModelScope.launch {
+            llmConfigPort.deleteConfig(configId)
+            if (_editingConfigId.value == configId) {
+                onCancelEdit()
+            }
+            loadConfigs()
+        }
+    }
+
+    fun validateApiKeyAndModel() {
+        val modelName = _selectedModel.value
+        val apiKey = _apiKeyInput.value.trim()
+        if (apiKey.isEmpty()) return
+
+        viewModelScope.launch {
+            _isValidating.value = true
+            _errorMessage.value = null
+            _validationSuccessMessage.value = null
+            val isValid = llmClientPort.validateApiKey(modelName, apiKey)
+            _isValidating.value = false
+            if (isValid) {
+                _validationSuccessMessage.value = "VALIDATION_SUCCESS"
+            } else {
+                _errorMessage.value = "INVALID_API_KEY"
+            }
+        }
     }
 
     fun fetchAvailableVersions() {
@@ -116,16 +179,19 @@ class LlmConfigViewModel @Inject constructor(
                 return@launch
             }
 
-            val newConfig = LlmConfig(
+            val configToSave = LlmConfig(
+                id = _editingConfigId.value,
                 modelName = modelName,
                 selectedVersion = _selectedVersion.value,
                 apiKey = apiKey,
                 isActive = true
             )
-            llmConfigPort.saveConfig(newConfig)
+            llmConfigPort.saveConfig(configToSave)
+            _editingConfigId.value = 0L
             _apiKeyInput.value = ""
             _availableVersions.value = emptyList()
             _selectedVersion.value = ""
+            _validationSuccessMessage.value = null
             loadConfigs()
         }
     }

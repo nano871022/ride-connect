@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -78,7 +79,8 @@ fun TripScreen(
     val latestBatteryLevel by viewModel.latestBatteryLevel.collectAsState()
     val calculatedNewKm by viewModel.calculatedNewKm.collectAsState()
 
-    var menuExpanded by remember { mutableStateOf(false) }
+    var leftMenuExpanded by remember { mutableStateOf(false) }
+    var settingsMenuExpanded by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -92,55 +94,70 @@ fun TripScreen(
                 title = { Text(stringResource(R.string.trip_title)) },
                 navigationIcon = {
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(onClick = { leftMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Settings Menu"
+                                contentDescription = "Navigation Menu"
                             )
                         }
                         DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
+                            expanded = leftMenuExpanded,
+                            onDismissRequest = { leftMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToDashboard()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.nav_trip)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToTrip()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.nav_ev_data)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToEvData()
+                                }
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { settingsMenuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = settingsMenuExpanded,
+                            onDismissRequest = { settingsMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    settingsMenuExpanded = false
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToBackup()
                                 }
                             )
@@ -150,7 +167,8 @@ fun TripScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },

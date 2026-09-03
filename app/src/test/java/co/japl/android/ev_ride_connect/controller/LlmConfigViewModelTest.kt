@@ -128,6 +128,54 @@ class LlmConfigViewModelTest {
         assertThat(viewModel.activeConfigs.value).isEmpty()
     }
 
+    @Test
+    fun shouldDeleteConfigAndReload() = runTest {
+        viewModel.deleteConfig(1L)
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.configs.value).hasSize(1)
+        assertThat(viewModel.configs.value.first().id).isEqualTo(2L)
+    }
+
+    @Test
+    fun shouldPopulateFormOnEditAndSaveExistingConfig() = runTest {
+        fakeLlmClientPort.shouldValidateSuccessfully = true
+
+        val existing = LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "key-gemini")
+        viewModel.onEditConfig(existing)
+
+        assertThat(viewModel.editingConfigId.value).isEqualTo(1L)
+        assertThat(viewModel.apiKeyInput.value).isEqualTo("key-gemini")
+
+        viewModel.onApiKeyChanged("key-gemini-updated")
+        viewModel.saveConfig()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.editingConfigId.value).isEqualTo(0L)
+        val updated = viewModel.configs.value.find { it.id == 1L }
+        assertThat(updated?.apiKey).isEqualTo("key-gemini-updated")
+    }
+
+    @Test
+    fun shouldPopulateFormOnDuplicateAndSaveAsNewConfig() = runTest {
+        fakeLlmClientPort.shouldValidateSuccessfully = true
+
+        val existing = LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "key-gemini")
+        viewModel.onDuplicateConfig(existing)
+
+        assertThat(viewModel.editingConfigId.value).isEqualTo(0L)
+        assertThat(viewModel.apiKeyInput.value).isEqualTo("key-gemini")
+
+        viewModel.saveConfig()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.configs.value).hasSize(3)
+        assertThat(viewModel.configs.value.last().id).isEqualTo(3L)
+    }
+
     private class FakeLlmConfigPort : LlmConfigPort {
         val configs = mutableListOf(
             LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "key-gemini", createdAt = "2025-01-01", updatedAt = "2025-01-01", isActive = true),
@@ -146,7 +194,12 @@ class LlmConfigViewModelTest {
         override suspend fun saveConfig(config: LlmConfig): Long {
             val id = if (config.id == 0L) autoId++ else config.id
             val newConfig = config.copy(id = id)
-            configs.add(newConfig)
+            val index = configs.indexOfFirst { it.id == id }
+            if (index >= 0) {
+                configs[index] = newConfig
+            } else {
+                configs.add(newConfig)
+            }
             return id
         }
 
@@ -157,6 +210,10 @@ class LlmConfigViewModelTest {
                 return true
             }
             return false
+        }
+
+        override suspend fun deleteConfig(id: Long): Boolean {
+            return configs.removeIf { it.id == id }
         }
     }
 

@@ -71,6 +71,18 @@
     <string name="llm_fetch_versions_button">Fetch Versions</string>
     <string name="llm_fetching_versions">Fetching versions...</string>
     <string name="llm_version_display">Version: %1$s</string>
+    <string name="llm_edit_title">Editing Configuration #%1$d</string>
+    <string name="llm_cancel_edit">Cancel Edit</string>
+    <string name="llm_duplicate_button">Duplicate</string>
+    <string name="llm_delete_title">Delete Configuration</string>
+    <string name="llm_delete_confirm_message">Are you sure you want to delete this LLM configuration?</string>
+    <string name="llm_delete_button">Delete</string>
+    <string name="llm_validate_button">Validate Connection</string>
+    <string name="llm_validation_success">API Key and model validated successfully.</string>
+    <string name="startup_api_key_title">API Key Required</string>
+    <string name="startup_api_key_message">To use the app features with AI, you must register an API Key for the model you want to use.</string>
+    <string name="startup_api_key_video_label">Watch video guide:</string>
+    <string name="startup_api_key_configure_button">I want to configure it</string>
 
     <!-- EV Configuration -->
     <string name="ev_config_title">EV Configuration</string>
@@ -103,6 +115,10 @@
     <string name="ev_loaded_status">EV Loaded into System</string>
     <string name="ev_llm_prompt_template">Identify specs for EV query: \"%1$s\". Respond with JSON containing keys: brand, version, motors (array of objects with name and watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
     <string name="nav_ev_config">Configure EV</string>
+    <string name="ev_search_dialog_title">Searching EV Information</string>
+    <string name="ev_search_dialog_processing">Processing query with the latest active model...</string>
+    <string name="ev_search_retry_button">Retry Search</string>
+    <string name="ev_no_active_model">No active LLM model configured. Please configure an API key first.</string>
 
     <!-- Trip Tracking -->
     <string name="trip_title">Trip Tracking</string>
