@@ -7,4 +7,5 @@ interface LlmConfigPort {
     suspend fun getActiveConfigs(): List<LlmConfig>
     suspend fun saveConfig(config: LlmConfig): Long
     suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean
+    suspend fun deleteConfig(id: Long): Boolean
 }

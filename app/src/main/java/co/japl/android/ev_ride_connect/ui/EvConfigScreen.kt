@@ -18,20 +18,24 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -62,9 +66,9 @@ fun EvConfigScreen(
     val isLoadingLlm by viewModel.isLoadingLlm.collectAsState()
     val llmErrorMessage by viewModel.llmErrorMessage.collectAsState()
     val statusMessage by viewModel.statusMessage.collectAsState()
-    val activeLlmConfigs by viewModel.activeLlmConfigs.collectAsState()
-    val selectedLlmConfig by viewModel.selectedLlmConfig.collectAsState()
-    var menuExpanded by remember { mutableStateOf(false) }
+    val isSearchDialogVisible by viewModel.isSearchDialogVisible.collectAsState()
+    var leftMenuExpanded by remember { mutableStateOf(false) }
+    var settingsMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -72,41 +76,70 @@ fun EvConfigScreen(
                 title = { Text(stringResource(R.string.ev_config_title)) },
                 navigationIcon = {
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(onClick = { leftMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Settings Menu"
+                                contentDescription = "Navigation Menu"
                             )
                         }
                         DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
+                            expanded = leftMenuExpanded,
+                            onDismissRequest = { leftMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dashboard_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    leftMenuExpanded = false
                                     navigator?.navigateToDashboard()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_trip)) },
+                                onClick = {
+                                    leftMenuExpanded = false
+                                    navigator?.navigateToTrip()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.nav_ev_data)) },
+                                onClick = {
+                                    leftMenuExpanded = false
+                                    navigator?.navigateToEvData()
+                                }
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { settingsMenuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = settingsMenuExpanded,
+                            onDismissRequest = { settingsMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.llm_config_title)) },
+                                onClick = {
+                                    settingsMenuExpanded = false
+                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.ev_config_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    navigator?.navigateToLlmConfig()
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.backup_title)) },
                                 onClick = {
-                                    menuExpanded = false
+                                    settingsMenuExpanded = false
                                     navigator?.navigateToBackup()
                                 }
                             )
@@ -116,7 +149,8 @@ fun EvConfigScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         },
@@ -132,12 +166,8 @@ fun EvConfigScreen(
         ) {
             AiRequestSection(
                 request = evConfig.request,
-                activeLlmConfigs = activeLlmConfigs,
-                selectedLlmConfig = selectedLlmConfig,
                 isLoadingLlm = isLoadingLlm,
-                llmErrorMessage = llmErrorMessage,
                 onRequestChanged = { viewModel.onRequestChanged(it) },
-                onSelectLlmConfig = { viewModel.onSelectLlmConfig(it) },
                 onRequestAi = { viewModel.requestEvInfoFromLlm() }
             )
 
@@ -193,21 +223,24 @@ fun EvConfigScreen(
             )
         }
     }
+
+    if (isSearchDialogVisible) {
+        EvSearchProgressDialog(
+            isLoading = isLoadingLlm,
+            errorMessage = llmErrorMessage,
+            onRetry = { viewModel.requestEvInfoFromLlm() },
+            onDismiss = { viewModel.dismissSearchDialog() }
+        )
+    }
 }
 
 @Composable
 private fun AiRequestSection(
     request: String,
-    activeLlmConfigs: List<LlmConfig>,
-    selectedLlmConfig: LlmConfig?,
     isLoadingLlm: Boolean,
-    llmErrorMessage: String?,
     onRequestChanged: (String) -> Unit,
-    onSelectLlmConfig: (LlmConfig) -> Unit,
     onRequestAi: () -> Unit
 ) {
-    var dropdownExpanded by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -232,61 +265,11 @@ private fun AiRequestSection(
                 singleLine = false
             )
 
-            if (activeLlmConfigs.isNotEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = selectedLlmConfig?.modelName ?: stringResource(R.string.llm_model_label),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.llm_model_label)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                                modifier = Modifier.clickable { dropdownExpanded = !dropdownExpanded }
-                            )
-                        }
-                    )
-
-                    DropdownMenu(
-                        expanded = dropdownExpanded,
-                        onDismissRequest = { dropdownExpanded = false },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        activeLlmConfigs.forEach { config ->
-                            DropdownMenuItem(
-                                text = { Text(config.modelName) },
-                                onClick = {
-                                    onSelectLlmConfig(config)
-                                    dropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            val currentErrorMsg = llmErrorMessage
-            if (currentErrorMsg != null) {
-                Text(
-                    text = currentErrorMsg,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isLoadingLlm) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 12.dp)
-                    )
-                }
-
                 Button(
                     onClick = onRequestAi,
                     enabled = !isLoadingLlm && request.isNotBlank()
@@ -296,6 +279,57 @@ private fun AiRequestSection(
             }
         }
     }
+}
+
+@Composable
+private fun EvSearchProgressDialog(
+    isLoading: Boolean,
+    errorMessage: String?,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            if (!isLoading) onDismiss()
+        },
+        title = { Text(stringResource(R.string.ev_search_dialog_title)) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (isLoading) {
+                    Text(stringResource(R.string.ev_search_dialog_processing))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else if (errorMessage != null) {
+                    val errorText = when (errorMessage) {
+                        "NO_ACTIVE_LLM_CONFIG" -> stringResource(R.string.ev_no_active_model)
+                        "INVALID_API_KEY" -> stringResource(R.string.llm_validation_error)
+                        else -> errorMessage
+                    }
+                    Text(
+                        text = errorText,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (!isLoading && errorMessage != null) {
+                Button(onClick = onRetry) {
+                    Text(stringResource(R.string.ev_search_retry_button))
+                }
+            }
+        },
+        dismissButton = {
+            if (!isLoading) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        }
+    )
 }
 
 @Composable

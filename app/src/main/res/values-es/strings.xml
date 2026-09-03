@@ -71,6 +71,18 @@
     <string name="llm_fetch_versions_button">Obtener Versiones</string>
     <string name="llm_fetching_versions">Obteniendo versiones...</string>
     <string name="llm_version_display">Versión: %1$s</string>
+    <string name="llm_edit_title">Editando Configuración #%1$d</string>
+    <string name="llm_cancel_edit">Cancelar Edición</string>
+    <string name="llm_duplicate_button">Duplicar</string>
+    <string name="llm_delete_title">Eliminar Configuración</string>
+    <string name="llm_delete_confirm_message">¿Está seguro de que desea eliminar esta configuración LLM?</string>
+    <string name="llm_delete_button">Eliminar</string>
+    <string name="llm_validate_button">Validar Conexión</string>
+    <string name="llm_validation_success">API Key y modelo validados con éxito.</string>
+    <string name="startup_api_key_title">Configuración de API Key Requerida</string>
+    <string name="startup_api_key_message">Para utilizar las funciones de la app, debe registrar la API Key del modelo que desea utilizar.</string>
+    <string name="startup_api_key_video_label">Vea el video de cómo obtenerla:</string>
+    <string name="startup_api_key_configure_button">Quiero configurarlo</string>
 
     <!-- Configuración EV -->
     <string name="ev_config_title">Configuración del Vehículo Eléctrico</string>
@@ -103,6 +115,10 @@
     <string name="ev_loaded_status">EV Cargado en el Sistema</string>
     <string name="ev_llm_prompt_template">Identificar especificaciones para la consulta de EV: \"%1$s\". Responder con JSON que contenga las claves: brand, version, motors (arreglo de objetos con name y watts), manufactoryYear, manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.</string>
     <string name="nav_ev_config">Configurar EV</string>
+    <string name="ev_search_dialog_title">Buscando Información del EV</string>
+    <string name="ev_search_dialog_processing">Procesando consulta con el último modelo activo...</string>
+    <string name="ev_search_retry_button">Volver a ejecutar</string>
+    <string name="ev_no_active_model">No hay ningún modelo LLM activo configurado. Por favor registre una API Key.</string>
 
     <!-- Trip Tracking -->
     <string name="trip_title">Seguimiento de Viaje</string>

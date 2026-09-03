@@ -27,4 +27,7 @@ interface LlmConfigDao {
 
     @Query("UPDATE llm_configs SET is_active = :isActive, updated_at = :updatedAt WHERE id = :id")
     suspend fun updateActiveStatus(id: Long, isActive: Boolean, updatedAt: String): Int
+
+    @Query("DELETE FROM llm_configs WHERE id = :id")
+    suspend fun deleteConfigById(id: Long): Int
 }

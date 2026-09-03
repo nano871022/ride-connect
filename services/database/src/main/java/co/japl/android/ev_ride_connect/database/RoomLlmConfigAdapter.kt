@@ -42,6 +42,11 @@ class RoomLlmConfigAdapter(
         return updatedRows > 0
     }
 
+    override suspend fun deleteConfig(id: Long): Boolean {
+        val deletedRows = llmConfigDao.deleteConfigById(id)
+        return deletedRows > 0
+    }
+
     private fun LlmConfigEntity.toDomain(): LlmConfig {
         return LlmConfig(
             id = id,
