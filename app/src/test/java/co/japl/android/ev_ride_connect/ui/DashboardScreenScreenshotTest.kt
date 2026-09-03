@@ -4,13 +4,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import co.japl.android.ev_ride_connect.core.domain.EvConfig
+import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,30 +23,24 @@ class DashboardScreenScreenshotTest {
 
     @Test
     fun captureDashboardScreenshot() {
-        val testState = ScooterState(
-            isLocked = false,
-            speedMode = 2,
-            currentSpeed = 25,
-            realtimeVoltage = 520,
-            batteryPercentage = 85,
-            totalOdometer = 120,
-            isLightOn = true
+        val testEvData = EvData(
+            evCode = "EV01",
+            km = 120L,
+            batteryLevel = 85
         )
 
-        val fakeBlePort = object : BleScooterPort {
-            override fun observeScooterState(): Flow<ScooterState> = flowOf(testState)
-            override fun sendCommand(dpId: Int, value: Any) {}
+        val fakeEvDataPort = object : EvDataPort {
+            override suspend fun getLatestEvData(): EvData? = testEvData
+            override suspend fun getAllEvData(): List<EvData> = listOf(testEvData)
+            override suspend fun saveEvData(evData: EvData): Long = 1L
         }
 
-        val fakeTripPort = object : TripDatabasePort {
-            override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
-            override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
-            override suspend fun getAllTrips(): List<Trip> = emptyList()
-            override suspend fun getTripById(tripId: Long): Trip? = null
-            override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
+        val fakeEvConfigPort = object : EvConfigPort {
+            override suspend fun getEvConfig(): EvConfig? = EvConfig(id = 1L, request = "Vsett C7")
+            override suspend fun saveEvConfig(config: EvConfig): Long = 1L
         }
 
-        val viewModel = DashboardViewModel(fakeBlePort, fakeTripPort)
+        val viewModel = DashboardViewModel(fakeEvDataPort, fakeEvConfigPort)
 
         composeTestRule.setContent {
             MaterialThemeComposeUI {
@@ -57,6 +48,6 @@ class DashboardScreenScreenshotTest {
             }
         }
 
-        composeTestRule.onNodeWithText("km/h", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("120", substring = true).assertExists()
     }
 }

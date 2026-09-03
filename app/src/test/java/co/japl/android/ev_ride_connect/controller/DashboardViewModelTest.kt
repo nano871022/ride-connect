@@ -1,17 +1,12 @@
 package co.japl.android.ev_ride_connect.controller
 
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.domain.EvConfig
+import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -26,16 +21,16 @@ class DashboardViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val podamFactory = PodamFactoryImpl()
-    private lateinit var fakeBlePort: FakeBleScooterPort
-    private lateinit var fakeTripPort: FakeTripDatabasePort
+    private lateinit var fakeEvDataPort: FakeEvDataPort
+    private lateinit var fakeEvConfigPort: FakeEvConfigPort
     private lateinit var viewModel: DashboardViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        fakeBlePort = FakeBleScooterPort()
-        fakeTripPort = FakeTripDatabasePort()
-        viewModel = DashboardViewModel(fakeBlePort, fakeTripPort)
+        fakeEvDataPort = FakeEvDataPort()
+        fakeEvConfigPort = FakeEvConfigPort()
+        viewModel = DashboardViewModel(fakeEvDataPort, fakeEvConfigPort)
     }
 
     @After
@@ -44,108 +39,57 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun shouldObserveScooterStateFromBlePort() = runTest {
-        val expectedState = ScooterState(
-            isLocked = true,
-            speedMode = 2,
-            currentSpeed = 25,
-            realtimeVoltage = 520,
-            batteryPercentage = 85,
-            totalOdometer = 250,
-            isLightOn = true
-        )
+    fun shouldLoadLatestEvDataOnInit() = runTest {
+        val initialEvData = EvData(evCode = "EV01", km = 150L, batteryLevel = 80)
+        fakeEvDataPort.savedList.add(initialEvData)
 
-        val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.scooterState.collect {}
-        }
-        fakeBlePort.emitState(expectedState)
+        viewModel.loadLatestEvData()
         testScheduler.runCurrent()
 
-        assertThat(viewModel.scooterState.value).isEqualTo(expectedState)
-        collectJob.cancel()
+        assertThat(viewModel.latestEvData.value).isEqualTo(initialEvData)
     }
 
     @Test
-    fun shouldToggleLockCommand() = runTest {
-        val initialState = ScooterState(
-            isLocked = false,
-            speedMode = 1,
-            currentSpeed = 0,
-            realtimeVoltage = 500,
-            batteryPercentage = 80,
-            totalOdometer = 100,
-            isLightOn = false
-        )
-        fakeBlePort.emitState(initialState)
+    fun shouldSaveEvDataAndRefreshLatest() = runTest {
+        val config = EvConfig(id = 5L, request = "Vsett C7")
+        fakeEvConfigPort.config = config
+
+        viewModel.saveEvData(200L, 90)
         testScheduler.runCurrent()
 
-        viewModel.toggleLock()
-
-        assertThat(fakeBlePort.lastCommandDpId).isEqualTo(1)
-        assertThat(fakeBlePort.lastCommandValue).isEqualTo(true)
+        assertThat(fakeEvDataPort.savedList).hasSize(1)
+        val saved = fakeEvDataPort.savedList.first()
+        assertThat(saved.evCode).isEqualTo("5")
+        assertThat(saved.km).isEqualTo(200L)
+        assertThat(saved.batteryLevel).isEqualTo(90.toShort())
+        assertThat(viewModel.latestEvData.value?.km).isEqualTo(200L)
     }
 
-    @Test
-    fun shouldToggleLightCommand() = runTest {
-        val initialState = ScooterState(
-            isLocked = false,
-            speedMode = 1,
-            currentSpeed = 0,
-            realtimeVoltage = 500,
-            batteryPercentage = 80,
-            totalOdometer = 100,
-            isLightOn = false
-        )
-        fakeBlePort.emitState(initialState)
-        testScheduler.runCurrent()
+    private class FakeEvDataPort : EvDataPort {
+        val savedList = mutableListOf<EvData>()
 
-        viewModel.toggleLight()
-
-        assertThat(fakeBlePort.lastCommandDpId).isEqualTo(4)
-        assertThat(fakeBlePort.lastCommandValue).isEqualTo(true)
-    }
-
-    @Test
-    fun shouldSetSpeedModeCommand() = runTest {
-        viewModel.setSpeedMode(2)
-
-        assertThat(fakeBlePort.lastCommandDpId).isEqualTo(2)
-        assertThat(fakeBlePort.lastCommandValue).isEqualTo(2)
-    }
-
-    private class FakeBleScooterPort : BleScooterPort {
-        private val _stateFlow = MutableStateFlow(
-            ScooterState(
-                isLocked = false,
-                speedMode = 0,
-                currentSpeed = 0,
-                realtimeVoltage = 0,
-                batteryPercentage = 0,
-                totalOdometer = 0,
-                isLightOn = false
-            )
-        )
-
-        var lastCommandDpId: Int? = null
-        var lastCommandValue: Any? = null
-
-        fun emitState(state: ScooterState) {
-            _stateFlow.value = state
+        override suspend fun getLatestEvData(): EvData? {
+            return savedList.lastOrNull()
         }
 
-        override fun observeScooterState() = _stateFlow.asStateFlow()
+        override suspend fun getAllEvData(): List<EvData> {
+            return savedList.toList()
+        }
 
-        override fun sendCommand(dpId: Int, value: Any) {
-            lastCommandDpId = dpId
-            lastCommandValue = value
+        override suspend fun saveEvData(evData: EvData): Long {
+            savedList.add(evData)
+            return savedList.size.toLong()
         }
     }
 
-    private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
-        override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
-        override suspend fun getAllTrips(): List<Trip> = emptyList()
-        override suspend fun getTripById(tripId: Long): Trip? = null
-        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
+    private class FakeEvConfigPort : EvConfigPort {
+        var config: EvConfig? = null
+
+        override suspend fun getEvConfig(): EvConfig? = config
+
+        override suspend fun saveEvConfig(config: EvConfig): Long {
+            this.config = config
+            return 1L
+        }
     }
 }

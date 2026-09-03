@@ -47,9 +47,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
+import co.japl.android.ev_ride_connect.navigation.AppNavigator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -189,7 +189,7 @@ fun EvConfigScreen(
             ActionButtonsSection(
                 isLoaded = evConfig.isLoaded,
                 onSave = { viewModel.saveEvConfig() },
-                onLoadAndConnect = { viewModel.loadEvAndConnectBle() }
+                onLoad = { viewModel.loadEv() }
             )
         }
     }
@@ -597,7 +597,7 @@ private fun ChargingAndOtherSection(
 private fun ActionButtonsSection(
     isLoaded: Boolean,
     onSave: () -> Unit,
-    onLoadAndConnect: () -> Unit
+    onLoad: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -630,10 +630,10 @@ private fun ActionButtonsSection(
                 }
 
                 Button(
-                    onClick = onLoadAndConnect,
+                    onClick = onLoad,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.ev_load_ble_button))
+                    Text(stringResource(R.string.ev_save_button))
                 }
             }
         }

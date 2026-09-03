@@ -7,8 +7,11 @@ import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +28,9 @@ import javax.inject.Inject
 @HiltViewModel
 class TripViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val tripDatabasePort: TripDatabasePort
+    private val tripDatabasePort: TripDatabasePort,
+    private val evDataPort: EvDataPort,
+    private val evConfigPort: EvConfigPort
 ) : ViewModel() {
 
     private val _isTripActive = MutableStateFlow(false)
@@ -52,6 +57,18 @@ class TripViewModel @Inject constructor(
     private val _currentAverageSpeed = MutableStateFlow(0.0)
     val currentAverageSpeed: StateFlow<Double> = _currentAverageSpeed.asStateFlow()
 
+    private val _showStartBatteryDialog = MutableStateFlow(false)
+    val showStartBatteryDialog: StateFlow<Boolean> = _showStartBatteryDialog.asStateFlow()
+
+    private val _showEndBatteryDialog = MutableStateFlow(false)
+    val showEndBatteryDialog: StateFlow<Boolean> = _showEndBatteryDialog.asStateFlow()
+
+    private val _latestBatteryLevel = MutableStateFlow<Short>(0)
+    val latestBatteryLevel: StateFlow<Short> = _latestBatteryLevel.asStateFlow()
+
+    private val _calculatedNewKm = MutableStateFlow(0L)
+    val calculatedNewKm: StateFlow<Long> = _calculatedNewKm.asStateFlow()
+
     private val recordedGpsPoints = mutableListOf<TripGps>()
 
     private var timerJob: Job? = null
@@ -65,6 +82,41 @@ class TripViewModel @Inject constructor(
         val interval = seconds.coerceAtLeast(1L)
         _gpsIntervalSeconds.value = interval
         _showBatteryWarning.value = interval < 30L
+    }
+
+    fun onStartTripRequested() {
+        if (_isTripActive.value) return
+        viewModelScope.launch {
+            val latestEvData = evDataPort.getLatestEvData()
+            _latestBatteryLevel.value = latestEvData?.batteryLevel ?: 0
+            _showStartBatteryDialog.value = true
+        }
+    }
+
+    fun confirmStartTrip(batteryLevel: Short) {
+        _showStartBatteryDialog.value = false
+        viewModelScope.launch {
+            val evConfig = evConfigPort.getEvConfig()
+            val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
+                ?: evConfig?.request?.takeIf { it.isNotBlank() }
+                ?: "EV01"
+            val currentEvData = evDataPort.getLatestEvData()
+            val currentKm = currentEvData?.km ?: 0L
+
+            evDataPort.saveEvData(
+                EvData(
+                    evCode = evCode,
+                    km = currentKm,
+                    batteryLevel = batteryLevel,
+                    createTmst = System.currentTimeMillis()
+                )
+            )
+            startTrip()
+        }
+    }
+
+    fun cancelStartTrip() {
+        _showStartBatteryDialog.value = false
     }
 
     fun startTrip() {
@@ -105,6 +157,44 @@ class TripViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun onStopTripRequested() {
+        if (!_isTripActive.value) return
+        viewModelScope.launch {
+            val totalDistance = recordedGpsPoints.sumOf { it.distance }
+            val latestEvData = evDataPort.getLatestEvData()
+            val previousKm = latestEvData?.km ?: 0L
+            val addedKm = Math.round(totalDistance)
+            _calculatedNewKm.value = previousKm + addedKm
+            _latestBatteryLevel.value = latestEvData?.batteryLevel ?: 0
+            _showEndBatteryDialog.value = true
+        }
+    }
+
+    fun confirmStopTrip(batteryLevel: Short) {
+        _showEndBatteryDialog.value = false
+        val newKm = _calculatedNewKm.value
+        viewModelScope.launch {
+            val evConfig = evConfigPort.getEvConfig()
+            val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
+                ?: evConfig?.request?.takeIf { it.isNotBlank() }
+                ?: "EV01"
+
+            evDataPort.saveEvData(
+                EvData(
+                    evCode = evCode,
+                    km = newKm,
+                    batteryLevel = batteryLevel,
+                    createTmst = System.currentTimeMillis()
+                )
+            )
+            stopTrip()
+        }
+    }
+
+    fun cancelStopTrip() {
+        _showEndBatteryDialog.value = false
     }
 
     fun fetchCurrentLocation(): Pair<Double, Double>? {

@@ -37,6 +37,12 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun shouldNavigateToEvData() {
+        navigator.navigateToEvData()
+        assertThat(navigator.currentScreen.value).isEqualTo(AppScreen.EV_DATA)
+    }
+
+    @Test
     fun shouldNavigateToDashboard() {
         navigator.navigateToEvConfig()
         navigator.navigateToDashboard()

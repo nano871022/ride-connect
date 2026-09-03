@@ -3,15 +3,18 @@ package co.japl.android.ev_ride_connect.database.di
 import android.content.Context
 import androidx.room.Room
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.database.AppDatabase
 import co.japl.android.ev_ride_connect.database.GoogleDriveBackupHelper
 import co.japl.android.ev_ride_connect.database.RoomEvConfigAdapter
+import co.japl.android.ev_ride_connect.database.RoomEvDataAdapter
 import co.japl.android.ev_ride_connect.database.RoomLlmConfigAdapter
 import co.japl.android.ev_ride_connect.database.RoomTripAdapter
 import co.japl.android.ev_ride_connect.database.dao.EvConfigDao
+import co.japl.android.ev_ride_connect.database.dao.EvDataDao
 import co.japl.android.ev_ride_connect.database.dao.LlmConfigDao
 import co.japl.android.ev_ride_connect.database.dao.TripDao
 import dagger.Module
@@ -69,6 +72,18 @@ object DatabaseModule {
     @Singleton
     fun provideEvConfigPort(evConfigDao: EvConfigDao): EvConfigPort {
         return RoomEvConfigAdapter(evConfigDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEvDataDao(database: AppDatabase): EvDataDao {
+        return database.evDataDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideEvDataPort(evDataDao: EvDataDao): EvDataPort {
+        return RoomEvDataAdapter(evDataDao)
     }
 
     @Provides
