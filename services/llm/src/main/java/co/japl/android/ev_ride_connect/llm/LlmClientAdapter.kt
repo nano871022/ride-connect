@@ -101,7 +101,7 @@ class LlmClientAdapter @Inject constructor() : LlmClientPort {
     private fun getDefaultModels(modelName: String): List<String> {
         return when {
             modelName.contains("gemini", ignoreCase = true) ->
-                listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-2.5-pro")
+                listOf("gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.8-flash")
             modelName.contains("deepseek", ignoreCase = true) ->
                 listOf("deepseek-chat", "deepseek-coder", "deepseek-r1")
             modelName.contains("chatgpt", ignoreCase = true) || modelName.contains("openai", ignoreCase = true) ->
