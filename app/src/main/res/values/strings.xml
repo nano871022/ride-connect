@@ -43,6 +43,52 @@
     <string name="no_data">No records found</string>
     <string name="nav_ev_data">EV History</string>
 
+    <!-- History & Telemetry Design -->
+    <string name="history_title">History</string>
+    <string name="history_connected">Connected</string>
+    <string name="history_total_odometer">Total Odometer</string>
+    <string name="history_today_km">+14.2 km today</string>
+    <string name="history_trips">Trips</string>
+    <string name="history_routes_unit">routes</string>
+    <string name="history_cloud_sync">100% sync cloud</string>
+    <string name="history_efficiency">Efficiency</string>
+    <string name="history_efficiency_unit">Wh/km</string>
+    <string name="history_mode_sport_eco">Sport Eco Mode</string>
+    <string name="history_current_battery">Current Battery</string>
+    <string name="history_battery_unit">%</string>
+    <string name="history_voltage_stable">52.4V stable</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_week">Last Week</string>
+    <string name="history_filter_month">This Month</string>
+    <string name="history_filter_charge">Charges Only</string>
+    <string name="history_recent_records">Recent Records</string>
+    <string name="history_order_chronological">Order: Chronological</string>
+    <string name="history_active_session_ended">Active session ended</string>
+    <string name="history_status_completed">Completed</string>
+    <string name="history_distance_traveled">Distance Traveled</string>
+    <string name="history_consumption">Consumption</string>
+    <string name="history_battery">Battery</string>
+    <string name="history_duration">Duration</string>
+    <string name="history_avg_speed">Avg Speed</string>
+    <string name="history_view_telemetry">View Telemetry</string>
+    <string name="history_gpx">GPX</string>
+    <string name="history_internal_workshop">Internal workshop check</string>
+    <string name="history_operation">Operation</string>
+    <string name="history_static_calibration">Static calibration</string>
+    <string name="history_domestic_charge">Domestic charge 54.6V / 2A</string>
+    <string name="history_charge_delta">Charge Delta</string>
+    <string name="history_top_off">+3% (Top-off)</string>
+    <string name="history_maintenance_title">Lifespan &amp; Maintenance</string>
+    <string name="history_optimal_health">Optimal Health</string>
+    <string name="history_brake_pads">Brake Pads (Front / Rear)</string>
+    <string name="history_next_inspection">Next inspection in 350 km</string>
+    <string name="history_tires">Tires 10x3.0 CST Street</string>
+    <string name="history_recommended_pressure">Recommended pressure: 45 PSI</string>
+    <string name="history_battery_cycles">Li-Ion Battery Cycles</string>
+    <string name="history_degradation_est">Estimated degradation: &lt; 0.5%</string>
+    <string name="history_remaining_life">97.2% remaining life</string>
+    <string name="history_log_event">Register Event</string>
+
     <!-- Backup -->
     <string name="backup_title">Google Drive Backup</string>
     <string name="backup_now">Backup Now</string>
