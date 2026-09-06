@@ -14,6 +14,12 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun shouldDefaultToSplash() {
+        val defaultNav = AppNavigator()
+        assertThat(defaultNav.currentScreen.value).isEqualTo(AppScreen.SPLASH)
+    }
+
+    @Test
     fun shouldInitializeWithGivenScreen() {
         assertThat(navigator.currentScreen.value).isEqualTo(AppScreen.DASHBOARD)
     }

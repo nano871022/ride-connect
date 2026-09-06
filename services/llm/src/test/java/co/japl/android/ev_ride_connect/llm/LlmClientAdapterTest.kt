@@ -38,7 +38,7 @@ class LlmClientAdapterTest {
     fun shouldFetchAvailableModelsForProvider() = runTest {
         val models = adapter.fetchAvailableModels("Gemini", "valid-api-key-12345")
         assertThat(models).isNotEmpty()
-        assertThat(models).contains("gemini-1.5-flash")
+        assertThat(models).contains("gemini-3.5-flash")
     }
 
     @Test

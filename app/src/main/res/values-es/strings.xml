@@ -19,6 +19,10 @@
     <string name="speed_mode_drive">NORMAL</string>
     <string name="speed_mode_sport">SPORT</string>
 
+    <!-- Pantalla Splash -->
+    <string name="splash_loading_message">Cargando EV Ride Connect...</string>
+    <string name="splash_loading_data">Inicializando base de datos y configuración...</string>
+
     <!-- Datos EV -->
     <string name="ev_data_title">Historial de Datos EV</string>
     <string name="km_label">Kilómetros Recorridos</string>

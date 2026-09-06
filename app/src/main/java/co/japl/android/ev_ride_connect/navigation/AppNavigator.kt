@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 enum class AppScreen {
+    SPLASH,
     DASHBOARD,
     EV_CONFIG,
     LLM_CONFIG,
@@ -14,7 +15,7 @@ enum class AppScreen {
     TRIP_DETAIL
 }
 
-class AppNavigator(initialScreen: AppScreen = AppScreen.DASHBOARD) {
+class AppNavigator(initialScreen: AppScreen = AppScreen.SPLASH) {
 
     private val _currentScreen = MutableStateFlow(initialScreen)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
