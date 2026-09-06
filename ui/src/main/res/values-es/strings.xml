@@ -7,4 +7,20 @@
     <string name="action_retry">Reintentar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_ok">Aceptar</string>
+
+    <!-- Live Trip HUD Strings in UI module -->
+    <string name="trip_gps_accuracy">GPS ±2.5m (%1$d sats)</string>
+    <string name="trip_live_telemetry">Telemetría en Vivo</string>
+    <string name="trip_interval_seconds">%1$d s</string>
+    <string name="trip_mode_sport_plus">SPORT +</string>
+    <string name="trip_timer_label">Tiempo Transcurrido</string>
+    <string name="trip_distance_label">Distancia</string>
+    <string name="km_unit">km</string>
+    <string name="trip_current_speed_label">Vel. Actual</string>
+    <string name="speed_unit">km/h</string>
+    <string name="trip_avg_speed_label">Vel. Media</string>
+    <string name="trip_power_consumption_label">Consumo</string>
+    <string name="trip_power_consumption_unit">W</string>
+    <string name="trip_co2_saved_label">CO₂ Ahorrado</string>
+    <string name="trip_co2_saved_unit">g</string>
 </resources>

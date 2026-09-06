@@ -215,4 +215,21 @@
     <string name="trip_point_distance">Distancia: %1$.2f km</string>
     <string name="trip_back_button">Volver</string>
     <string name="nav_trip">Seguimiento de Viaje</string>
+
+    <!-- Live Trip HUD Strings -->
+    <string name="trip_connected_status">VSETT C7+ • Conectado</string>
+    <string name="trip_gps_accuracy">GPS ±2.5m (%1$d sats)</string>
+    <string name="trip_live_telemetry">Telemetría en Vivo</string>
+    <string name="trip_mode_sport_plus">SPORT +</string>
+    <string name="trip_current_speed_label">Vel. Actual</string>
+    <string name="trip_power_consumption_label">Consumo</string>
+    <string name="trip_power_consumption_unit">W</string>
+    <string name="trip_co2_saved_label">CO₂ Ahorrado</string>
+    <string name="trip_co2_saved_unit">g</string>
+    <string name="trip_pause_button">Pausar Viaje</string>
+    <string name="trip_resume_button">Reanudar Recorrido</string>
+    <string name="trip_mark_poi_button">Marcar POI</string>
+    <string name="trip_sos_lock_button">SOS / Bloqueo</string>
+    <string name="trip_recent_history_title">Histórico Reciente</string>
+    <string name="trip_view_full_telemetry">Ver Telemetría Completa</string>
 </resources>
