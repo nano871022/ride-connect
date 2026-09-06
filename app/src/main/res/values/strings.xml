@@ -248,6 +248,22 @@
     <string name="trip_back_button">Back</string>
     <string name="nav_trip">Trip Tracking</string>
 
+    <!-- Live Trip HUD Strings -->
+    <string name="trip_connected_status">VSETT C7+ • Connected</string>
+    <string name="trip_gps_accuracy">GPS ±2.5m (%1$d sats)</string>
+    <string name="trip_live_telemetry">Live Telemetry</string>
+    <string name="trip_mode_sport_plus">SPORT +</string>
+    <string name="trip_current_speed_label">Current Speed</string>
+    <string name="trip_power_consumption_label">Consumption</string>
+    <string name="trip_power_consumption_unit">W</string>
+    <string name="trip_co2_saved_label">CO₂ Saved</string>
+    <string name="trip_co2_saved_unit">g</string>
+    <string name="trip_pause_button">Pause Trip</string>
+    <string name="trip_resume_button">Resume Trip</string>
+    <string name="trip_mark_poi_button">Mark POI</string>
+    <string name="trip_sos_lock_button">SOS / Lock</string>
+    <string name="trip_recent_history_title">Recent History</string>
+    <string name="trip_view_full_telemetry">View Full Telemetry</string>
     <!-- LLM HTML Design additions -->
     <string name="llm_network_telemetry">Network &amp; Telemetry</string>
     <string name="llm_sync_status">Synchronized</string>
