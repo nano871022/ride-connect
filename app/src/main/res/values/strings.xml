@@ -19,6 +19,10 @@
     <string name="speed_mode_drive">DRIVE</string>
     <string name="speed_mode_sport">SPORT</string>
 
+    <!-- Splash Screen -->
+    <string name="splash_loading_message">Loading EV Ride Connect...</string>
+    <string name="splash_loading_data">Initializing database and app settings...</string>
+
     <!-- EV Data -->
     <string name="ev_data_title">EV Data History</string>
     <string name="km_label">Distance Traveled</string>

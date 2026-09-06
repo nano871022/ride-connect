@@ -21,6 +21,7 @@ import co.japl.android.ev_ride_connect.ui.DashboardScreen
 import co.japl.android.ev_ride_connect.ui.EvConfigScreen
 import co.japl.android.ev_ride_connect.ui.EvDataScreen
 import co.japl.android.ev_ride_connect.ui.LlmConfigScreen
+import co.japl.android.ev_ride_connect.ui.SplashScreen
 import co.japl.android.ev_ride_connect.ui.TripDetailScreen
 import co.japl.android.ev_ride_connect.ui.TripScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,6 +44,12 @@ class MainActivity : ComponentActivity() {
                 val currentScreen by navigator.currentScreen.collectAsState()
 
                 when (currentScreen) {
+                    AppScreen.SPLASH -> SplashScreen(
+                        navigator = navigator,
+                        dashboardViewModel = dashboardViewModel,
+                        evConfigViewModel = evConfigViewModel,
+                        llmConfigViewModel = llmConfigViewModel
+                    )
                     AppScreen.DASHBOARD -> DashboardScreen(
                         viewModel = dashboardViewModel,
                         navigator = navigator
