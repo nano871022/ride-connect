@@ -215,4 +215,27 @@
     <string name="trip_point_distance">Distancia: %1$.2f km</string>
     <string name="trip_back_button">Volver</string>
     <string name="nav_trip">Seguimiento de Viaje</string>
+
+    <!-- LLM HTML Design additions -->
+    <string name="llm_network_telemetry">Red y Telemetría</string>
+    <string name="llm_sync_status">Sincronizado</string>
+    <string name="llm_ble_status">BLE 5.2</string>
+    <string name="llm_glonass_status">GLONASS</string>
+    <string name="llm_glonass_sub">14 Satélites</string>
+    <string name="llm_cloud_ia">Cloud IA</string>
+    <string name="llm_cloud_ia_sub">Online</string>
+    <string name="llm_tab_ai">Modelos IA</string>
+    <string name="llm_tab_backup">Copia de Seguridad</string>
+    <string name="llm_api_key_card_title">Configuración API Key</string>
+    <string name="llm_api_key_card_subtitle">Conecta copilotos de ruta inteligentes</string>
+    <string name="llm_ai_provider_label">Proveedor de IA</string>
+    <string name="llm_token_key_label">Clave API Token</string>
+    <string name="llm_secret_key_placeholder">Ingresa tu clave secreta</string>
+    <string name="llm_connected_feedback">Conectado exitosamente con Google Gemini API v1beta</string>
+    <string name="llm_registered_models">Modelos Registrados</string>
+    <string name="llm_models_summary_badge">%1$d Activo • %2$d Fallback</string>
+    <string name="llm_secondary_fallback">Fallback Secundario</string>
+    <string name="llm_add_new_model_button">Agregar Nuevo Modelo / Fallback</string>
+    <string name="llm_latency_label">Latencia: %1$dms</string>
+    <string name="llm_temp_label">Temp: %1$s</string>
 </resources>
