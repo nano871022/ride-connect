@@ -19,6 +19,38 @@
     <string name="speed_mode_drive">NORMAL</string>
     <string name="speed_mode_sport">SPORT</string>
 
+    <!-- Dashboard UI Stitch -->
+    <string name="dashboard_subtitle_manual">Modo Manual • Sin telemetría directa</string>
+    <string name="dashboard_manual_input">Ingreso Manual</string>
+    <string name="dashboard_gps_phone">GPS Teléfono</string>
+    <string name="dashboard_history">Histórico</string>
+    <string name="dashboard_mobile_gps_speed">Velocidad GPS Móvil</string>
+    <string name="dashboard_no_vehicle_connection">Sin conexión vehículo</string>
+    <string name="dashboard_gps_ready">• GPS Listo</string>
+    <string name="dashboard_measurement_notice">Medición activa al grabar viaje</string>
+    <string name="dashboard_sensor_off">Sensor Scooter OFF</string>
+    <string name="dashboard_record_trip_gps">Grabar Viaje con GPS</string>
+    <string name="dashboard_recording">Grabando...</string>
+    <string name="dashboard_battery_tag">Batería</string>
+    <string name="dashboard_battery_record">Registro:</string>
+    <string name="dashboard_battery_manual">Manual</string>
+    <string name="dashboard_battery_updated">Actualizado:</string>
+    <string name="dashboard_last_charge">Última Carga</string>
+    <string name="dashboard_est_full_charge">Carga completa est.</string>
+    <string name="dashboard_cycles">Ciclos:</string>
+    <string name="dashboard_cycles_est">%1$d estimados</string>
+    <string name="dashboard_pack_health">Salud pack:</string>
+    <string name="dashboard_pack_health_optimal">98% óptima</string>
+    <string name="dashboard_consumption">Consumo</string>
+    <string name="dashboard_calculated">Calculado</string>
+    <string name="dashboard_consumption_unit">Wh/km</string>
+    <string name="dashboard_consumption_est">Estimado por GPS y cargas</string>
+    <string name="dashboard_odometer_manual">Lectura manual del display</string>
+    <string name="dashboard_last_record">Último:</string>
+    <string name="dashboard_preventive_maintenance">Mantenimiento Preventivo</string>
+    <string name="dashboard_ai_recommendation">Recomendación IA</string>
+    <string name="dashboard_maintenance_detail">Presión de neumáticos (45 PSI): calibración sugerida en 50 km.</string>
+
     <!-- Pantalla Splash -->
     <string name="splash_loading_message">Cargando EV Ride Connect...</string>
     <string name="splash_loading_data">Inicializando base de datos y configuración...</string>
