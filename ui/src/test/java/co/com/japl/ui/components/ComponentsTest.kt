@@ -34,6 +34,18 @@ class ComponentsTest {
         val className = StatusCardComponent.CLASS_NAME
         assertThat(className).contains("co.com.japl.ui.components.StatusCardKt")
     }
+
+    @Test
+    fun shouldReturnCorrectConfigSectionCardClassName() {
+        val className = ConfigSectionCardComponent.CLASS_NAME
+        assertThat(className).contains("co.com.japl.ui.components.ConfigSectionCardKt")
+    }
+
+    @Test
+    fun shouldReturnCorrectSpecTileClassName() {
+        val className = SpecTileComponent.CLASS_NAME
+        assertThat(className).contains("co.com.japl.ui.components.SpecTileKt")
+    }
 }
 
 object MetricCardComponent {
@@ -50,4 +62,12 @@ object SettingSwitchRowComponent {
 
 object StatusCardComponent {
     val CLASS_NAME = ComponentsTest::class.java.packageName + ".StatusCardKt"
+}
+
+object ConfigSectionCardComponent {
+    val CLASS_NAME = ComponentsTest::class.java.packageName + ".ConfigSectionCardKt"
+}
+
+object SpecTileComponent {
+    val CLASS_NAME = ComponentsTest::class.java.packageName + ".SpecTileKt"
 }
