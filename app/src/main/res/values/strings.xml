@@ -19,6 +19,38 @@
     <string name="speed_mode_drive">DRIVE</string>
     <string name="speed_mode_sport">SPORT</string>
 
+    <!-- Dashboard UI Stitch -->
+    <string name="dashboard_subtitle_manual">Manual Mode • No direct telemetry</string>
+    <string name="dashboard_manual_input">Manual Input</string>
+    <string name="dashboard_gps_phone">Phone GPS</string>
+    <string name="dashboard_history">History</string>
+    <string name="dashboard_mobile_gps_speed">Mobile GPS Speed</string>
+    <string name="dashboard_no_vehicle_connection">No vehicle connection</string>
+    <string name="dashboard_gps_ready">• GPS Ready</string>
+    <string name="dashboard_measurement_notice">Active measurement when recording trip</string>
+    <string name="dashboard_sensor_off">Scooter Sensor OFF</string>
+    <string name="dashboard_record_trip_gps">Record Trip with GPS</string>
+    <string name="dashboard_recording">Recording...</string>
+    <string name="dashboard_battery_tag">Battery</string>
+    <string name="dashboard_battery_record">Record:</string>
+    <string name="dashboard_battery_manual">Manual</string>
+    <string name="dashboard_battery_updated">Updated:</string>
+    <string name="dashboard_last_charge">Last Charge</string>
+    <string name="dashboard_est_full_charge">Est. full charge</string>
+    <string name="dashboard_cycles">Cycles:</string>
+    <string name="dashboard_cycles_est">%1$d estimated</string>
+    <string name="dashboard_pack_health">Pack health:</string>
+    <string name="dashboard_pack_health_optimal">98% optimal</string>
+    <string name="dashboard_consumption">Consumption</string>
+    <string name="dashboard_calculated">Calculated</string>
+    <string name="dashboard_consumption_unit">Wh/km</string>
+    <string name="dashboard_consumption_est">Estimated by GPS &amp; charges</string>
+    <string name="dashboard_odometer_manual">Manual display reading</string>
+    <string name="dashboard_last_record">Last:</string>
+    <string name="dashboard_preventive_maintenance">Preventive Maintenance</string>
+    <string name="dashboard_ai_recommendation">AI Recommendation</string>
+    <string name="dashboard_maintenance_detail">Tire pressure (45 PSI): suggested calibration in 50 km.</string>
+
     <!-- Splash Screen -->
     <string name="splash_loading_message">Loading EV Ride Connect...</string>
     <string name="splash_loading_data">Initializing database and app settings...</string>
@@ -232,4 +264,26 @@
     <string name="trip_sos_lock_button">SOS / Lock</string>
     <string name="trip_recent_history_title">Recent History</string>
     <string name="trip_view_full_telemetry">View Full Telemetry</string>
+    <!-- LLM HTML Design additions -->
+    <string name="llm_network_telemetry">Network &amp; Telemetry</string>
+    <string name="llm_sync_status">Synchronized</string>
+    <string name="llm_ble_status">BLE 5.2</string>
+    <string name="llm_glonass_status">GLONASS</string>
+    <string name="llm_glonass_sub">14 Satellites</string>
+    <string name="llm_cloud_ia">Cloud IA</string>
+    <string name="llm_cloud_ia_sub">Online</string>
+    <string name="llm_tab_ai">AI Models</string>
+    <string name="llm_tab_backup">Backup</string>
+    <string name="llm_api_key_card_title">API Key Setup</string>
+    <string name="llm_api_key_card_subtitle">Connect intelligent route co-pilots</string>
+    <string name="llm_ai_provider_label">AI Provider</string>
+    <string name="llm_token_key_label">API Token Key</string>
+    <string name="llm_secret_key_placeholder">Enter your secret key</string>
+    <string name="llm_connected_feedback">Successfully connected to Google Gemini API v1beta</string>
+    <string name="llm_registered_models">Registered Models</string>
+    <string name="llm_models_summary_badge">%1$d Active • %2$d Fallback</string>
+    <string name="llm_secondary_fallback">Secondary Fallback</string>
+    <string name="llm_add_new_model_button">Add New Model / Fallback</string>
+    <string name="llm_latency_label">Latency: %1$dms</string>
+    <string name="llm_temp_label">Temp: %1$s</string>
 </resources>
