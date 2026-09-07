@@ -220,7 +220,7 @@ private fun SimulatedMapCanvas(modifier: Modifier = Modifier) {
 
         val streetPath = Path().apply {
             moveTo(0f, height * 0.7f)
-            quadraticTo(width * 0.3f, height * 0.5f, width * 0.6f, height * 0.65f)
+            quadraticBezierTo(width * 0.3f, height * 0.5f, width * 0.6f, height * 0.65f)
             lineTo(width, height * 0.4f)
         }
         drawPath(

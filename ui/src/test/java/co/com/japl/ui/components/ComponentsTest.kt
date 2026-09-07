@@ -52,6 +52,18 @@ class ComponentsTest {
         val className = MaintenanceBannerComponent.CLASS_NAME
         assertThat(className).contains("co.com.japl.ui.components.MaintenanceBannerKt")
     }
+
+    @Test
+    fun shouldReturnCorrectConfigSectionCardClassName() {
+        val className = ConfigSectionCardComponent.CLASS_NAME
+        assertThat(className).contains("co.com.japl.ui.components.ConfigSectionCardKt")
+    }
+
+    @Test
+    fun shouldReturnCorrectSpecTileClassName() {
+        val className = SpecTileComponent.CLASS_NAME
+        assertThat(className).contains("co.com.japl.ui.components.SpecTileKt")
+    }
 }
 
 object SpeedometerGaugeComponent {
@@ -66,17 +78,6 @@ object MaintenanceBannerComponent {
     val CLASS_NAME = ComponentsTest::class.java.packageName + ".MaintenanceBannerKt"
 }
 
-    fun shouldReturnCorrectConfigSectionCardClassName() {
-        val className = ConfigSectionCardComponent.CLASS_NAME
-        assertThat(className).contains("co.com.japl.ui.components.ConfigSectionCardKt")
-    }
-
-    @Test
-    fun shouldReturnCorrectSpecTileClassName() {
-        val className = SpecTileComponent.CLASS_NAME
-        assertThat(className).contains("co.com.japl.ui.components.SpecTileKt")
-    }
-}
 object MetricCardComponent {
     val CLASS_NAME = ComponentsTest::class.java.packageName + ".MetricCardKt"
 }
