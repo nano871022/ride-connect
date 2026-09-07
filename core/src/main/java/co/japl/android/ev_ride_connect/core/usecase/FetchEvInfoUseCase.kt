@@ -11,11 +11,14 @@ class FetchEvInfoUseCase @Inject constructor(
     private val llmClientPort: LlmClientPort
 ) {
 
-    suspend fun execute(requestText: String, config: LlmConfig, currentEvConfig: EvConfig): EvConfig {
-        val prompt = String.format(
-            EvConstants.EV_LLM_PROMPT_TEMPLATE.trimIndent(),
-            requestText
-        )
+    suspend fun execute(
+        requestText: String,
+        config: LlmConfig,
+        currentEvConfig: EvConfig,
+        promptTemplate: String? = null
+    ): EvConfig {
+        val template = promptTemplate?.takeIf { it.isNotBlank() } ?: EvConstants.EV_LLM_PROMPT_TEMPLATE.trimIndent()
+        val prompt = String.format(template, requestText)
         val targetModel = config.selectedVersion.ifBlank { config.modelName }
         val responseText = llmClientPort.generateResponse(targetModel, config.apiKey, prompt)
         val parsedConfig = EvConfigMapper.fromLlmResponse(requestText, responseText)

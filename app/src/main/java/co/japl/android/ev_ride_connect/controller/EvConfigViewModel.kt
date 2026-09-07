@@ -151,7 +151,7 @@ class EvConfigViewModel @Inject constructor(
         }
     }
 
-    fun requestEvInfoFromLlm() {
+    fun requestEvInfoFromLlm(promptTemplate: String? = null) {
         val requestText = _evConfig.value.request.trim()
         if (requestText.isBlank()) {
             _llmErrorMessage.value = "EMPTY_REQUEST_PROMPT"
@@ -173,7 +173,7 @@ class EvConfigViewModel @Inject constructor(
             }
 
             try {
-                val updatedConfig = fetchEvInfoUseCase.execute(requestText, config, _evConfig.value)
+                val updatedConfig = fetchEvInfoUseCase.execute(requestText, config, _evConfig.value, promptTemplate)
                 _evConfig.value = updatedConfig
                 _statusMessage.value = "LLM_FETCH_SUCCESS"
                 _isSearchDialogVisible.value = false

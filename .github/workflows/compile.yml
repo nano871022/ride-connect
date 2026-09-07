@@ -10,6 +10,9 @@ jobs:
     name: Build Android App Bundle
     runs-on: ubuntu-latest
     environment: prod
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - name: Checkout repository
@@ -39,6 +42,8 @@ jobs:
           cp properties/ride-connect/ride-connect.jks app/ride-connect-sha.jks
 
       - name: Build Android App Bundle (.aab) and APK (.apk)
+        id: build_app
+        continue-on-error: true
         env:
           KEYSTORE_FILE: app/ride-connect-sha.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEY_PASS_JKS_FIRM_ANDROID_BUNDLE }}
@@ -54,12 +59,40 @@ jobs:
 
       - name: Upload Android App Bundle artifact
         uses: actions/upload-artifact@v4
+        if: steps.build_app.outcome == 'success'
         with:
           name: app-release-bundle
           path: app/build/outputs/bundle/release/*.aab
 
       - name: Upload Android App APK artifact
         uses: actions/upload-artifact@v4
+        if: steps.build_app.outcome == 'success'
         with:
           name: app-release-apk
           path: app/build/outputs/apk/release/*.apk
+
+      - name: Generate Job Summary
+        if: always()
+        run: |
+          echo "## 🚀 Compilation Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Outcome:** ${{ steps.build_app.outcome }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Automatically Create Issue on Compilation Failure
+        if: always() && steps.build_app.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_TITLE="[CI Alert] Release Bundle Compilation Failed on Commit ${{ github.sha }}"
+          ISSUE_BODY="Automated issue created by GitHub Actions.
+
+          **Workflow:** ${{ github.workflow }}
+          **Run Number:** ${{ github.run_number }}
+          **Commit:** ${{ github.sha }}
+
+          The release build task (\`./gradlew bundleRelease assembleRelease\`) failed during execution. Please inspect logs."
+
+          gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."
+
+      - name: Fail workflow if compilation step failed
+        if: steps.build_app.outcome != 'success'
+        run: exit 1
