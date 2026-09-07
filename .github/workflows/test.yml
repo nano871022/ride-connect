@@ -4,11 +4,17 @@ on:
   pull_request:
     branches:
       - master
+  push:
+    branches:
+      - master
 
 jobs:
   test:
     name: Run Unit and Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - name: Checkout repository
@@ -25,18 +31,84 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run unit tests and lint code analysis
+        id: run_tests
+        continue-on-error: true
         run: ./gradlew test lint
 
-      - name: Upload test results artifact
-        uses: actions/upload-artifact@v4
-        if: '!cancelled()'
-        with:
-          name: test-results
-          path: '**/build/reports/tests/'
+      - name: Package test and lint results as zip
+        if: always()
+        run: |
+          mkdir -p zipped_artifacts
+          zip -r zipped_artifacts/test-results.zip **/build/reports/tests/ || true
+          zip -r zipped_artifacts/lint-results.zip **/build/reports/lint-results* || true
 
-      - name: Upload lint results artifact
+      - name: Upload test results zip artifact
         uses: actions/upload-artifact@v4
-        if: '!cancelled()'
+        if: always()
         with:
-          name: lint-results
-          path: '**/build/reports/lint-results*'
+          name: test-results-zip
+          path: zipped_artifacts/test-results.zip
+
+      - name: Upload lint results zip artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-results-zip
+          path: zipped_artifacts/lint-results.zip
+
+      - name: Generate Job Summary & Check Warnings/Errors
+        id: analyze_results
+        if: always()
+        run: |
+          echo "## 📊 Test & Lint Execution Summary" >> $GITHUB_STEP_SUMMARY
+
+          TEST_STATUS="${{ steps.run_tests.outcome }}"
+          echo "**Build Status:** $TEST_STATUS" >> $GITHUB_STEP_SUMMARY
+
+          WARNINGS_FOUND=false
+          ERRORS_FOUND=false
+
+          if [ "$TEST_STATUS" != "success" ]; then
+            ERRORS_FOUND=true
+            echo "### ❌ Failures Detected" >> $GITHUB_STEP_SUMMARY
+            echo "Unit tests or lint analysis failed during execution." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          LINT_REPORTS=$(find . -name "lint-results*.xml" -o -name "lint-results*.html")
+          if [ -n "$LINT_REPORTS" ]; then
+            echo "### 🔍 Lint Analysis Details" >> $GITHUB_STEP_SUMMARY
+            echo "Found lint reports at: $LINT_REPORTS" >> $GITHUB_STEP_SUMMARY
+            if grep -q "<issue" $LINT_REPORTS 2>/dev/null; then
+              WARNINGS_FOUND=true
+              echo "Lint warnings or issues detected in the codebase." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+          echo "WARNINGS_FOUND=$WARNINGS_FOUND" >> $GITHUB_OUTPUT
+          echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT
+
+      - name: Automatically Create Issue on Errors or Warnings
+        if: always() && (steps.analyze_results.outputs.ERRORS_FOUND == 'true' || steps.analyze_results.outputs.WARNINGS_FOUND == 'true')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_TITLE="[CI Alert] Test / Lint Errors or Warnings in Commit ${{ github.sha }}"
+          ISSUE_BODY="Automated issue created by GitHub Actions.
+
+          **Workflow:** ${{ github.workflow }}
+          **Run Number:** ${{ github.run_number }}
+          **Commit:** ${{ github.sha }}
+          **Branch/Ref:** ${{ github.ref }}
+
+          ### Status
+          - **Test Execution Status:** ${{ steps.run_tests.outcome }}
+          - **Errors Detected:** ${{ steps.analyze_results.outputs.ERRORS_FOUND }}
+          - **Warnings Detected:** ${{ steps.analyze_results.outputs.WARNINGS_FOUND }}
+
+          Please check the workflow artifacts (\`test-results-zip\`, \`lint-results-zip\`) and job summary for detailed test and lint outputs."
+
+          gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."
+
+      - name: Fail workflow if test step failed
+        if: steps.run_tests.outcome != 'success'
+        run: exit 1

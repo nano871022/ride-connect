@@ -67,4 +67,18 @@ class FetchEvInfoUseCaseTest {
         assertThat(updatedConfig.motors).hasSize(1)
         assertThat(updatedConfig.motors[0].watts).isEqualTo(1400)
     }
+
+    @Test
+    fun shouldSupportCustomPromptTemplateWhenProvided() = runTest {
+        mockLlmClientPort.responseToReturn = """{"brand": "CustomBrand"}"""
+
+        val currentConfig = EvConfig()
+        val llmConfig = LlmConfig(id = 1, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "test-key-123", isActive = true)
+        val customTemplate = "Custom prompt template for %s"
+
+        val updatedConfig = useCase.execute("Scooter123", llmConfig, currentConfig, promptTemplate = customTemplate)
+
+        assertThat(mockLlmClientPort.lastPrompt).isEqualTo("Custom prompt template for Scooter123")
+        assertThat(updatedConfig.brand).isEqualTo("CustomBrand")
+    }
 }
