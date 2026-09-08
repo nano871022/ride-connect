@@ -7,6 +7,7 @@ import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +21,8 @@ import javax.inject.Inject
 class EvConfigViewModel @Inject constructor(
     private val evConfigPort: EvConfigPort,
     private val llmConfigPort: LlmConfigPort,
-    private val fetchEvInfoUseCase: FetchEvInfoUseCase
+    private val fetchEvInfoUseCase: FetchEvInfoUseCase,
+    private val sessionStatePort: SessionStatePort
 ) : ViewModel() {
 
     private val _evConfig = MutableStateFlow(EvConfig())
@@ -47,6 +49,36 @@ class EvConfigViewModel @Inject constructor(
     init {
         loadSavedConfig()
         loadActiveLlmConfigs()
+        checkAndHydratePendingLlmState()
+    }
+
+    private fun checkAndHydratePendingLlmState() {
+        viewModelScope.launch {
+            val session = sessionStatePort.getActiveSession()
+            if (session != null) {
+                val response = session.pendingLlmResponse
+                if (session.isLlmProcessing) {
+                    _isSearchDialogVisible.value = true
+                    _isLoadingLlm.value = true
+                } else if (response != null) {
+                    _isLoadingLlm.value = false
+                    if (response.startsWith("SUCCESS")) {
+                        loadSavedConfig()
+                        _statusMessage.value = "LLM_FETCH_SUCCESS"
+                        _isSearchDialogVisible.value = false
+                    } else if (response.startsWith("ERROR")) {
+                        _llmErrorMessage.value = response.removePrefix("ERROR:")
+                        _isSearchDialogVisible.value = true
+                    }
+                    val cleared = session.copy(pendingLlmPrompt = null, pendingLlmResponse = null)
+                    if (!cleared.isRideActive) {
+                        sessionStatePort.clearActiveSession()
+                    } else {
+                        sessionStatePort.saveActiveSession(cleared)
+                    }
+                }
+            }
+        }
     }
 
     fun loadSavedConfig() {
