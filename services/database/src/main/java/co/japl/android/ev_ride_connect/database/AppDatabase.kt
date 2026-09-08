@@ -2,10 +2,12 @@ package co.japl.android.ev_ride_connect.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import co.japl.android.ev_ride_connect.database.dao.ActiveSessionDao
 import co.japl.android.ev_ride_connect.database.dao.EvConfigDao
 import co.japl.android.ev_ride_connect.database.dao.EvDataDao
 import co.japl.android.ev_ride_connect.database.dao.LlmConfigDao
 import co.japl.android.ev_ride_connect.database.dao.TripDao
+import co.japl.android.ev_ride_connect.database.entities.ActiveSessionEntity
 import co.japl.android.ev_ride_connect.database.entities.EvConfigEntity
 import co.japl.android.ev_ride_connect.database.entities.EvDataEntity
 import co.japl.android.ev_ride_connect.database.entities.LlmConfigEntity
@@ -18,9 +20,10 @@ import co.japl.android.ev_ride_connect.database.entities.TripGpsEntity
         TripGpsEntity::class,
         LlmConfigEntity::class,
         EvConfigEntity::class,
-        EvDataEntity::class
+        EvDataEntity::class,
+        ActiveSessionEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -28,4 +31,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun llmConfigDao(): LlmConfigDao
     abstract fun evConfigDao(): EvConfigDao
     abstract fun evDataDao(): EvDataDao
+    abstract fun activeSessionDao(): ActiveSessionDao
 }
