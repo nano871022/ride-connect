@@ -4,10 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
 import co.japl.android.ev_ride_connect.core.domain.EvData
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.EvDataPort
-import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,10 +18,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val evDataPort: EvDataPort,
-    private val evConfigPort: EvConfigPort,
-    private val llmConfigPort: LlmConfigPort,
-    private val sessionStatePort: SessionStatePort
+    private val getLatestEvDataUseCase: GetLatestEvDataUseCase,
+    private val saveEvDataUseCase: SaveEvDataUseCase,
+    private val getEvConfigUseCase: GetEvConfigUseCase,
+    private val getActiveLlmConfigsUseCase: GetActiveLlmConfigsUseCase,
+    private val observeActiveSessionUseCase: ObserveActiveSessionUseCase
 ) : ViewModel() {
 
     private val _latestEvData = MutableStateFlow<EvData?>(null)
@@ -40,7 +42,7 @@ class DashboardViewModel @Inject constructor(
 
     private fun observeActiveSession() {
         viewModelScope.launch {
-            sessionStatePort.observeActiveSession().collect { session ->
+            observeActiveSessionUseCase.execute().collect { session ->
                 if (session != null && (session.isRideActive || session.isLlmProcessing || session.pendingLlmResponse != null)) {
                     _resumedSession.value = session
                 } else {
@@ -52,7 +54,7 @@ class DashboardViewModel @Inject constructor(
 
     fun checkActiveLlmConfigs() {
         viewModelScope.launch {
-            val active = llmConfigPort.getActiveConfigs()
+            val active = getActiveLlmConfigsUseCase.execute()
             _showApiKeyPrompt.value = active.isEmpty() || active.all { it.apiKey.isBlank() }
         }
     }
@@ -63,13 +65,13 @@ class DashboardViewModel @Inject constructor(
 
     fun loadLatestEvData() {
         viewModelScope.launch {
-            _latestEvData.value = evDataPort.getLatestEvData()
+            _latestEvData.value = getLatestEvDataUseCase.execute()
         }
     }
 
     fun saveEvData(km: Long, batteryLevel: Short) {
         viewModelScope.launch {
-            val evConfig = evConfigPort.getEvConfig()
+            val evConfig = getEvConfigUseCase.execute()
             val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
                 ?: evConfig?.request?.takeIf { it.isNotBlank() }
                 ?: "EV01"
@@ -80,7 +82,7 @@ class DashboardViewModel @Inject constructor(
                 batteryLevel = batteryLevel,
                 createTmst = System.currentTimeMillis()
             )
-            evDataPort.saveEvData(evData)
+            saveEvDataUseCase.execute(evData)
             loadLatestEvData()
         }
     }

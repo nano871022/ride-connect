@@ -2,6 +2,7 @@ package co.japl.android.ev_ride_connect.controller
 
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
+import co.japl.android.ev_ride_connect.core.usecase.GetAllEvDataUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,7 +27,7 @@ class EvDataViewModelTest {
         fakeEvDataPort = FakeEvDataPort()
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 120L, batteryLevel = 70))
-        viewModel = EvDataViewModel(fakeEvDataPort)
+        viewModel = EvDataViewModel(GetAllEvDataUseCase(fakeEvDataPort))
     }
 
     @After

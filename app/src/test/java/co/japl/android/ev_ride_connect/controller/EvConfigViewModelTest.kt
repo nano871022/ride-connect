@@ -7,7 +7,13 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.ClearActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvConfigUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -41,10 +47,13 @@ class EvConfigViewModelTest {
 
         val fetchEvInfoUseCase = FetchEvInfoUseCase(fakeLlmClientPort)
         viewModel = EvConfigViewModel(
-            fakeEvConfigPort,
-            fakeLlmConfigPort,
+            GetEvConfigUseCase(fakeEvConfigPort),
+            SaveEvConfigUseCase(fakeEvConfigPort),
+            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
             fetchEvInfoUseCase,
-            fakeSessionStatePort
+            GetActiveSessionUseCase(fakeSessionStatePort),
+            SaveActiveSessionUseCase(fakeSessionStatePort),
+            ClearActiveSessionUseCase(fakeSessionStatePort)
         )
     }
 
@@ -69,10 +78,13 @@ class EvConfigViewModelTest {
         )
 
         viewModel = EvConfigViewModel(
-            fakeEvConfigPort,
-            fakeLlmConfigPort,
+            GetEvConfigUseCase(fakeEvConfigPort),
+            SaveEvConfigUseCase(fakeEvConfigPort),
+            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
             FetchEvInfoUseCase(fakeLlmClientPort),
-            fakeSessionStatePort
+            GetActiveSessionUseCase(fakeSessionStatePort),
+            SaveActiveSessionUseCase(fakeSessionStatePort),
+            ClearActiveSessionUseCase(fakeSessionStatePort)
         )
 
         testScheduler.runCurrent()
@@ -90,10 +102,13 @@ class EvConfigViewModelTest {
         )
 
         viewModel = EvConfigViewModel(
-            fakeEvConfigPort,
-            fakeLlmConfigPort,
+            GetEvConfigUseCase(fakeEvConfigPort),
+            SaveEvConfigUseCase(fakeEvConfigPort),
+            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
             FetchEvInfoUseCase(fakeLlmClientPort),
-            fakeSessionStatePort
+            GetActiveSessionUseCase(fakeSessionStatePort),
+            SaveActiveSessionUseCase(fakeSessionStatePort),
+            ClearActiveSessionUseCase(fakeSessionStatePort)
         )
 
         testScheduler.runCurrent()

@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.ClearActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvConfigUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,10 +22,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EvConfigViewModel @Inject constructor(
-    private val evConfigPort: EvConfigPort,
-    private val llmConfigPort: LlmConfigPort,
+    private val getEvConfigUseCase: GetEvConfigUseCase,
+    private val saveEvConfigUseCase: SaveEvConfigUseCase,
+    private val getActiveLlmConfigsUseCase: GetActiveLlmConfigsUseCase,
     private val fetchEvInfoUseCase: FetchEvInfoUseCase,
-    private val sessionStatePort: SessionStatePort
+    private val getActiveSessionUseCase: GetActiveSessionUseCase,
+    private val saveActiveSessionUseCase: SaveActiveSessionUseCase,
+    private val clearActiveSessionUseCase: ClearActiveSessionUseCase
 ) : ViewModel() {
 
     private val _evConfig = MutableStateFlow(EvConfig())
@@ -54,7 +60,7 @@ class EvConfigViewModel @Inject constructor(
 
     private fun checkAndHydratePendingLlmState() {
         viewModelScope.launch {
-            val session = sessionStatePort.getActiveSession()
+            val session = getActiveSessionUseCase.execute()
             if (session != null) {
                 val response = session.pendingLlmResponse
                 if (session.isLlmProcessing) {
@@ -72,9 +78,9 @@ class EvConfigViewModel @Inject constructor(
                     }
                     val cleared = session.copy(pendingLlmPrompt = null, pendingLlmResponse = null)
                     if (!cleared.isRideActive) {
-                        sessionStatePort.clearActiveSession()
+                        clearActiveSessionUseCase.execute()
                     } else {
-                        sessionStatePort.saveActiveSession(cleared)
+                        saveActiveSessionUseCase.execute(cleared)
                     }
                 }
             }
@@ -83,7 +89,7 @@ class EvConfigViewModel @Inject constructor(
 
     fun loadSavedConfig() {
         viewModelScope.launch {
-            val saved = evConfigPort.getEvConfig()
+            val saved = getEvConfigUseCase.execute()
             if (saved != null) {
                 _evConfig.value = saved
             }
@@ -92,7 +98,7 @@ class EvConfigViewModel @Inject constructor(
 
     fun loadActiveLlmConfigs() {
         viewModelScope.launch {
-            val configs = llmConfigPort.getActiveConfigs()
+            val configs = getActiveLlmConfigsUseCase.execute()
             _activeLlmConfigs.value = configs
             if (_selectedLlmConfig.value == null && configs.isNotEmpty()) {
                 _selectedLlmConfig.value = configs.first()
@@ -195,7 +201,7 @@ class EvConfigViewModel @Inject constructor(
             _isLoadingLlm.value = true
             _llmErrorMessage.value = null
 
-            val configs = llmConfigPort.getActiveConfigs()
+            val configs = getActiveLlmConfigsUseCase.execute()
             val config = configs.maxByOrNull { it.id } ?: configs.firstOrNull()
 
             if (config == null || config.apiKey.isBlank()) {
@@ -224,7 +230,7 @@ class EvConfigViewModel @Inject constructor(
 
     fun saveEvConfig() {
         viewModelScope.launch {
-            val id = evConfigPort.saveEvConfig(_evConfig.value)
+            val id = saveEvConfigUseCase.execute(_evConfig.value)
             _evConfig.update { it.copy(id = id) }
             _statusMessage.value = "CONFIG_SAVED"
         }
@@ -233,7 +239,7 @@ class EvConfigViewModel @Inject constructor(
     fun loadEv() {
         viewModelScope.launch {
             val updated = _evConfig.value.copy(isLoaded = true)
-            val id = evConfigPort.saveEvConfig(updated)
+            val id = saveEvConfigUseCase.execute(updated)
             _evConfig.value = updated.copy(id = id)
             _statusMessage.value = "EV_LOADED"
         }
