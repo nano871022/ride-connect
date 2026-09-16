@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
 import co.japl.android.ev_ride_connect.core.domain.BackupStatus
-import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.core.usecase.ConfigureAutoBackupUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetBackupConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.PerformManualBackupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
-    private val googleDriveBackupPort: GoogleDriveBackupPort
+    private val getBackupConfigUseCase: GetBackupConfigUseCase,
+    private val performManualBackupUseCase: PerformManualBackupUseCase,
+    private val configureAutoBackupUseCase: ConfigureAutoBackupUseCase
 ) : ViewModel() {
 
     private val _backupConfig = MutableStateFlow(BackupConfig())
@@ -32,7 +36,7 @@ class BackupViewModel @Inject constructor(
 
     fun loadBackupConfig() {
         viewModelScope.launch {
-            val config = googleDriveBackupPort.getBackupConfig()
+            val config = getBackupConfigUseCase.execute()
             _backupConfig.value = config
         }
     }
@@ -41,7 +45,7 @@ class BackupViewModel @Inject constructor(
         viewModelScope.launch {
             _isBackingUp.value = true
             _backupStatus.value = BackupStatus.IN_PROGRESS
-            val success = googleDriveBackupPort.performManualBackup(databasePath, imagePaths)
+            val success = performManualBackupUseCase.execute(databasePath, imagePaths)
             _isBackingUp.value = false
             _backupStatus.value = if (success) BackupStatus.SUCCESS else BackupStatus.FAILURE
             if (success) {
@@ -56,7 +60,7 @@ class BackupViewModel @Inject constructor(
                 isAutoBackupEnabled = enabled,
                 backupIntervalHours = intervalHours
             )
-            val success = googleDriveBackupPort.configureAutomaticBackup(updatedConfig)
+            val success = configureAutoBackupUseCase.execute(updatedConfig)
             if (success) {
                 _backupConfig.value = updatedConfig
             }

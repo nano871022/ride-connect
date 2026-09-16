@@ -12,6 +12,11 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -61,7 +66,13 @@ class DashboardScreenScreenshotTest {
             override suspend fun clearActiveSession() {}
         }
 
-        val viewModel = DashboardViewModel(fakeEvDataPort, fakeEvConfigPort, fakeLlmConfigPort, fakeSessionStatePort)
+        val viewModel = DashboardViewModel(
+            GetLatestEvDataUseCase(fakeEvDataPort),
+            SaveEvDataUseCase(fakeEvDataPort),
+            GetEvConfigUseCase(fakeEvConfigPort),
+            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
+            ObserveActiveSessionUseCase(fakeSessionStatePort)
+        )
 
         composeTestRule.setContent {
             MaterialThemeComposeUI {

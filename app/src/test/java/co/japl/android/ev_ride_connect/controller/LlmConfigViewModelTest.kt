@@ -3,6 +3,12 @@ package co.japl.android.ev_ride_connect.controller
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.core.usecase.DeleteLlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.FetchAvailableLlmModelsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetAllLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveLlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ToggleLlmConfigStatusUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ValidateLlmApiKeyUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -27,7 +33,14 @@ class LlmConfigViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeLlmClientPort = FakeLlmClientPort()
-        viewModel = LlmConfigViewModel(fakeLlmConfigPort, fakeLlmClientPort)
+        viewModel = LlmConfigViewModel(
+            GetAllLlmConfigsUseCase(fakeLlmConfigPort),
+            SaveLlmConfigUseCase(fakeLlmConfigPort),
+            DeleteLlmConfigUseCase(fakeLlmConfigPort),
+            ToggleLlmConfigStatusUseCase(fakeLlmConfigPort),
+            ValidateLlmApiKeyUseCase(fakeLlmClientPort),
+            FetchAvailableLlmModelsUseCase(fakeLlmClientPort)
+        )
     }
 
     @After

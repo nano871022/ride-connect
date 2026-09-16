@@ -9,6 +9,13 @@ import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -44,7 +51,16 @@ class TripViewModelTest {
         fakeTripPort = FakeTripDatabasePort()
         fakeEvDataPort = FakeEvDataPort()
         fakeEvConfigPort = FakeEvConfigPort()
-        viewModel = TripViewModel(context, fakeTripPort, fakeEvDataPort, fakeEvConfigPort)
+        viewModel = TripViewModel(
+            context,
+            SaveTripUseCase(fakeTripPort),
+            GetAllTripsUseCase(fakeTripPort),
+            GetTripByIdUseCase(fakeTripPort),
+            GetGpsPointsByTripIdUseCase(fakeTripPort),
+            GetLatestEvDataUseCase(fakeEvDataPort),
+            SaveEvDataUseCase(fakeEvDataPort),
+            GetEvConfigUseCase(fakeEvConfigPort)
+        )
     }
 
     @After

@@ -8,6 +8,11 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -40,10 +45,11 @@ class DashboardViewModelTest {
         fakeSessionStatePort = FakeSessionStatePort()
 
         viewModel = DashboardViewModel(
-            fakeEvDataPort,
-            fakeEvConfigPort,
-            fakeLlmConfigPort,
-            fakeSessionStatePort
+            GetLatestEvDataUseCase(fakeEvDataPort),
+            SaveEvDataUseCase(fakeEvDataPort),
+            GetEvConfigUseCase(fakeEvConfigPort),
+            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
+            ObserveActiveSessionUseCase(fakeSessionStatePort)
         )
     }
 

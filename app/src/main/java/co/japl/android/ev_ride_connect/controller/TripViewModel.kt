@@ -10,9 +10,13 @@ import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.EvDataPort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,9 +32,13 @@ import javax.inject.Inject
 @HiltViewModel
 class TripViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val tripDatabasePort: TripDatabasePort,
-    private val evDataPort: EvDataPort,
-    private val evConfigPort: EvConfigPort
+    private val saveTripUseCase: SaveTripUseCase,
+    private val getAllTripsUseCase: GetAllTripsUseCase,
+    private val getTripByIdUseCase: GetTripByIdUseCase,
+    private val getGpsPointsByTripIdUseCase: GetGpsPointsByTripIdUseCase,
+    private val getLatestEvDataUseCase: GetLatestEvDataUseCase,
+    private val saveEvDataUseCase: SaveEvDataUseCase,
+    private val getEvConfigUseCase: GetEvConfigUseCase
 ) : ViewModel() {
 
     private val _isTripActive = MutableStateFlow(false)
@@ -87,7 +95,7 @@ class TripViewModel @Inject constructor(
     fun onStartTripRequested() {
         if (_isTripActive.value) return
         viewModelScope.launch {
-            val latestEvData = evDataPort.getLatestEvData()
+            val latestEvData = getLatestEvDataUseCase.execute()
             _latestBatteryLevel.value = latestEvData?.batteryLevel ?: 0
             _showStartBatteryDialog.value = true
         }
@@ -96,14 +104,14 @@ class TripViewModel @Inject constructor(
     fun confirmStartTrip(batteryLevel: Short) {
         _showStartBatteryDialog.value = false
         viewModelScope.launch {
-            val evConfig = evConfigPort.getEvConfig()
+            val evConfig = getEvConfigUseCase.execute()
             val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
                 ?: evConfig?.request?.takeIf { it.isNotBlank() }
                 ?: "EV01"
-            val currentEvData = evDataPort.getLatestEvData()
+            val currentEvData = getLatestEvDataUseCase.execute()
             val currentKm = currentEvData?.km ?: 0L
 
-            evDataPort.saveEvData(
+            saveEvDataUseCase.execute(
                 EvData(
                     evCode = evCode,
                     km = currentKm,
@@ -163,7 +171,7 @@ class TripViewModel @Inject constructor(
         if (!_isTripActive.value) return
         viewModelScope.launch {
             val totalDistance = recordedGpsPoints.sumOf { it.distance }
-            val latestEvData = evDataPort.getLatestEvData()
+            val latestEvData = getLatestEvDataUseCase.execute()
             val previousKm = latestEvData?.km ?: 0L
             val addedKm = Math.round(totalDistance)
             _calculatedNewKm.value = previousKm + addedKm
@@ -176,12 +184,12 @@ class TripViewModel @Inject constructor(
         _showEndBatteryDialog.value = false
         val newKm = _calculatedNewKm.value
         viewModelScope.launch {
-            val evConfig = evConfigPort.getEvConfig()
+            val evConfig = getEvConfigUseCase.execute()
             val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
                 ?: evConfig?.request?.takeIf { it.isNotBlank() }
                 ?: "EV01"
 
-            evDataPort.saveEvData(
+            saveEvDataUseCase.execute(
                 EvData(
                     evCode = evCode,
                     km = newKm,
@@ -274,22 +282,22 @@ class TripViewModel @Inject constructor(
         val pointsToSave = recordedGpsPoints.toList()
 
         viewModelScope.launch {
-            tripDatabasePort.saveTrip(trip, pointsToSave)
+            saveTripUseCase.execute(trip, pointsToSave)
             loadTripHistory()
         }
     }
 
     fun loadTripHistory() {
         viewModelScope.launch {
-            _tripHistory.value = tripDatabasePort.getAllTrips()
+            _tripHistory.value = getAllTripsUseCase.execute()
         }
     }
 
     fun loadTripDetail(tripId: Long) {
         viewModelScope.launch {
-            val trip = tripDatabasePort.getTripById(tripId)
+            val trip = getTripByIdUseCase.execute(tripId)
             if (trip != null) {
-                val gpsPoints = tripDatabasePort.getGpsPointsByTripId(tripId)
+                val gpsPoints = getGpsPointsByTripIdUseCase.execute(tripId)
                 _selectedTripDetail.value = Pair(trip, gpsPoints)
             } else {
                 _selectedTripDetail.value = null
