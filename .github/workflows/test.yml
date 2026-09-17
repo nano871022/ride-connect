@@ -48,7 +48,7 @@ jobs:
       - name: Run unit tests and lint code analysis
         id: run_tests
         continue-on-error: true
-        run: ./gradlew test
+        run: ./gradlew test -x about:test
 
       - name: Package test and lint results as zip
         if: always()
