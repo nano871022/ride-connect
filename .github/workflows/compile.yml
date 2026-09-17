@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p app
           cp properties/ride-connect/ride-connect.jks app/ride-connect-sha.jks
-          cp properties/ride-connect/google-service.json app/google-service.json
+          cp properties/ride-connect/google-services.json app/google-services.json
 
       - name: Build Android App Bundle (.aab) and APK (.apk)
         id: build_app
