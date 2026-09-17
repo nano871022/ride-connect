@@ -59,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import co.com.japl.ui.components.MaintenanceBanner
 import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.TelemetryBentoCard
@@ -539,7 +540,7 @@ private fun StartupApiKeyDialog(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable {
                         try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
+                            val intent = Intent(Intent.ACTION_VIEW, videoUrl.toUri())
                             context.startActivity(intent)
                         } catch (_: Exception) {}
                     }
