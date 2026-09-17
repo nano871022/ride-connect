@@ -60,136 +60,46 @@ fun BackupScreen(
     val backupConfig by viewModel.backupConfig.collectAsState()
     val isBackingUp by viewModel.isBackingUp.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
-    var leftMenuExpanded by remember { mutableStateOf(false) }
-    var settingsMenuExpanded by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.backup_title)) },
-                navigationIcon = {
-                    Box {
-                        IconButton(onClick = { leftMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Navigation Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = leftMenuExpanded,
-                            onDismissRequest = { leftMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.dashboard_title)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToDashboard()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_trip)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToTrip()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_ev_data)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToEvData()
-                                }
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { settingsMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = settingsMenuExpanded,
-                            onDismissRequest = { settingsMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToLlmConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.ev_config_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.backup_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToBackup()
-                                }
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        },
+    Column(
         modifier = modifier
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val lastBackupText = if (backupConfig.lastBackupTimestamp > 0) {
-                stringResource(R.string.last_backup_time, DateUtils.formatTimestamp(backupConfig.lastBackupTimestamp))
-            } else null
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val lastBackupText = if (backupConfig.lastBackupTimestamp > 0) {
+            stringResource(R.string.last_backup_time, DateUtils.formatTimestamp(backupConfig.lastBackupTimestamp))
+        } else null
 
-            val statusMsg = when (backupStatus) {
-                BackupStatus.SUCCESS -> stringResource(R.string.backup_success)
-                BackupStatus.FAILURE -> stringResource(R.string.backup_failure)
-                else -> null
-            }
-
-            StatusCard(
-                title = stringResource(R.string.backup_title),
-                isLoading = isBackingUp,
-                lastUpdatedText = lastBackupText,
-                actionButtonText = stringResource(R.string.backup_now),
-                onActionClick = { viewModel.performManualBackup(databasePath, imagePaths) },
-                statusMessage = statusMsg,
-                isSuccessStatus = backupStatus == BackupStatus.SUCCESS
-            )
-
-            AutoBackupCard(
-                backupConfig = backupConfig,
-                onToggleAutoBackup = { enabled ->
-                    viewModel.configureAutoBackup(enabled, backupConfig.backupIntervalHours)
-                },
-                onIntervalSelected = { interval ->
-                    viewModel.configureAutoBackup(backupConfig.isAutoBackupEnabled, interval)
-                }
-            )
-
-            BackupInfoCard(backupConfig = backupConfig)
+        val statusMsg = when (backupStatus) {
+            BackupStatus.SUCCESS -> stringResource(R.string.backup_success)
+            BackupStatus.FAILURE -> stringResource(R.string.backup_failure)
+            else -> null
         }
+
+        StatusCard(
+            title = stringResource(R.string.backup_title),
+            isLoading = isBackingUp,
+            lastUpdatedText = lastBackupText,
+            actionButtonText = stringResource(R.string.backup_now),
+            onActionClick = { viewModel.performManualBackup(databasePath, imagePaths) },
+            statusMessage = statusMsg,
+            isSuccessStatus = backupStatus == BackupStatus.SUCCESS
+        )
+
+        AutoBackupCard(
+            backupConfig = backupConfig,
+            onToggleAutoBackup = { enabled ->
+                viewModel.configureAutoBackup(enabled, backupConfig.backupIntervalHours)
+            },
+            onIntervalSelected = { interval ->
+                viewModel.configureAutoBackup(backupConfig.isAutoBackupEnabled, interval)
+            }
+        )
+
+        BackupInfoCard(backupConfig = backupConfig)
     }
 }
 

@@ -45,65 +45,41 @@ fun TripDetailScreen(
 ) {
     val selectedTripDetail by viewModel.selectedTripDetail.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.trip_detail_title)) },
-                navigationIcon = {
-                    IconButton(onClick = { navigator?.navigateToTrip() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.trip_back_button)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+    val tripDetailPair = selectedTripDetail
+    if (tripDetailPair == null) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(R.string.trip_empty_history),
+                style = MaterialTheme.typography.bodyLarge
             )
-        },
-        modifier = modifier
-    ) { innerPadding ->
-        val tripDetailPair = selectedTripDetail
-        if (tripDetailPair == null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.trip_empty_history),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        } else {
-            val (trip, gpsPoints) = tripDetailPair
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                TripSummaryCard(trip = trip)
+        }
+    } else {
+        val (trip, gpsPoints) = tripDetailPair
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            TripSummaryCard(trip = trip)
 
-                Text(
-                    text = stringResource(R.string.trip_detail_points_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+            Text(
+                text = stringResource(R.string.trip_detail_points_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
 
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(gpsPoints) { sample ->
-                        GpsSampleItem(sample = sample)
-                    }
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(gpsPoints) { sample ->
+                    GpsSampleItem(sample = sample)
                 }
             }
         }

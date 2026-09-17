@@ -80,8 +80,6 @@ fun EvDataScreen(
     modifier: Modifier = Modifier
 ) {
     val evDataList by viewModel.evDataList.collectAsState()
-    var leftMenuExpanded by remember { mutableStateOf(false) }
-    var settingsMenuExpanded by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf(HistoryFilter.ALL) }
 
     val filterItems = listOf(
@@ -156,314 +154,181 @@ fun EvDataScreen(
         )
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "VOLTRIDE EV",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(R.string.history_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                navigationIcon = {
-                    Box {
-                        IconButton(onClick = { leftMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Navigation Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = leftMenuExpanded,
-                            onDismissRequest = { leftMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.dashboard_title)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToDashboard()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_trip)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToTrip()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_ev_data)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToEvData()
-                                }
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    RoundedCornerShape(16.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.secondaryContainer,
-                                        CircleShape
-                                    )
-                            )
-                            Text(
-                                text = "VSETT C7+ • ${stringResource(R.string.history_connected)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        Box {
-                            IconButton(onClick = { settingsMenuExpanded = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = "Settings Menu"
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = settingsMenuExpanded,
-                                onDismissRequest = { settingsMenuExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.llm_config_title)) },
-                                    onClick = {
-                                        settingsMenuExpanded = false
-                                        navigator?.navigateToLlmConfig()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.ev_config_title)) },
-                                    onClick = {
-                                        settingsMenuExpanded = false
-                                        navigator?.navigateToEvConfig()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.backup_title)) },
-                                    onClick = {
-                                        settingsMenuExpanded = false
-                                        navigator?.navigateToBackup()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
+    LazyColumn(
         modifier = modifier
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { Spacer(modifier = Modifier.height(4.dp)) }
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // 1. Analytics Grid
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        AnalyticsStatCard(
-                            title = stringResource(R.string.history_total_odometer),
-                            value = if (evDataList.isNotEmpty()) evDataList.first().km.toString() else "143.0",
-                            unit = stringResource(R.string.km_unit),
-                            icon = Icons.Default.Place,
-                            modifier = Modifier.weight(1f),
-                            subText = stringResource(R.string.history_today_km),
-                            iconTint = MaterialTheme.colorScheme.primaryContainer,
-                            valueColor = MaterialTheme.colorScheme.primary
-                        )
-
-                        AnalyticsStatCard(
-                            title = stringResource(R.string.history_trips),
-                            value = "18",
-                            unit = stringResource(R.string.history_routes_unit),
-                            icon = Icons.Default.SportsScore,
-                            modifier = Modifier.weight(1f),
-                            subIcon = Icons.Default.CalendarToday,
-                            subText = stringResource(R.string.history_cloud_sync),
-                            iconTint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        AnalyticsStatCard(
-                            title = stringResource(R.string.history_efficiency),
-                            value = "17.5",
-                            unit = stringResource(R.string.history_efficiency_unit),
-                            icon = Icons.Default.Eco,
-                            modifier = Modifier.weight(1f),
-                            subIcon = Icons.Default.Eco,
-                            subText = stringResource(R.string.history_mode_sport_eco),
-                            iconTint = MaterialTheme.colorScheme.secondaryContainer,
-                            valueColor = MaterialTheme.colorScheme.secondaryContainer,
-                            subTextColor = MaterialTheme.colorScheme.secondaryContainer
-                        )
-
-                        AnalyticsStatCard(
-                            title = stringResource(R.string.history_current_battery),
-                            value = if (evDataList.isNotEmpty()) evDataList.first().batteryLevel.toString() else "43",
-                            unit = stringResource(R.string.history_battery_unit),
-                            icon = Icons.Default.BatteryChargingFull,
-                            modifier = Modifier.weight(1f),
-                            subIcon = Icons.Default.BatteryChargingFull,
-                            subText = stringResource(R.string.history_voltage_stable),
-                            iconTint = MaterialTheme.colorScheme.tertiary,
-                            valueColor = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-                }
-            }
-
-            // 2. Filter Pills
-            item {
-                FilterPillGroup(
-                    items = filterItems,
-                    selectedItemId = selectedFilter,
-                    onItemSelected = { selectedFilter = it }
-                )
-            }
-
-            // 3. Telemetry Chronology Header
-            item {
+        // 1. Analytics Grid
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.history_recent_records),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                    AnalyticsStatCard(
+                        title = stringResource(R.string.history_total_odometer),
+                        value = if (evDataList.isNotEmpty()) evDataList.first().km.toString() else "143.0",
+                        unit = stringResource(R.string.km_unit),
+                        icon = Icons.Default.Place,
+                        modifier = Modifier.weight(1f),
+                        subText = stringResource(R.string.history_today_km),
+                        iconTint = MaterialTheme.colorScheme.primaryContainer,
+                        valueColor = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        text = stringResource(R.string.history_order_chronological),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                    AnalyticsStatCard(
+                        title = stringResource(R.string.history_trips),
+                        value = "18",
+                        unit = stringResource(R.string.history_routes_unit),
+                        icon = Icons.Default.SportsScore,
+                        modifier = Modifier.weight(1f),
+                        subIcon = Icons.Default.CalendarToday,
+                        subText = stringResource(R.string.history_cloud_sync),
+                        iconTint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AnalyticsStatCard(
+                        title = stringResource(R.string.history_efficiency),
+                        value = "17.5",
+                        unit = stringResource(R.string.history_efficiency_unit),
+                        icon = Icons.Default.Eco,
+                        modifier = Modifier.weight(1f),
+                        subIcon = Icons.Default.Eco,
+                        subText = stringResource(R.string.history_mode_sport_eco),
+                        iconTint = MaterialTheme.colorScheme.secondaryContainer,
+                        valueColor = MaterialTheme.colorScheme.secondaryContainer,
+                        subTextColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+
+                    AnalyticsStatCard(
+                        title = stringResource(R.string.history_current_battery),
+                        value = if (evDataList.isNotEmpty()) evDataList.first().batteryLevel.toString() else "43",
+                        unit = stringResource(R.string.history_battery_unit),
+                        icon = Icons.Default.BatteryChargingFull,
+                        modifier = Modifier.weight(1f),
+                        subIcon = Icons.Default.BatteryChargingFull,
+                        subText = stringResource(R.string.history_voltage_stable),
+                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        valueColor = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
+        }
 
-            // 4. Chronology Records
-            if (evDataList.isNotEmpty()) {
-                items(evDataList) { evData ->
-                    HistoryRecordCard(
-                        record = HistoryRecordData(
-                            id = "${evData.evCode}",
-                            type = HistoryRecordType.RIDE,
-                            timestamp = DateUtils.formatTimestamp(evData.createTmst),
-                            subtitle = stringResource(R.string.history_active_session_ended),
-                            statusText = stringResource(R.string.history_status_completed),
-                            distanceValue = evData.km.toString(),
-                            distanceUnit = stringResource(R.string.km_unit),
-                            consumptionValue = "1.2 kWh",
-                            batteryValue = "${evData.batteryLevel}%",
-                            durationValue = "32m",
-                            avgSpeedValue = "24.6 km/h"
-                        ),
-                        viewTelemetryText = stringResource(R.string.history_view_telemetry),
-                        gpxText = stringResource(R.string.history_gpx)
-                    )
-                }
-            } else {
-                items(sampleRecords) { record ->
-                    HistoryRecordCard(
-                        record = record,
-                        viewTelemetryText = stringResource(R.string.history_view_telemetry),
-                        gpxText = stringResource(R.string.history_gpx)
-                    )
-                }
-            }
+        // 2. Filter Pills
+        item {
+            FilterPillGroup(
+                items = filterItems,
+                selectedItemId = selectedFilter,
+                onItemSelected = { selectedFilter = it }
+            )
+        }
 
-            // 5. Lifespan & Maintenance Section
-            item {
-                MaintenanceHealthCard(
-                    title = stringResource(R.string.history_maintenance_title),
-                    statusBadgeText = stringResource(R.string.history_optimal_health),
-                    indicators = maintenanceIndicators
+        // 3. Telemetry Chronology Header
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.history_recent_records),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = stringResource(R.string.history_order_chronological),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
 
-            // 6. Action Floating Button Bar
-            item {
-                Box(
+        // 4. Chronology Records
+        if (evDataList.isNotEmpty()) {
+            items(evDataList) { evData ->
+                HistoryRecordCard(
+                    record = HistoryRecordData(
+                        id = "${evData.evCode}",
+                        type = HistoryRecordType.RIDE,
+                        timestamp = DateUtils.formatTimestamp(evData.createTmst),
+                        subtitle = stringResource(R.string.history_active_session_ended),
+                        statusText = stringResource(R.string.history_status_completed),
+                        distanceValue = evData.km.toString(),
+                        distanceUnit = stringResource(R.string.km_unit),
+                        consumptionValue = "1.2 kWh",
+                        batteryValue = "${evData.batteryLevel}%",
+                        durationValue = "32m",
+                        avgSpeedValue = "24.6 km/h"
+                    ),
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
+                    gpxText = stringResource(R.string.history_gpx)
+                )
+            }
+        } else {
+            items(sampleRecords) { record ->
+                HistoryRecordCard(
+                    record = record,
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
+                    gpxText = stringResource(R.string.history_gpx)
+                )
+            }
+        }
+
+        // 5. Lifespan & Maintenance Section
+        item {
+            MaintenanceHealthCard(
+                title = stringResource(R.string.history_maintenance_title),
+                statusBadgeText = stringResource(R.string.history_optimal_health),
+                indicators = maintenanceIndicators
+            )
+        }
+
+        // 6. Action Floating Button Bar
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Button(
+                    onClick = { /* Action to log manual event */ },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 ) {
-                    Button(
-                        onClick = { /* Action to log manual event */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = stringResource(R.string.history_log_event),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(R.string.history_log_event),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
+
+        item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }

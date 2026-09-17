@@ -249,7 +249,7 @@
     <string name="nav_trip">Seguimiento de Viaje</string>
 
     <!-- Live Trip HUD Strings -->
-    <string name="trip_connected_status">VSETT C7+ • Conectado</string>
+    <string name="trip_connected_status">%s \n Conectado</string>
     <string name="trip_gps_accuracy">GPS ±2.5m (%1$d sats)</string>
     <string name="trip_live_telemetry">Telemetría en Vivo</string>
     <string name="trip_mode_sport_plus">SPORT +</string>
@@ -286,4 +286,5 @@
     <string name="llm_add_new_model_button">Agregar Nuevo Modelo / Fallback</string>
     <string name="llm_latency_label">Latencia: %1$dms</string>
     <string name="llm_temp_label">Temp: %1$s</string>
+    <string name="about">Acerca de</string>
 </resources>

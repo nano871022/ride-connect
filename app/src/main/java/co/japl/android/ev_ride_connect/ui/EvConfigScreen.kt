@@ -89,163 +89,73 @@ fun EvConfigScreen(
     val llmErrorMessage by viewModel.llmErrorMessage.collectAsState()
     val statusMessage by viewModel.statusMessage.collectAsState()
     val isSearchDialogVisible by viewModel.isSearchDialogVisible.collectAsState()
-    var leftMenuExpanded by remember { mutableStateOf(false) }
-    var settingsMenuExpanded by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.ev_config_title)) },
-                navigationIcon = {
-                    Box {
-                        IconButton(onClick = { leftMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Navigation Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = leftMenuExpanded,
-                            onDismissRequest = { leftMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.dashboard_title)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToDashboard()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_trip)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToTrip()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_ev_data)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToEvData()
-                                }
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { settingsMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = settingsMenuExpanded,
-                            onDismissRequest = { settingsMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToLlmConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.ev_config_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.backup_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToBackup()
-                                }
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
+    Column(
         modifier = modifier
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            AiAssistantPromptSection(
-                request = evConfig.request,
-                isLoadingLlm = isLoadingLlm,
-                onRequestChanged = { viewModel.onRequestChanged(it) },
-                onRequestAi = { viewModel.requestEvInfoFromLlm() }
-            )
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        AiAssistantPromptSection(
+            request = evConfig.request,
+            isLoadingLlm = isLoadingLlm,
+            onRequestChanged = { viewModel.onRequestChanged(it) },
+            onRequestAi = { viewModel.requestEvInfoFromLlm() }
+        )
 
-            BrandAndModelSection(
-                evConfig = evConfig,
-                onBrandChanged = { viewModel.onBrandChanged(it) },
-                onVersionChanged = { viewModel.onVersionChanged(it) },
-                onManufactoryYearChanged = { viewModel.onManufactoryYearChanged(it) },
-                onManufactoryCompanyChanged = { viewModel.onManufactoryCompanyChanged(it) },
-                onBoughtDateChanged = { viewModel.onBoughtDateChanged(it) }
-            )
+        BrandAndModelSection(
+            evConfig = evConfig,
+            onBrandChanged = { viewModel.onBrandChanged(it) },
+            onVersionChanged = { viewModel.onVersionChanged(it) },
+            onManufactoryYearChanged = { viewModel.onManufactoryYearChanged(it) },
+            onManufactoryCompanyChanged = { viewModel.onManufactoryCompanyChanged(it) },
+            onBoughtDateChanged = { viewModel.onBoughtDateChanged(it) }
+        )
 
-            MotorsAndPowerSection(
-                motors = evConfig.motors,
-                onAddMotor = { viewModel.onAddMotor("Motor ${evConfig.motors.size + 1}", 500) },
-                onUpdateMotor = { index, name, watts -> viewModel.onUpdateMotor(index, name, watts) },
-                onRemoveMotor = { index -> viewModel.onRemoveMotor(index) }
-            )
+        MotorsAndPowerSection(
+            motors = evConfig.motors,
+            onAddMotor = { viewModel.onAddMotor("Motor ${evConfig.motors.size + 1}", 500) },
+            onUpdateMotor = { index, name, watts -> viewModel.onUpdateMotor(index, name, watts) },
+            onRemoveMotor = { index -> viewModel.onRemoveMotor(index) }
+        )
 
-            BatterySpecsSection(
-                evConfig = evConfig,
-                onBatteryTechChanged = { viewModel.onBatteryTechnologyChanged(it) },
-                onVoltsChanged = { viewModel.onBatteryVoltsChanged(it) },
-                onAmpersChanged = { viewModel.onBatteryAmpersChanged(it) }
-            )
+        BatterySpecsSection(
+            evConfig = evConfig,
+            onBatteryTechChanged = { viewModel.onBatteryTechnologyChanged(it) },
+            onVoltsChanged = { viewModel.onBatteryVoltsChanged(it) },
+            onAmpersChanged = { viewModel.onBatteryAmpersChanged(it) }
+        )
 
-            BrakesAndSuspensionSection(
-                evConfig = evConfig,
-                onBrakeQuantityChanged = { viewModel.onBrakeQuantityChanged(it) },
-                onBrakeTechChanged = { viewModel.onBrakeTechnologyChanged(it) },
-                onSuspensionTechChanged = { viewModel.onSuspensionTechnologyChanged(it) }
-            )
+        BrakesAndSuspensionSection(
+            evConfig = evConfig,
+            onBrakeQuantityChanged = { viewModel.onBrakeQuantityChanged(it) },
+            onBrakeTechChanged = { viewModel.onBrakeTechnologyChanged(it) },
+            onSuspensionTechChanged = { viewModel.onSuspensionTechnologyChanged(it) }
+        )
 
-            ChargingAndErgonomicsSection(
-                evConfig = evConfig,
-                onChargePowerChanged = { viewModel.onChargePowerChanged(it) },
-                onOtherCharacteristicsChanged = { viewModel.onOtherCharacteristicsChanged(it) }
-            )
+        ChargingAndErgonomicsSection(
+            evConfig = evConfig,
+            onChargePowerChanged = { viewModel.onChargePowerChanged(it) },
+            onOtherCharacteristicsChanged = { viewModel.onOtherCharacteristicsChanged(it) }
+        )
 
-            TelemetryBannerSection()
+        TelemetryBannerSection()
 
-            val currentStatusMsg = statusMessage
-            if (currentStatusMsg != null) {
-                Text(
-                    text = currentStatusMsg,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            BottomActionTray(
-                isLoaded = evConfig.isLoaded,
-                onDiscard = { viewModel.loadSavedConfig() },
-                onSave = { viewModel.saveEvConfig() }
+        val currentStatusMsg = statusMessage
+        if (currentStatusMsg != null) {
+            Text(
+                text = currentStatusMsg,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
+
+        BottomActionTray(
+            isLoaded = evConfig.isLoaded,
+            onDiscard = { viewModel.loadSavedConfig() },
+            onSave = { viewModel.saveEvConfig() }
+        )
     }
 
     if (isSearchDialogVisible) {

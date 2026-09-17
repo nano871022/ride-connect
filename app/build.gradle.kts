@@ -1,8 +1,52 @@
+abstract class CopyGoogleServicesTask : DefaultTask() {
+    @get:Input
+    @get:Optional
+    abstract val sourceFilePath: Property<File>
+
+    @get:OutputFile
+    abstract val targetFile: RegularFileProperty
+
+    @TaskAction
+    fun copy() {
+        val srcPath = sourceFilePath.orNull
+        val dest = targetFile.get().asFile
+
+        if (!dest.exists() && srcPath != null && srcPath.exists()) {
+            srcPath.copyTo(dest, overwrite = true)
+            logger.lifecycle("--> [Build Local] google-services.json copiado exitosamente.")
+        } else {
+            logger.lifecycle("--> [Build Local] google-services.json No fue encontrado.")
+        }
+    }
+}
+
+val copyGoogleServicesJson =
+    tasks.register<CopyGoogleServicesTask>("copyGoogleServicesJson") {
+        description = "Copia el archivo google-services.json si no existe localmente."
+        // Cambia la ruta según la ubicación de tu repositorio externo
+        var externalFile = layout.projectDirectory.file("../../japl-properties/ride-connect/google-services.json").asFile
+        var target = layout.projectDirectory.file("google-services.json")
+        sourceFilePath.set(externalFile)
+        targetFile.set(target)
+
+        onlyIf {
+            !target.asFile.exists()
+        }
+    }
+
+tasks.configureEach {
+    if ((name.startsWith("process") && name.endsWith("GoogleServices")) || name == "preBuild") {
+        dependsOn(copyGoogleServicesJson)
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -63,6 +107,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    //noinspection WrongGradleMethod
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
@@ -107,6 +152,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

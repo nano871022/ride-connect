@@ -1,0 +1,46 @@
+name: Release Tagger
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    if: >-
+      contains(github.event.head_commit.message, 'chore(release): bump version to') &&  
+      github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Version from commit message
+        id: extract_version
+        run: |
+          # Busca el patrón "bump version to X.Y.Z" y extrae el número
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP 'bump version to \K[0-9.]+')
+          if [ -z "$VERSION" ]; then
+            echo "Version not found in message"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version detected: $VERSION"
+
+      - name: Create and Push Tag
+        run: |
+          TAG_NAME="v${{ steps.extract_version.outputs.VERSION }}"
+
+          # Verificar si el tag ya existe para evitar errores en re-runs
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists. Skipping."
+          else
+            echo "Creating tag $TAG_NAME"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            git push origin "$TAG_NAME"
+          fi

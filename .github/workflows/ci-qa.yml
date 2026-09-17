@@ -1,0 +1,45 @@
+name: CI & QA Pipeline Orchestrator
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  unit-tests:
+    name: Unit Testing
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  statick-check:
+    name: Static Check
+    uses: ./.github/workflows/static-check.yml
+    secrets: inherit
+
+  build-release:
+    name: Production Release Build
+    needs: unit-tests
+    if: github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/compile.yml
+    secrets: inherit
+
+  deploy-release:
+    name: Deploy Internal
+    needs: build-release
+    if: github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/publish-internal.yml
+    secrets: inherit  
+
+  tag-version:
+    name: Create Tag Version
+    needs: deploy-release
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-tagger.yml

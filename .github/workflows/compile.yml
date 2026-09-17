@@ -1,9 +1,7 @@
 name: Compile Application Bundle
 
 on:
-  push:
-    branches:
-      - master
+  workflow_call:
 
 jobs:
   compile:
@@ -40,6 +38,7 @@ jobs:
         run: |
           mkdir -p app
           cp properties/ride-connect/ride-connect.jks app/ride-connect-sha.jks
+          cp properties/ride-connect/google-service.json app/google-service.json
 
       - name: Build Android App Bundle (.aab) and APK (.apk)
         id: build_app

@@ -1,0 +1,44 @@
+name: Publish Internal
+
+on:
+  workflow_call:
+
+jobs:
+
+   deploy-google-play:
+     name: Deploy to Google Play Console
+     runs-on: ubuntu-latest
+     environment: PROD
+
+     steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout private properties repository
+        uses: actions/checkout@v4
+        with:
+          repository: nano871022/japl-properties
+          token: ${{ secrets.TOKEN_PROP_GITHUB || secrets.GH_TOKEN || github.token }}
+          path: private-props
+
+      - name: Download build artifact Mobile
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-bundle
+          path: ./bundle/
+
+      - name: List build outputs
+        run: |
+            find ./bundle/ -type f -name "*.aab" 2>/dev/null || echo "No .aab files found"
+            ls -la ./bundle/ || echo "outputs directory not found"
+
+      - name: Upload Mobile to Google Play Console
+        uses: r0adkll/upload-google-play@v1.1.5
+        with:
+            serviceAccountJson: ${{ github.workspace }}/private-props/ride-connect/${{ vars.JSON_CREDENTIALS_PLAY_STORE }}
+            packageName: co.japl.android.synapsefit
+            releaseFiles: ./bundle/app-release.aab
+            track: internal
+            inAppUpdatePriority: 2
+            status: completed

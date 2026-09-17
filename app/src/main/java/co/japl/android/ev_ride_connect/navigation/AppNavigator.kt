@@ -12,7 +12,8 @@ enum class AppScreen {
     BACKUP,
     EV_DATA,
     TRIP,
-    TRIP_DETAIL
+    TRIP_DETAIL,
+    ABOUT
 }
 
 class AppNavigator(initialScreen: AppScreen = AppScreen.SPLASH) {
@@ -54,5 +55,9 @@ class AppNavigator(initialScreen: AppScreen = AppScreen.SPLASH) {
     fun navigateToTripDetail(tripId: Long) {
         _selectedTripId.value = tripId
         navigateTo(AppScreen.TRIP_DETAIL)
+    }
+
+    fun navigateToAbout(){
+        navigateTo(AppScreen.ABOUT)
     }
 }

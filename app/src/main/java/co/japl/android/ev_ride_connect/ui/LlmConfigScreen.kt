@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -97,254 +99,152 @@ fun LlmConfigScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val editingConfigId by viewModel.editingConfigId.collectAsState()
     val validationSuccessMessage by viewModel.validationSuccessMessage.collectAsState()
+    val scrollState = rememberScrollState()
 
-    var leftMenuExpanded by remember { mutableStateOf(false) }
-    var settingsMenuExpanded by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf("ai") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "VoltRide EV",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(R.string.llm_config_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                navigationIcon = {
-                    Box {
-                        IconButton(onClick = { leftMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Navigation Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = leftMenuExpanded,
-                            onDismissRequest = { leftMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.dashboard_title)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToDashboard()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_trip)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToTrip()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.nav_ev_data)) },
-                                onClick = {
-                                    leftMenuExpanded = false
-                                    navigator?.navigateToEvData()
-                                }
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { settingsMenuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings Menu"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = settingsMenuExpanded,
-                            onDismissRequest = { settingsMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.llm_config_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToLlmConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.ev_config_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToEvConfig()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.backup_title)) },
-                                onClick = {
-                                    settingsMenuExpanded = false
-                                    navigator?.navigateToBackup()
-                                }
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
+    Column(
         modifier = modifier
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CockpitNetworkSummaryCard()
+            .fillMaxSize()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        CockpitNetworkSummaryCard()
 
-            SegmentedTabRow(
-                activeTab = activeTab,
-                onTabSelected = { tab ->
-                    activeTab = tab
-                    if (tab == "backup" && navigator != null) {
-                        navigator.navigateToBackup()
-                    }
+        SegmentedTabRow(
+            activeTab = activeTab,
+            onTabSelected = { tab ->
+                activeTab = tab
+                if (tab == "backup" && navigator != null) {
+                    navigator.navigateToBackup()
                 }
+            }
+        )
+
+        if (activeTab == "ai") {
+            LlmConfigFormCard(
+                selectedModel = selectedModel,
+                apiKeyInput = apiKeyInput,
+                availableVersions = availableVersions,
+                selectedVersion = selectedVersion,
+                isFetchingVersions = isFetchingVersions,
+                isValidating = isValidating,
+                errorMessage = errorMessage,
+                editingConfigId = editingConfigId,
+                validationSuccessMessage = validationSuccessMessage,
+                onModelSelected = { viewModel.onModelSelected(it) },
+                onApiKeyChanged = { viewModel.onApiKeyChanged(it) },
+                onFetchVersions = { viewModel.fetchAvailableVersions() },
+                onVersionSelected = { viewModel.onVersionSelected(it) },
+                onValidate = { viewModel.validateApiKeyAndModel() },
+                onCancelEdit = { viewModel.onCancelEdit() },
+                onSave = { viewModel.saveConfig() }
             )
 
-            if (activeTab == "ai") {
-                LlmConfigFormCard(
-                    selectedModel = selectedModel,
-                    apiKeyInput = apiKeyInput,
-                    availableVersions = availableVersions,
-                    selectedVersion = selectedVersion,
-                    isFetchingVersions = isFetchingVersions,
-                    isValidating = isValidating,
-                    errorMessage = errorMessage,
-                    editingConfigId = editingConfigId,
-                    validationSuccessMessage = validationSuccessMessage,
-                    onModelSelected = { viewModel.onModelSelected(it) },
-                    onApiKeyChanged = { viewModel.onApiKeyChanged(it) },
-                    onFetchVersions = { viewModel.fetchAvailableVersions() },
-                    onVersionSelected = { viewModel.onVersionSelected(it) },
-                    onValidate = { viewModel.validateApiKeyAndModel() },
-                    onCancelEdit = { viewModel.onCancelEdit() },
-                    onSave = { viewModel.saveConfig() }
+            val activeCount = configs.count { it.isActive }
+            val fallbackCount = (configs.size - activeCount).coerceAtLeast(0)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.llm_registered_models),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
                 )
+                Text(
+                    text = stringResource(R.string.llm_models_summary_badge, activeCount, fallbackCount),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-                val activeCount = configs.count { it.isActive }
-                val fallbackCount = (configs.size - activeCount).coerceAtLeast(0)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            if (configs.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.llm_empty_configurations),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
                 ) {
-                    Text(
-                        text = stringResource(R.string.llm_registered_models),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(R.string.llm_models_summary_badge, activeCount, fallbackCount),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    items(configs, key = { it.id }) { config ->
+                        val createdText = if (config.createdAt.isNotBlank()) {
+                            stringResource(R.string.llm_created_at, config.createdAt)
+                        } else ""
 
-                if (configs.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.llm_empty_configurations),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        items(configs, key = { it.id }) { config ->
-                            val createdText = if (config.createdAt.isNotBlank()) {
-                                stringResource(R.string.llm_created_at, config.createdAt)
-                            } else ""
+                        var showDeleteConfirm by remember { mutableStateOf(false) }
 
-                            var showDeleteConfirm by remember { mutableStateOf(false) }
+                        ModelConfigCard(
+                            providerName = config.modelName,
+                            modelVersion = config.selectedVersion,
+                            createdAtText = createdText,
+                            isActive = config.isActive,
+                            isSecondaryFallback = !config.isActive,
+                            latencyText = if (config.isActive) stringResource(R.string.llm_latency_label, 142) else null,
+                            temperatureText = if (config.isActive) stringResource(R.string.llm_temp_label, "0.3") else null,
+                            onToggleActive = { isActive ->
+                                viewModel.toggleActiveStatus(config.id, isActive)
+                            },
+                            onEdit = { viewModel.onEditConfig(config) },
+                            onDuplicate = { viewModel.onDuplicateConfig(config) },
+                            onDelete = { showDeleteConfirm = true }
+                        )
 
-                            ModelConfigCard(
-                                providerName = config.modelName,
-                                modelVersion = config.selectedVersion,
-                                createdAtText = createdText,
-                                isActive = config.isActive,
-                                isSecondaryFallback = !config.isActive,
-                                latencyText = if (config.isActive) stringResource(R.string.llm_latency_label, 142) else null,
-                                temperatureText = if (config.isActive) stringResource(R.string.llm_temp_label, "0.3") else null,
-                                onToggleActive = { isActive ->
-                                    viewModel.toggleActiveStatus(config.id, isActive)
-                                },
-                                onEdit = { viewModel.onEditConfig(config) },
-                                onDuplicate = { viewModel.onDuplicateConfig(config) },
-                                onDelete = { showDeleteConfirm = true }
-                            )
-
-                            if (showDeleteConfirm) {
-                                AlertDialog(
-                                    onDismissRequest = { showDeleteConfirm = false },
-                                    title = { Text(stringResource(R.string.llm_delete_title)) },
-                                    text = { Text(stringResource(R.string.llm_delete_confirm_message)) },
-                                    confirmButton = {
-                                        Button(
-                                            onClick = {
-                                                viewModel.deleteConfig(config.id)
-                                                showDeleteConfirm = false
-                                            },
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.error
-                                            )
-                                        ) {
-                                            Text(stringResource(R.string.llm_delete_button))
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = { showDeleteConfirm = false }) {
-                                            Text(stringResource(R.string.cancel_button))
-                                        }
+                        if (showDeleteConfirm) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteConfirm = false },
+                                title = { Text(stringResource(R.string.llm_delete_title)) },
+                                text = { Text(stringResource(R.string.llm_delete_confirm_message)) },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            viewModel.deleteConfig(config.id)
+                                            showDeleteConfirm = false
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.error
+                                        )
+                                    ) {
+                                        Text(stringResource(R.string.llm_delete_button))
                                     }
-                                )
-                            }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showDeleteConfirm = false }) {
+                                        Text(stringResource(R.string.cancel_button))
+                                    }
+                                }
+                            )
                         }
+                    }
 
-                        item {
-                            OutlinedButton(
-                                onClick = { viewModel.onCancelEdit() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AddCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                                Text(
-                                    text = stringResource(R.string.llm_add_new_model_button),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                    item {
+                        OutlinedButton(
+                            onClick = { viewModel.onCancelEdit() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddCircle,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.llm_add_new_model_button),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
