@@ -2,8 +2,13 @@ package co.japl.android.ev_ride_connect.controller
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
+import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +22,8 @@ import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
+import co.japl.android.ev_ride_connect.track.ScooterTrackingService
+import co.japl.android.ev_ride_connect.track.TrackingSettings
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -81,6 +88,7 @@ class TripViewModel @Inject constructor(
 
     private var timerJob: Job? = null
     private var gpsSamplingJob: Job? = null
+    private var locationListener: LocationListener? = null
 
     init {
         loadTripHistory()
@@ -95,7 +103,11 @@ class TripViewModel @Inject constructor(
     fun onStartTripRequested() {
         if (_isTripActive.value) return
         viewModelScope.launch {
-            val latestEvData = getLatestEvDataUseCase.execute()
+            val latestEvData = try {
+                getLatestEvDataUseCase.execute()
+            } catch (_: Exception) {
+                null
+            }
             _latestBatteryLevel.value = latestEvData?.batteryLevel ?: 0
             _showStartBatteryDialog.value = true
         }
@@ -104,21 +116,24 @@ class TripViewModel @Inject constructor(
     fun confirmStartTrip(batteryLevel: Short) {
         _showStartBatteryDialog.value = false
         viewModelScope.launch {
-            val evConfig = getEvConfigUseCase.execute()
-            val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
-                ?: evConfig?.request?.takeIf { it.isNotBlank() }
-                ?: "EV01"
-            val currentEvData = getLatestEvDataUseCase.execute()
-            val currentKm = currentEvData?.km ?: 0L
+            try {
+                val evConfig = getEvConfigUseCase.execute()
+                val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
+                    ?: evConfig?.request?.takeIf { it.isNotBlank() }
+                    ?: "EV01"
+                val currentEvData = getLatestEvDataUseCase.execute()
+                val currentKm = currentEvData?.km ?: 0L
 
-            saveEvDataUseCase.execute(
-                EvData(
-                    evCode = evCode,
-                    km = currentKm,
-                    batteryLevel = batteryLevel,
-                    createTmst = System.currentTimeMillis()
+                saveEvDataUseCase.execute(
+                    EvData(
+                        evCode = evCode,
+                        km = currentKm,
+                        batteryLevel = batteryLevel,
+                        createTmst = System.currentTimeMillis()
+                    )
                 )
-            )
+            } catch (_: Exception) {
+            }
             startTrip()
         }
     }
@@ -134,6 +149,9 @@ class TripViewModel @Inject constructor(
         _currentDistance.value = 0.0
         _currentAverageSpeed.value = 0.0
         recordedGpsPoints.clear()
+
+        startTrackingService()
+        startLocationUpdates()
 
         val initialLocation = fetchCurrentLocation()
         if (initialLocation != null) {
@@ -171,7 +189,11 @@ class TripViewModel @Inject constructor(
         if (!_isTripActive.value) return
         viewModelScope.launch {
             val totalDistance = recordedGpsPoints.sumOf { it.distance }
-            val latestEvData = getLatestEvDataUseCase.execute()
+            val latestEvData = try {
+                getLatestEvDataUseCase.execute()
+            } catch (_: Exception) {
+                null
+            }
             val previousKm = latestEvData?.km ?: 0L
             val addedKm = Math.round(totalDistance)
             _calculatedNewKm.value = previousKm + addedKm
@@ -184,25 +206,106 @@ class TripViewModel @Inject constructor(
         _showEndBatteryDialog.value = false
         val newKm = _calculatedNewKm.value
         viewModelScope.launch {
-            val evConfig = getEvConfigUseCase.execute()
-            val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
-                ?: evConfig?.request?.takeIf { it.isNotBlank() }
-                ?: "EV01"
+            try {
+                val evConfig = getEvConfigUseCase.execute()
+                val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
+                    ?: evConfig?.request?.takeIf { it.isNotBlank() }
+                    ?: "EV01"
 
-            saveEvDataUseCase.execute(
-                EvData(
-                    evCode = evCode,
-                    km = newKm,
-                    batteryLevel = batteryLevel,
-                    createTmst = System.currentTimeMillis()
+                saveEvDataUseCase.execute(
+                    EvData(
+                        evCode = evCode,
+                        km = newKm,
+                        batteryLevel = batteryLevel,
+                        createTmst = System.currentTimeMillis()
+                    )
                 )
-            )
+            } catch (_: Exception) {
+            }
             stopTrip()
         }
     }
 
     fun cancelStopTrip() {
         _showEndBatteryDialog.value = false
+    }
+
+    private fun startLocationUpdates() {
+        try {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
+            val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            if (!hasFine && !hasCoarse) return
+
+            if (locationListener == null) {
+                locationListener = object : LocationListener {
+                    override fun onLocationChanged(location: Location) {
+                        if (_isTripActive.value) {
+                            addLocationPoint(location.latitude, location.longitude)
+                        }
+                    }
+
+                    @Deprecated("Deprecated in Java")
+                    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+                    override fun onProviderEnabled(provider: String) {}
+                    override fun onProviderDisabled(provider: String) {}
+                }
+            }
+
+            val minTimeMs = _gpsIntervalSeconds.value * 1000L
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    minTimeMs,
+                    1f,
+                    locationListener!!
+                )
+            }
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    minTimeMs,
+                    1f,
+                    locationListener!!
+                )
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun stopLocationUpdates() {
+        try {
+            locationListener?.let { listener ->
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                locationManager?.removeUpdates(listener)
+            }
+            locationListener = null
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun startTrackingService() {
+        try {
+            val intent = Intent(context, ScooterTrackingService::class.java).apply {
+                action = TrackingSettings.ACTION_START_TRACKING
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun stopTrackingService() {
+        try {
+            val intent = Intent(context, ScooterTrackingService::class.java).apply {
+                action = TrackingSettings.ACTION_STOP_TRACKING
+            }
+            context.startService(intent)
+        } catch (_: Exception) {
+        }
     }
 
     fun fetchCurrentLocation(): Pair<Double, Double>? {
@@ -268,6 +371,9 @@ class TripViewModel @Inject constructor(
         gpsSamplingJob?.cancel()
         gpsSamplingJob = null
 
+        stopLocationUpdates()
+        stopTrackingService()
+
         val totalTime = _elapsedTimeSeconds.value
         val totalDistance = recordedGpsPoints.sumOf { it.distance }
         val finalAverageSpeed = GpsUtils.calculateAverageSpeed(totalDistance, totalTime)
@@ -282,26 +388,42 @@ class TripViewModel @Inject constructor(
         val pointsToSave = recordedGpsPoints.toList()
 
         viewModelScope.launch {
-            saveTripUseCase.execute(trip, pointsToSave)
+            try {
+                saveTripUseCase.execute(trip, pointsToSave)
+            } catch (_: Exception) {
+            }
             loadTripHistory()
         }
     }
 
     fun loadTripHistory() {
         viewModelScope.launch {
-            _tripHistory.value = getAllTripsUseCase.execute()
+            _tripHistory.value = try {
+                getAllTripsUseCase.execute()
+            } catch (_: Exception) {
+                emptyList()
+            }
         }
     }
 
     fun loadTripDetail(tripId: Long) {
         viewModelScope.launch {
-            val trip = getTripByIdUseCase.execute(tripId)
-            if (trip != null) {
-                val gpsPoints = getGpsPointsByTripIdUseCase.execute(tripId)
-                _selectedTripDetail.value = Pair(trip, gpsPoints)
-            } else {
+            try {
+                val trip = getTripByIdUseCase.execute(tripId)
+                if (trip != null) {
+                    val gpsPoints = getGpsPointsByTripIdUseCase.execute(tripId)
+                    _selectedTripDetail.value = Pair(trip, gpsPoints)
+                } else {
+                    _selectedTripDetail.value = null
+                }
+            } catch (_: Exception) {
                 _selectedTripDetail.value = null
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopLocationUpdates()
     }
 }
