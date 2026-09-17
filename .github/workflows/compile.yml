@@ -26,6 +26,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Checkout japl about module
+        uses: actions/checkout@v4
+        with:
+          repository: nano871022/japl-android-about-module
+          path: about
+
       - name: Checkout properties
         uses: actions/checkout@v4
         with:
