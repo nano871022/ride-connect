@@ -14,6 +14,9 @@ jobs:
 
   unit-tests:
     name: Unit Testing
+    permissions:
+      issues: write
+      contents: read
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
