@@ -9,6 +9,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
 class TripViewModel @Inject constructor(
@@ -132,7 +134,8 @@ class TripViewModel @Inject constructor(
                         createTmst = System.currentTimeMillis()
                     )
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
             startTrip()
         }
@@ -160,7 +163,7 @@ class TripViewModel @Inject constructor(
 
         timerJob = viewModelScope.launch {
             while (isActive && _isTripActive.value) {
-                delay(1000L)
+                delay(1000L.milliseconds)
                 _elapsedTimeSeconds.value += 1L
                 if (_elapsedTimeSeconds.value > 0) {
                     _currentAverageSpeed.value = GpsUtils.calculateAverageSpeed(
@@ -191,7 +194,8 @@ class TripViewModel @Inject constructor(
             val totalDistance = recordedGpsPoints.sumOf { it.distance }
             val latestEvData = try {
                 getLatestEvDataUseCase.execute()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(this@TripViewModel.javaClass.name, e.message, e)
                 null
             }
             val previousKm = latestEvData?.km ?: 0L
@@ -220,7 +224,8 @@ class TripViewModel @Inject constructor(
                         createTmst = System.currentTimeMillis()
                     )
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
             stopTrip()
         }
@@ -269,7 +274,9 @@ class TripViewModel @Inject constructor(
                     locationListener!!
                 )
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(this@TripViewModel.javaClass.name, e.message, e)
+            null
         }
     }
 
@@ -280,7 +287,9 @@ class TripViewModel @Inject constructor(
                 locationManager?.removeUpdates(listener)
             }
             locationListener = null
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(this@TripViewModel.javaClass.name, e.message, e)
+            null
         }
     }
 
@@ -294,7 +303,9 @@ class TripViewModel @Inject constructor(
             } else {
                 context.startService(intent)
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(this@TripViewModel.javaClass.name, e.message, e)
+            null
         }
     }
 
@@ -323,6 +334,7 @@ class TripViewModel @Inject constructor(
                 Pair(location.latitude, location.longitude)
             } else null
         } catch (e: Exception) {
+            Log.e(this@TripViewModel.javaClass.name, e.message, e)
             null
         }
     }
@@ -390,7 +402,8 @@ class TripViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 saveTripUseCase.execute(trip, pointsToSave)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
             loadTripHistory()
         }
@@ -400,7 +413,8 @@ class TripViewModel @Inject constructor(
         viewModelScope.launch {
             _tripHistory.value = try {
                 getAllTripsUseCase.execute()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(this@TripViewModel.javaClass.name, e.message, e)
                 emptyList()
             }
         }
@@ -416,7 +430,8 @@ class TripViewModel @Inject constructor(
                 } else {
                     _selectedTripDetail.value = null
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(this@TripViewModel.javaClass.name, e.message, e)
                 _selectedTripDetail.value = null
             }
         }
