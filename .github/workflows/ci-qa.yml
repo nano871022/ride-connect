@@ -32,6 +32,9 @@ jobs:
     name: Production Release Build
     needs: unit-tests
     if: github.ref == 'refs/heads/master'
+    permissions:
+      issues: write
+      contents: read
     uses: ./.github/workflows/compile.yml
     secrets: inherit
 
