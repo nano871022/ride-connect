@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.ui
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -72,11 +73,16 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import co.com.japl.ui.components.HistoryRecordCard
 import co.com.japl.ui.components.HistoryRecordData
 import co.com.japl.ui.components.HistoryRecordType
 import co.com.japl.ui.components.MapHudCard
 import co.com.japl.ui.components.TelemetryMetricsCard
+import co.com.japl.ui.theme.MaterialThemeComposeUI
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -225,12 +231,18 @@ fun TripScreen(
                     if (!isTripActive) {
                         Button(
                             onClick = {
-                                permissionLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION
-                                    )
+                                val perms = mutableListOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
                                 )
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    perms.add(Manifest.permission.BLUETOOTH_SCAN)
+                                    perms.add(Manifest.permission.BLUETOOTH_CONNECT)
+                                }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    perms.add(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                permissionLauncher.launch(perms.toTypedArray())
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

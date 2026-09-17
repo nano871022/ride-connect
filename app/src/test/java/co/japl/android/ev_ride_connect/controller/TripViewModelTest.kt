@@ -65,6 +65,9 @@ class TripViewModelTest {
 
     @After
     fun tearDown() {
+        if (viewModel.isTripActive.value) {
+            viewModel.stopTrip()
+        }
         Dispatchers.resetMain()
     }
 
@@ -96,6 +99,9 @@ class TripViewModelTest {
         assertThat(viewModel.isTripActive.value).isTrue()
         assertThat(fakeEvDataPort.savedList).hasSize(2)
         assertThat(fakeEvDataPort.savedList.last().batteryLevel).isEqualTo(80.toShort())
+
+        viewModel.stopTrip()
+        testScheduler.runCurrent()
     }
 
     @Test
@@ -120,7 +126,7 @@ class TripViewModelTest {
         assertThat(viewModel.calculatedNewKm.value).isGreaterThanOrEqualTo(100L)
 
         viewModel.confirmStopTrip(70)
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         assertThat(viewModel.isTripActive.value).isFalse()
         assertThat(fakeTripPort.savedTrips).hasSize(1)
@@ -138,7 +144,7 @@ class TripViewModelTest {
         fakeTripPort.saveTrip(trip, gpsPoints)
 
         viewModel.loadTripDetail(1L)
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         val detail = viewModel.selectedTripDetail.value
         assertThat(detail).isNotNull

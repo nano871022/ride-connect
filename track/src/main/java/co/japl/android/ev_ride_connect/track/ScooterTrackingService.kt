@@ -1,14 +1,18 @@
 package co.japl.android.ev_ride_connect.track
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
@@ -77,7 +81,7 @@ class ScooterTrackingService : Service() {
         when (action) {
             TrackingSettings.ACTION_START_TRACKING -> {
                 val notification = createNotification()
-                startForeground(TrackingSettings.NOTIFICATION_ID, notification)
+                startForegroundCompat(notification)
                 trackingTracker.startTracking()
             }
             TrackingSettings.ACTION_STOP_TRACKING -> {
@@ -92,7 +96,7 @@ class ScooterTrackingService : Service() {
             }
             TrackingSettings.ACTION_PROCESS_LLM_PROMPT -> {
                 val notification = createNotification()
-                startForeground(TrackingSettings.NOTIFICATION_ID, notification)
+                startForegroundCompat(notification)
                 val prompt = intent?.getStringExtra(TrackingSettings.EXTRA_PROMPT) ?: ""
                 val modelName = intent?.getStringExtra(TrackingSettings.EXTRA_MODEL_NAME) ?: ""
                 val apiKey = intent?.getStringExtra(TrackingSettings.EXTRA_API_KEY) ?: ""
@@ -104,6 +108,34 @@ class ScooterTrackingService : Service() {
         }
 
         return START_STICKY
+    }
+
+    private fun startForegroundCompat(notification: Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            var types = 0
+            val hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasBluetooth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+
+            if (hasLocation) {
+                types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            }
+            if (hasBluetooth) {
+                types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            }
+
+            if (types != 0) {
+                startForeground(TrackingSettings.NOTIFICATION_ID, notification, types)
+            } else {
+                startForeground(TrackingSettings.NOTIFICATION_ID, notification)
+            }
+        } else {
+            startForeground(TrackingSettings.NOTIFICATION_ID, notification)
+        }
     }
 
     fun processLlmPromptInBackground(prompt: String, modelName: String, apiKey: String, template: String?) {

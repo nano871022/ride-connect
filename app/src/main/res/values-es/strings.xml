@@ -40,7 +40,7 @@
     <string name="dashboard_cycles">Ciclos:</string>
     <string name="dashboard_cycles_est">%1$d estimados</string>
     <string name="dashboard_pack_health">Salud pack:</string>
-    <string name="dashboard_pack_health_optimal">98% óptima</string>
+    <string name="dashboard_pack_health_optimal">98\% óptima</string>
     <string name="dashboard_consumption">Consumo</string>
     <string name="dashboard_calculated">Calculado</string>
     <string name="dashboard_consumption_unit">Wh/km</string>
@@ -82,7 +82,7 @@
     <string name="history_today_km">+14.2 km hoy</string>
     <string name="history_trips">Viajes</string>
     <string name="history_routes_unit">rutas</string>
-    <string name="history_cloud_sync">100% sync cloud</string>
+    <string name="history_cloud_sync">100\% sync cloud</string>
     <string name="history_efficiency">Eficiencia</string>
     <string name="history_efficiency_unit">Wh/km</string>
     <string name="history_mode_sport_eco">Modo Sport Eco</string>
