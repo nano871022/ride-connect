@@ -110,6 +110,15 @@ class EvConfigViewModel @Inject constructor(
         _selectedLlmConfig.value = config
     }
 
+    fun onImageUrlChanged(value: String) {
+        _evConfig.update { it.copy(imageUrl = value) }
+    }
+
+    fun onPrepareNewVehicle() {
+        _evConfig.update { it.copy(id = 0, isLoaded = false) }
+        _statusMessage.value = "EV_CREATION_MODE"
+    }
+
     fun onRequestChanged(value: String) {
         _evConfig.update { it.copy(request = value) }
     }

@@ -24,6 +24,7 @@ class EvConfigMapperTest {
               "brakeTechnology": "Hydraulic disc brakes",
               "suspensionTechnology": "Front suspension fork",
               "chargePower": "84W (42V 2A)",
+              "imageUrl": "https://example.com/scooter.jpg",
               "otherCharacteristics": [
                 "Dual battery system",
                 "LCD display"
@@ -49,6 +50,7 @@ class EvConfigMapperTest {
         assertThat(result.motors).hasSize(1)
         assertThat(result.motors.first().name).isEqualTo("Rear Hub Motor")
         assertThat(result.motors.first().watts).isEqualTo(350)
+        assertThat(result.imageUrl).isEqualTo("https://example.com/scooter.jpg")
     }
 
     @Test

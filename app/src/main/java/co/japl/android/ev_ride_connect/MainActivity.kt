@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import co.com.japl.homeconnect.about.ui.About
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
@@ -185,10 +184,26 @@ class MainActivity : ComponentActivity() {
             )
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(innerPadding)) {
-                About(
-                    versionDetail = version,
-                    applicationId = appId
-                )
+                val aboutClass = remember {
+                    try {
+                        Class.forName("co.com.japl.homeconnect.about.ui.AboutKt")
+                    } catch (e: Throwable) {
+                        null
+                    }
+                }
+                if (aboutClass != null) {
+                    val method = remember(aboutClass) {
+                        aboutClass.methods.firstOrNull { it.name == "About" }
+                    }
+                    if (method != null) {
+                        val composer = androidx.compose.runtime.currentComposer
+                        method.invoke(null, version, appId, composer, 0, 0)
+                    } else {
+                        Text("Version: $version ($appId)")
+                    }
+                } else {
+                    Text("Version: $version ($appId)")
+                }
             }
 
             else -> {}

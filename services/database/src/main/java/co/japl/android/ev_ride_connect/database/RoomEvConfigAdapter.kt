@@ -38,6 +38,7 @@ class RoomEvConfigAdapter(
             suspensionTechnology = suspensionTechnology,
             chargePower = chargePower,
             otherCharacteristics = otherCharacteristics,
+            imageUrl = imageUrl,
             isLoaded = isLoaded
         )
     }
@@ -60,6 +61,7 @@ class RoomEvConfigAdapter(
             suspensionTechnology = suspensionTechnology,
             chargePower = chargePower,
             otherCharacteristics = otherCharacteristics,
+            imageUrl = imageUrl,
             isLoaded = isLoaded
         )
     }

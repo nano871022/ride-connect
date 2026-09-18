@@ -119,6 +119,17 @@ class EvConfigViewModelTest {
     }
 
     @Test
+    fun shouldUpdateImageUrlAndPrepareNewVehicle() = runTest {
+        viewModel.onImageUrlChanged("https://example.com/vehicle.jpg")
+        assertThat(viewModel.evConfig.value.imageUrl).isEqualTo("https://example.com/vehicle.jpg")
+
+        viewModel.onPrepareNewVehicle()
+        assertThat(viewModel.evConfig.value.id).isEqualTo(0)
+        assertThat(viewModel.evConfig.value.isLoaded).isFalse()
+        assertThat(viewModel.statusMessage.value).isEqualTo("EV_CREATION_MODE")
+    }
+
+    @Test
     fun shouldUpdateEvConfigFields() = runTest {
         viewModel.onRequestChanged("Vsett c7 plus")
         viewModel.onBrandChanged("VSETT")
