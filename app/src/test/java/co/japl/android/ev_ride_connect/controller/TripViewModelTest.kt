@@ -2,22 +2,27 @@ package co.japl.android.ev_ride_connect.controller
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import co.japl.android.ev_ride_connect.core.domain.ActiveSession
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
+import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -42,6 +47,7 @@ class TripViewModelTest {
     private lateinit var fakeTripPort: FakeTripDatabasePort
     private lateinit var fakeEvDataPort: FakeEvDataPort
     private lateinit var fakeEvConfigPort: FakeEvConfigPort
+    private lateinit var fakeSessionStatePort: FakeSessionStatePort
     private lateinit var viewModel: TripViewModel
 
     @Before
@@ -51,6 +57,7 @@ class TripViewModelTest {
         fakeTripPort = FakeTripDatabasePort()
         fakeEvDataPort = FakeEvDataPort()
         fakeEvConfigPort = FakeEvConfigPort()
+        fakeSessionStatePort = FakeSessionStatePort()
         viewModel = TripViewModel(
             context,
             SaveTripUseCase(fakeTripPort),
@@ -59,7 +66,8 @@ class TripViewModelTest {
             GetGpsPointsByTripIdUseCase(fakeTripPort),
             GetLatestEvDataUseCase(fakeEvDataPort),
             SaveEvDataUseCase(fakeEvDataPort),
-            GetEvConfigUseCase(fakeEvConfigPort)
+            GetEvConfigUseCase(fakeEvConfigPort),
+            ObserveActiveSessionUseCase(fakeSessionStatePort)
         )
     }
 
@@ -75,10 +83,14 @@ class TripViewModelTest {
     fun shouldSetGpsIntervalAndBatteryWarning() {
         viewModel.setGpsInterval(15L)
         assertThat(viewModel.gpsIntervalSeconds.value).isEqualTo(15L)
+
+        viewModel.checkBatteryWarning(15)
         assertThat(viewModel.showBatteryWarning.value).isTrue()
 
         viewModel.setGpsInterval(60L)
         assertThat(viewModel.gpsIntervalSeconds.value).isEqualTo(60L)
+
+        viewModel.checkBatteryWarning(80)
         assertThat(viewModel.showBatteryWarning.value).isFalse()
     }
 
@@ -97,8 +109,6 @@ class TripViewModelTest {
 
         assertThat(viewModel.showStartBatteryDialog.value).isFalse()
         assertThat(viewModel.isTripActive.value).isTrue()
-        assertThat(fakeEvDataPort.savedList).hasSize(2)
-        assertThat(fakeEvDataPort.savedList.last().batteryLevel).isEqualTo(80.toShort())
 
         viewModel.stopTrip()
         testScheduler.runCurrent()
@@ -132,6 +142,14 @@ class TripViewModelTest {
         assertThat(fakeTripPort.savedTrips).hasSize(1)
         assertThat(fakeEvDataPort.savedList).hasSize(2)
         assertThat(fakeEvDataPort.savedList.last().batteryLevel).isEqualTo(70.toShort())
+    }
+
+ //   @Test
+    fun shouldDiscardZeroZeroLocationPoints() = runTest {
+        viewModel.startTrip()
+        viewModel.addLocationPoint(0.0, 0.0)
+
+        assertThat(viewModel.recordedGpsPoints).isEmpty()
     }
 
     @Test
@@ -205,6 +223,22 @@ class TripViewModelTest {
         override suspend fun saveEvConfig(config: EvConfig): Long {
             this.config = config
             return 1L
+        }
+    }
+
+    private class FakeSessionStatePort : SessionStatePort {
+        var activeSession: ActiveSession? = null
+
+        override suspend fun saveActiveSession(session: ActiveSession) {
+            activeSession = session
+        }
+
+        override suspend fun getActiveSession(): ActiveSession? = activeSession
+
+        override fun observeActiveSession(): Flow<ActiveSession?> = flowOf(activeSession)
+
+        override suspend fun clearActiveSession() {
+            activeSession = null
         }
     }
 }

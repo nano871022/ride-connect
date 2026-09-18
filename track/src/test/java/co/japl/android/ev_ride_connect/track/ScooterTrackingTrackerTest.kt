@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.track
 
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
@@ -80,22 +81,32 @@ class ScooterTrackingTrackerTest {
     @Test
     fun shouldRecordTelemetryAndCacheInSession() = runTest(testDispatcher) {
         tracker.startTracking()
-        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5)
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
 
         assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
         assertThat(fakeSessionStatePort.activeSession?.currentDistanceKm).isEqualTo(0.5)
         assertThat(fakeSessionStatePort.activeSession?.cachedTelemetryCount).isEqualTo(1)
+        assertThat(fakeSessionStatePort.activeSession?.motionState).isEqualTo(MotionState.MOVING)
+    }
+
+    @Test
+    fun shouldDiscardZeroZeroCoordinates() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(x = 0.0, y = 0.0, speed = 10.0, distanceDelta = 0.1, motionState = MotionState.MOVING)
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(0)
     }
 
     @Test
     fun shouldStopTrackingSaveTripAndClearSession() = runTest(testDispatcher) {
         tracker.startTracking()
-        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 1.0)
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 1.0, motionState = MotionState.ACCELERATING)
         tracker.stopTracking()
 
         assertThat(tracker.isTracking.value).isFalse
         assertThat(fakeTripDatabasePort.savedTrips).hasSize(1)
         assertThat(fakeTripDatabasePort.savedGpsPoints).hasSize(1)
+        assertThat(fakeTripDatabasePort.savedGpsPoints[0].motionState).isEqualTo(MotionState.ACCELERATING)
         assertThat(fakeSessionStatePort.activeSession).isNull()
     }
 }

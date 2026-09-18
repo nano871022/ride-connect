@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -16,9 +17,11 @@ import androidx.core.content.ContextCompat
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
+import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
@@ -50,14 +53,19 @@ class ScooterTrackingService : Service() {
     @Inject
     lateinit var evConfigPort: EvConfigPort
 
+    @Inject
+    lateinit var motionDetectorPort: MotionDetectorPort
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var trackingTracker: ScooterTrackingTracker
+    private var previousMotionState: MotionState = MotionState.STOPPED
 
     override fun onCreate() {
         super.onCreate()
         trackingTracker = ScooterTrackingTracker(tripDatabasePort, sessionStatePort, serviceScope)
         createNotificationChannel()
         observeBleState()
+        observeMotionState()
     }
 
     private fun observeBleState() {
@@ -68,11 +76,53 @@ class ScooterTrackingService : Service() {
                         x = 0.0,
                         y = 0.0,
                         speed = scooterState.currentSpeed.toDouble(),
-                        distanceDelta = 0.01
+                        distanceDelta = 0.01,
+                        motionState = motionDetectorPort.motionState.value
                     )
                 }
             }
             .launchIn(serviceScope)
+    }
+
+    private fun observeMotionState() {
+        motionDetectorPort.motionState
+            .onEach { newState ->
+                val wasStopped = (previousMotionState == MotionState.STOPPED)
+                val isStopped = (newState == MotionState.STOPPED)
+                if (trackingTracker.isTracking.value && wasStopped != isStopped) {
+                    val loc = fetchCurrentLocation()
+                    if (loc != null) {
+                        trackingTracker.recordTelemetry(
+                            x = loc.first,
+                            y = loc.second,
+                            speed = 0.0,
+                            distanceDelta = 0.0,
+                            motionState = newState
+                        )
+                    }
+                }
+                previousMotionState = newState
+            }
+            .launchIn(serviceScope)
+    }
+
+    private fun fetchCurrentLocation(): Pair<Double, Double>? {
+        return try {
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
+            val hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            if (!hasFine && !hasCoarse) return null
+
+            val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                ?: locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER)
+
+            if (location != null && (location.latitude != 0.0 || location.longitude != 0.0)) {
+                Pair(location.latitude, location.longitude)
+            } else null
+        } catch (e: Exception) {
+            null
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -82,10 +132,12 @@ class ScooterTrackingService : Service() {
             TrackingSettings.ACTION_START_TRACKING -> {
                 val notification = createNotification()
                 startForegroundCompat(notification)
+                motionDetectorPort.start()
                 trackingTracker.startTracking()
             }
             TrackingSettings.ACTION_STOP_TRACKING -> {
                 serviceScope.launch {
+                    motionDetectorPort.stop()
                     trackingTracker.stopTracking()
                     val session = sessionStatePort.getActiveSession()
                     if (session == null || (!session.isRideActive && !session.isLlmProcessing)) {
@@ -191,6 +243,7 @@ class ScooterTrackingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        motionDetectorPort.stop()
         serviceScope.cancel()
     }
 

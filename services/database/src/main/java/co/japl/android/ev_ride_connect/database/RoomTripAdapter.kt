@@ -1,5 +1,6 @@
 package co.japl.android.ev_ride_connect.database
 
+import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
@@ -44,7 +45,8 @@ class RoomTripAdapter(
                     distance = gps.distance,
                     x = gps.x,
                     y = gps.y,
-                    createTmst = gps.createTmst
+                    createTmst = gps.createTmst,
+                    motionState = gps.motionState.name
                 )
             }
             tripDao.insertTripGpsList(gpsEntities)
@@ -80,6 +82,11 @@ class RoomTripAdapter(
 
     override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
         return tripDao.getGpsPointsByTripId(tripId).map { entity ->
+            val motionState = try {
+                MotionState.valueOf(entity.motionState)
+            } catch (e: Exception) {
+                MotionState.STOPPED
+            }
             TripGps(
                 id = entity.id,
                 tripId = entity.tripId,
@@ -88,7 +95,8 @@ class RoomTripAdapter(
                 distance = entity.distance,
                 x = entity.x,
                 y = entity.y,
-                createTmst = entity.createTmst
+                createTmst = entity.createTmst,
+                motionState = motionState
             )
         }
     }

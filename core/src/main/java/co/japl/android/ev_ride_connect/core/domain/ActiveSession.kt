@@ -10,5 +10,6 @@ data class ActiveSession(
     val pendingLlmResponse: String? = null,
     val isLlmProcessing: Boolean = false,
     val cachedTelemetryCount: Int = 0,
-    val lastUpdatedTmst: Long = System.currentTimeMillis()
+    val lastUpdatedTmst: Long = System.currentTimeMillis(),
+    val motionState: MotionState = MotionState.STOPPED
 )

@@ -293,6 +293,8 @@
     <string name="motion_accelerating">Acelerando</string>
     <string name="motion_braking">Frenando</string>
     <string name="motion_stationary">Quieto</string>
+    <string name="motion_moving">En movimiento</string>
+    <string name="motion_stopped">Detenido</string>
     <string name="motion_stationary_time">Quieto: %1$s</string>
     <string name="motion_last_stationary_time">Estuvo quieto: %1$s</string>
 </resources>

@@ -82,7 +82,7 @@ jobs:
 
           # 7. Construir versionName base y versionCodes
           NEW_VNAME_BASE="${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
-          NEW_VCODE_APP="1${NEW_MAJOR}_${NEW_MINOR}_${NEW_PATCH}"
+          NEW_VCODE_APP="${NEW_MAJOR}_${NEW_MINOR}_${NEW_PATCH}"
 
           # 8. Agregar sufijo al versionName si existe
           SUFFIX="${{ github.event.inputs.version_suffix }}"
