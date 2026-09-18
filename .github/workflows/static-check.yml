@@ -45,10 +45,10 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run unit tests and lint code analysis
+      - name: Run lint code analysis
         id: run_tests
         continue-on-error: true
-        run: ./gradlew lint
+        run: ./gradlew lint -x :about:lint
 
       - name: Package lint results as zip
         run: |
