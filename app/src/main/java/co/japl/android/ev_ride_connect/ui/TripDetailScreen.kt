@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,10 +71,10 @@ fun TripDetailScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            TripSummaryCard(trip = trip)
 
             Card(
                 modifier = Modifier
@@ -84,19 +86,16 @@ fun TripDetailScreen(
                 TripMapView(points = mapPoints, modifier = Modifier.fillMaxSize())
             }
 
+            TripSummaryCard(trip = trip)
+
             Text(
                 text = stringResource(R.string.trip_detail_points_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(gpsPoints) { sample ->
-                    GpsSampleItem(sample = sample)
-                }
+            gpsPoints.forEach { sample ->
+                GpsSampleItem(sample = sample)
             }
         }
     }

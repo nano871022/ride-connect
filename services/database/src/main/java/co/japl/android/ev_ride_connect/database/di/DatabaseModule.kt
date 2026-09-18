@@ -35,9 +35,7 @@ object DatabaseModule {
 
     private val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Ejemplo de uso de SQLite para añadir columnas y mantener la compatibilidad:
-            // db.execSQL("ALTER TABLE ev_configs ADD COLUMN image_url TEXT NOT NULL DEFAULT ''")
-        }
+            db.execSQL("ALTER TABLE ev_configs ADD COLUMN image_url TEXT NOT NULL DEFAULT ''")        }
     }
 
     @Provides

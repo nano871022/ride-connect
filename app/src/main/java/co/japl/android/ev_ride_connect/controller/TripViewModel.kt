@@ -59,6 +59,12 @@ class TripViewModel @Inject constructor(
     private val _elapsedTimeSeconds = MutableStateFlow(0L)
     val elapsedTimeSeconds: StateFlow<Long> = _elapsedTimeSeconds.asStateFlow()
 
+    private val _sateliteCount = MutableStateFlow(0L)
+    val sateliteCount: StateFlow<Long> = _sateliteCount.asStateFlow()
+
+    private val _metersPrecisionSatelite = MutableStateFlow(0.0)
+    val metersPrecisionSatelite: StateFlow<Double> = _metersPrecisionSatelite.asStateFlow()
+
     private val _gpsIntervalSeconds = MutableStateFlow(60L)
     val gpsIntervalSeconds: StateFlow<Long> = _gpsIntervalSeconds.asStateFlow()
 

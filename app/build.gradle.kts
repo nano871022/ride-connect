@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 abstract class CopyGoogleServicesTask : DefaultTask() {
     @get:Input
     @get:Optional
@@ -64,6 +67,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        val localFile = File(project.rootDir,"local.properties")
+        val properties = Properties();
+        properties.load(localFile.inputStream())
+        manifestPlaceholders["API_KEY_MAP"] = properties.getProperty("api.key.map")?:"NO-API"
     }
 
     signingConfigs {
