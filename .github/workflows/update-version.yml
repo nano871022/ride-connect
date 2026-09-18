@@ -111,5 +111,5 @@ jobs:
         run: |
           TAG_NAME="v$NEW_VERSION_NAME"
           git add app/build.gradle.kts CHANGELOG.md
-          git commit -m "chore(release): bump version to $TAG_NAME [skip ci]"
+          git commit -m "chore(release): bump version"
           git push origin HEAD
