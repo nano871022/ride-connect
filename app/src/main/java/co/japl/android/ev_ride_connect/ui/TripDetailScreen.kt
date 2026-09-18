@@ -86,7 +86,7 @@ fun TripDetailScreen(
                 TripMapView(points = mapPoints, modifier = Modifier.fillMaxSize())
             }
 
-            TripSummaryCard(trip = trip)
+            TripSummaryCard(trip = trip, gpsPointCnt = gpsPoints.size.toShort())
 
             Text(
                 text = stringResource(R.string.trip_detail_points_title),
@@ -102,7 +102,7 @@ fun TripDetailScreen(
 }
 
 @Composable
-private fun TripSummaryCard(trip: Trip) {
+private fun TripSummaryCard(trip: Trip, gpsPointCnt: Short = 0) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -110,14 +110,21 @@ private fun TripSummaryCard(trip: Trip) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(5.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = DateUtils.formatTimestamp(trip.createTmst),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row {
+                Text(
+                    text = DateUtils.formatTimestamp(trip.createTmst),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "${ gpsPointCnt }",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
             Text(
                 text = "${stringResource(R.string.trip_timer_label)}: ${DateUtils.formatDurationSeconds(trip.timeTrip)}",
                 style = MaterialTheme.typography.bodyLarge,
