@@ -79,6 +79,9 @@ import co.com.japl.ui.components.HistoryRecordCard
 import co.com.japl.ui.components.HistoryRecordData
 import co.com.japl.ui.components.HistoryRecordType
 import co.com.japl.ui.components.MapHudCard
+import co.com.japl.ui.components.MapPoint
+import co.com.japl.ui.components.MotionStatusCard
+import co.japl.android.ev_ride_connect.utils.MotionState
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
@@ -105,6 +108,18 @@ fun TripScreen(
     val calculatedNewKm by viewModel.calculatedNewKm.collectAsState()
 
     var historyExpanded by remember { mutableStateOf(true) }
+    val motionData by viewModel.motionData.collectAsState()
+    val motionStateText = when (motionData.state) {
+        MotionState.ACCELERATING -> stringResource(R.string.motion_accelerating)
+        MotionState.BRAKING -> stringResource(R.string.motion_braking)
+        MotionState.STATIONARY -> stringResource(R.string.motion_stationary)
+    }
+    val stationaryTimeText = if (motionData.state == MotionState.STATIONARY) {
+        stringResource(R.string.motion_stationary_time, DateUtils.formatDurationSeconds(motionData.currentStationarySeconds))
+    } else if (motionData.lastStationarySeconds > 0) {
+        stringResource(R.string.motion_last_stationary_time, DateUtils.formatDurationSeconds(motionData.lastStationarySeconds))
+    } else ""
+
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -121,7 +136,18 @@ fun TripScreen(
         item {
             MapHudCard(
                 gpsIntervalSeconds = gpsIntervalSeconds,
-                onGpsIntervalSelected = { sec -> viewModel.setGpsInterval(sec) }
+                onGpsIntervalSelected = { sec -> viewModel.setGpsInterval(sec) },
+                points = viewModel.recordedGpsPoints.map { MapPoint(it.x, it.y, "Punto #${it.orderIndex}") }
+            )
+        }
+
+                item {
+            MotionStatusCard(
+                motionStateText = motionStateText,
+                stationaryTimeText = stationaryTimeText,
+                isAccelerating = motionData.state == MotionState.ACCELERATING,
+                isBraking = motionData.state == MotionState.BRAKING,
+                isStationary = motionData.state == MotionState.STATIONARY
             )
         }
 
@@ -198,61 +224,6 @@ fun TripScreen(
                             text = stringResource(R.string.trip_pause_button),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.trip_mark_poi_button),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    Button(
-                        onClick = { },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.trip_sos_lock_button),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }

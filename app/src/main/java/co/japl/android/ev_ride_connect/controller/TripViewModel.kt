@@ -25,6 +25,9 @@ import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import co.japl.android.ev_ride_connect.track.ScooterTrackingService
 import co.japl.android.ev_ride_connect.track.TrackingSettings
+import co.japl.android.ev_ride_connect.utils.MotionData
+import co.japl.android.ev_ride_connect.utils.MotionDetector
+import co.japl.android.ev_ride_connect.utils.MotionState
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -86,7 +89,9 @@ class TripViewModel @Inject constructor(
     private val _calculatedNewKm = MutableStateFlow(0L)
     val calculatedNewKm: StateFlow<Long> = _calculatedNewKm.asStateFlow()
 
-    private val recordedGpsPoints = mutableListOf<TripGps>()
+    val recordedGpsPoints = mutableListOf<TripGps>()
+    private val motionDetector = MotionDetector(context)
+    val motionData: StateFlow<MotionData> = motionDetector.motionData
 
     private var timerJob: Job? = null
     private var gpsSamplingJob: Job? = null
@@ -146,6 +151,7 @@ class TripViewModel @Inject constructor(
     }
 
     fun startTrip() {
+        motionDetector.start()
         if (_isTripActive.value) return
         _isTripActive.value = true
         _elapsedTimeSeconds.value = 0L
@@ -376,6 +382,7 @@ class TripViewModel @Inject constructor(
     }
 
     fun stopTrip() {
+        motionDetector.stop()
         if (!_isTripActive.value) return
         _isTripActive.value = false
         timerJob?.cancel()
@@ -438,6 +445,7 @@ class TripViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        motionDetector.stop()
         super.onCleared()
         stopLocationUpdates()
     }

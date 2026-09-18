@@ -137,16 +137,14 @@ fun EvDataScreen(
                         durationValue = "32m",
                         avgSpeedValue = "24.6 km/h"
                     ),
-                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
-                    gpxText = stringResource(R.string.history_gpx)
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry)
                 )
             }
         } else {
             items(records) { record ->
                 HistoryRecordCard(
                     record = record,
-                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
-                    gpxText = stringResource(R.string.history_gpx)
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry)
                 )
             }
         }

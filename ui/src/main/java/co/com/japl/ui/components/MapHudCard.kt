@@ -50,7 +50,8 @@ fun MapHudCard(
     onGpsIntervalSelected: (Long) -> Unit,
     modifier: Modifier = Modifier,
     satellitesCount: Int = 14,
-    isLiveTelemetry: Boolean = true
+    isLiveTelemetry: Boolean = true,
+    points: List<MapPoint> = emptyList()
 ) {
     Card(
         modifier = modifier
@@ -63,7 +64,8 @@ fun MapHudCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            SimulatedMapCanvas(
+            TripMapView(
+                points = points,
                 modifier = Modifier.fillMaxSize()
             )
 
