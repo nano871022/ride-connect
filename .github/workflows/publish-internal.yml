@@ -37,7 +37,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1.1.5
         with:
             serviceAccountJson: ${{ github.workspace }}/private-props/ride-connect/${{ vars.JSON_CREDENTIALS_PLAY_STORE }}
-            packageName: co.japl.android.synapsefit
+            packageName: co.japl.android.ev_ride_connect
             releaseFiles: ./bundle/app-release.aab
             track: internal
             inAppUpdatePriority: 2
