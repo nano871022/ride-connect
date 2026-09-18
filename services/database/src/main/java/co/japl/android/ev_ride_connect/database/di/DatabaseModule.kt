@@ -9,6 +9,7 @@ import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.database.AppDatabase
+import co.japl.android.ev_ride_connect.database.DatabaseMigrations
 import co.japl.android.ev_ride_connect.database.GoogleDriveBackupHelper
 import co.japl.android.ev_ride_connect.database.RoomActiveSessionAdapter
 import co.japl.android.ev_ride_connect.database.RoomEvConfigAdapter
@@ -38,7 +39,10 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "app_database.db"
-        ).fallbackToDestructiveMigration(true).build()
+        )
+            .addMigrations(DatabaseMigrations.MIGRATION_6_7)
+            .fallbackToDestructiveMigration(true)
+            .build()
     }
 
     @Provides
