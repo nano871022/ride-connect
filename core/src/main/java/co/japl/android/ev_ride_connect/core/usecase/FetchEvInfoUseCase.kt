@@ -36,6 +36,7 @@ class FetchEvInfoUseCase @Inject constructor(
             brakeTechnology = parsedConfig.brakeTechnology.ifBlank { currentEvConfig.brakeTechnology },
             suspensionTechnology = parsedConfig.suspensionTechnology.ifBlank { currentEvConfig.suspensionTechnology },
             chargePower = parsedConfig.chargePower.ifBlank { currentEvConfig.chargePower },
+            imageUrl = parsedConfig.imageUrl.ifBlank { currentEvConfig.imageUrl },
             otherCharacteristics = parsedConfig.otherCharacteristics.ifBlank { currentEvConfig.otherCharacteristics }
         )
     }

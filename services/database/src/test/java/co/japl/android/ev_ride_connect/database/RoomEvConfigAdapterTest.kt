@@ -31,6 +31,7 @@ class RoomEvConfigAdapterTest {
             motors = listOf(MotorSpec("Front", 1000), MotorSpec("Rear", 1000)),
             manufactoryYear = "2023",
             batteryVolts = "60V",
+            imageUrl = "https://example.com/scooter.jpg",
             isLoaded = true
         )
 
@@ -42,6 +43,7 @@ class RoomEvConfigAdapterTest {
         assertThat(savedEntity.brand).isEqualTo("VSETT")
         assertThat(savedEntity.version).isEqualTo("C7 Plus")
         assertThat(savedEntity.motorsJson).contains("Front").contains("1000")
+        assertThat(savedEntity.imageUrl).isEqualTo("https://example.com/scooter.jpg")
         assertThat(savedEntity.isLoaded).isTrue()
     }
 
@@ -55,6 +57,7 @@ class RoomEvConfigAdapterTest {
             motorsJson = "Front:1000",
             manufactoryYear = "2023",
             batteryVolts = "60V",
+            imageUrl = "https://example.com/scooter.jpg",
             isLoaded = true
         )
         fakeEvConfigDao.configs.add(entity)
@@ -67,6 +70,7 @@ class RoomEvConfigAdapterTest {
         assertThat(retrieved?.motors).hasSize(1)
         assertThat(retrieved?.motors?.first()?.name).isEqualTo("Front")
         assertThat(retrieved?.motors?.first()?.watts).isEqualTo(1000)
+        assertThat(retrieved?.imageUrl).isEqualTo("https://example.com/scooter.jpg")
     }
 
     @Test

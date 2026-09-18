@@ -7,6 +7,6 @@ object EvConstants {
         Respond with JSON containing keys:
         brand, version, motors (array of objects with name and watts), manufactoryYear,
         manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity,
-        brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics.
+        brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics, imageUrl.
     """
 }

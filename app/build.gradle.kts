@@ -132,6 +132,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.coil.compose)
     implementation(project(":core"))
     implementation(project(":services:ble"))
     implementation(project(":services:database"))

@@ -70,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import co.com.japl.ui.components.ConfigSectionCard
+import co.com.japl.ui.components.VehicleImageCard
 import co.com.japl.ui.components.SpecTile
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
@@ -103,6 +104,20 @@ fun EvConfigScreen(
             onRequestChanged = { viewModel.onRequestChanged(it) },
             onRequestAi = { viewModel.requestEvInfoFromLlm() }
         )
+
+        if (evConfig.request.isNotBlank() || evConfig.brand.isNotBlank() || evConfig.imageUrl.isNotBlank()) {
+            val vehicleTitle = listOf(evConfig.brand, evConfig.version)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { evConfig.request }
+            VehicleImageCard(
+                imageUrl = evConfig.imageUrl,
+                title = vehicleTitle,
+                description = evConfig.otherCharacteristics.ifBlank { stringResource(R.string.ev_ai_assistant_desc) },
+                addButtonText = stringResource(R.string.ev_add_vehicle_button),
+                onAddClick = { viewModel.onPrepareNewVehicle() }
+            )
+        }
 
         BrandAndModelSection(
             evConfig = evConfig,

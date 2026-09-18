@@ -287,4 +287,7 @@
     <string name="llm_latency_label">Latencia: %1$dms</string>
     <string name="llm_temp_label">Temp: %1$s</string>
     <string name="about">Acerca de</string>
+    <string name="ev_add_vehicle_button">Agregar Vehículo</string>
+    <string name="ev_image_card_title">Imagen del Vehículo</string>
+    <string name="ev_image_not_found">Imagen no disponible</string>
 </resources>

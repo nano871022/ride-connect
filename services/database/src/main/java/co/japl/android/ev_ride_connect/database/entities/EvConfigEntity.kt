@@ -38,6 +38,8 @@ data class EvConfigEntity(
     val chargePower: String = "",
     @ColumnInfo(name = "other_characteristics")
     val otherCharacteristics: String = "",
+    @ColumnInfo(name = "image_url", defaultValue = "")
+    val imageUrl: String = "",
     @ColumnInfo(name = "is_loaded")
     val isLoaded: Boolean = false
 )

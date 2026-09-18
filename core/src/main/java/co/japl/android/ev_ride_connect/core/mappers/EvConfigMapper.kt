@@ -28,6 +28,7 @@ object EvConfigMapper {
             val brakeTechnology = json.optString("brakeTechnology", "")
             val suspensionTechnology = json.optString("suspensionTechnology", "")
             val chargePower = json.optString("chargePower", "")
+            val imageUrl = json.optString("imageUrl", "")
 
             val otherCharacteristics = when (val opt = json.opt("otherCharacteristics")) {
                 is JSONArray -> (0 until opt.length()).map { opt.get(it).toString() }.joinToString(", ")
@@ -62,7 +63,8 @@ object EvConfigMapper {
                     brakeTechnology = brakeTechnology,
                     suspensionTechnology = suspensionTechnology,
                     chargePower = chargePower,
-                    otherCharacteristics = otherCharacteristics
+                    otherCharacteristics = otherCharacteristics,
+                    imageUrl = imageUrl
                 )
             }
         } catch (e: Exception) {
@@ -91,6 +93,7 @@ object EvConfigMapper {
         val suspensionTechnology = extractKey("suspensionTechnology")
         val chargePower = extractKey("chargePower")
         val otherCharacteristics = extractKey("otherCharacteristics")
+        val imageUrl = extractKey("imageUrl")
 
         val motorsList = mutableListOf<MotorSpec>()
         val motorRegex = Regex("""\{\s*"name"\s*:\s*"([^"]+)"\s*,\s*"watts"\s*:\s*(\d+)\s*\}""", RegexOption.IGNORE_CASE)
@@ -114,7 +117,8 @@ object EvConfigMapper {
                 brakeTechnology = brakeTechnology,
                 suspensionTechnology = suspensionTechnology,
                 chargePower = chargePower,
-                otherCharacteristics = otherCharacteristics
+                otherCharacteristics = otherCharacteristics,
+                imageUrl = imageUrl
             )
         }
 
