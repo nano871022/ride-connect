@@ -61,8 +61,8 @@ android {
         applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1_00_002
-        versionName = "1.00.002"
+        versionCode = 11_00_003
+        versionName = "1.00.003"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
