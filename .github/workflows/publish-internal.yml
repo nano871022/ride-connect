@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nano871022/japl-properties
-          token: ${{ secrets.TOKEN_PROP_GITHUB || secrets.GH_TOKEN || github.token }}
+          token: ${{ secrets.PROPERTIES_TOKEN || secrets.GH_TOKEN || github.token }}
           path: private-props
 
       - name: Download build artifact Mobile
