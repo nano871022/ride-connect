@@ -84,7 +84,7 @@ import co.com.japl.ui.components.MapHudCard
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.MotionStatusCard
 import co.com.japl.ui.components.SpeedometerGauge
-import co.japl.android.ev_ride_connect.utils.MotionState
+import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
@@ -113,16 +113,16 @@ fun TripScreen(
     val calculatedNewKm by viewModel.calculatedNewKm.collectAsState()
 
     var historyExpanded by remember { mutableStateOf(true) }
-    val motionData by viewModel.motionData.collectAsState()
-    val motionStateText = when (motionData.state) {
+    val activeSession by viewModel.activeSession.collectAsState()
+    val motionState = activeSession?.motionState ?: MotionState.STOPPED
+    val motionStateText = when (motionState) {
+        MotionState.MOVING -> stringResource(R.string.motion_moving)
         MotionState.ACCELERATING -> stringResource(R.string.motion_accelerating)
         MotionState.BRAKING -> stringResource(R.string.motion_braking)
-        MotionState.STATIONARY -> stringResource(R.string.motion_stationary)
+        MotionState.STOPPED -> stringResource(R.string.motion_stopped)
     }
-    val stationaryTimeText = if (motionData.state == MotionState.STATIONARY) {
-        stringResource(R.string.motion_stationary_time, DateUtils.formatDurationSeconds(motionData.currentStationarySeconds))
-    } else if (motionData.lastStationarySeconds > 0) {
-        stringResource(R.string.motion_last_stationary_time, DateUtils.formatDurationSeconds(motionData.lastStationarySeconds))
+    val stationaryTimeText = if (motionState == MotionState.STOPPED) {
+        stringResource(R.string.motion_stopped)
     } else ""
 
 
@@ -177,9 +177,9 @@ fun TripScreen(
                 MotionStatusCard(
                     motionStateText = motionStateText,
                     stationaryTimeText = stationaryTimeText,
-                    isAccelerating = motionData.state == MotionState.ACCELERATING,
-                    isBraking = motionData.state == MotionState.BRAKING,
-                    isStationary = motionData.state == MotionState.STATIONARY
+                    isAccelerating = motionState == MotionState.ACCELERATING,
+                    isBraking = motionState == MotionState.BRAKING,
+                    isStationary = motionState == MotionState.STOPPED
                 )
             }
         }

@@ -8,5 +8,6 @@ data class TripGps(
     val distance: Double = 0.0,
     val x: Double = 0.0,
     val y: Double = 0.0,
-    val createTmst: Long = System.currentTimeMillis()
+    val createTmst: Long = System.currentTimeMillis(),
+    val motionState: MotionState = MotionState.STOPPED
 )

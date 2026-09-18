@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.track
 
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
@@ -38,14 +39,23 @@ class ScooterTrackingTracker(
                 currentDurationMillis = 0L,
                 currentDistanceKm = 0.0,
                 cachedTelemetryCount = 0,
-                lastUpdatedTmst = System.currentTimeMillis()
+                lastUpdatedTmst = System.currentTimeMillis(),
+                motionState = MotionState.STOPPED
             )
             sessionStatePort?.saveActiveSession(session)
         }
     }
 
-    fun recordTelemetry(x: Double, y: Double, speed: Double, distanceDelta: Double) {
+    fun recordTelemetry(
+        x: Double,
+        y: Double,
+        speed: Double,
+        distanceDelta: Double,
+        motionState: MotionState = MotionState.STOPPED
+    ) {
         if (!_isTracking.value) return
+        if (x == 0.0 && y == 0.0) return
+
         currentDistanceKm += distanceDelta
 
         val gpsPoint = TripGps(
@@ -54,7 +64,8 @@ class ScooterTrackingTracker(
             distance = currentDistanceKm,
             x = x,
             y = y,
-            createTmst = System.currentTimeMillis()
+            createTmst = System.currentTimeMillis(),
+            motionState = motionState
         )
         telemetryQueue.add(gpsPoint)
 
@@ -67,7 +78,8 @@ class ScooterTrackingTracker(
                 currentDurationMillis = duration,
                 currentDistanceKm = currentDistanceKm,
                 cachedTelemetryCount = telemetryQueue.size,
-                lastUpdatedTmst = System.currentTimeMillis()
+                lastUpdatedTmst = System.currentTimeMillis(),
+                motionState = motionState
             )
             sessionStatePort?.saveActiveSession(updated)
         }
@@ -96,7 +108,8 @@ class ScooterTrackingTracker(
                 currentDurationMillis = duration,
                 currentDistanceKm = currentDistanceKm,
                 cachedTelemetryCount = 0,
-                lastUpdatedTmst = System.currentTimeMillis()
+                lastUpdatedTmst = System.currentTimeMillis(),
+                motionState = MotionState.STOPPED
             )
             if (updated.pendingLlmPrompt == null && !updated.isLlmProcessing) {
                 sessionStatePort.clearActiveSession()

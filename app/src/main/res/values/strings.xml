@@ -293,6 +293,8 @@
     <string name="motion_accelerating">Accelerating</string>
     <string name="motion_braking">Braking</string>
     <string name="motion_stationary">Stationary</string>
+    <string name="motion_moving">Moving</string>
+    <string name="motion_stopped">Stopped</string>
     <string name="motion_stationary_time">Stationary: %1$s</string>
     <string name="motion_last_stationary_time">Was stationary: %1$s</string>
 </resources>

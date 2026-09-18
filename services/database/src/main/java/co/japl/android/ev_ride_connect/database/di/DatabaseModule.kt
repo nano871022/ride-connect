@@ -2,6 +2,8 @@ package co.japl.android.ev_ride_connect.database.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
@@ -20,8 +22,6 @@ import co.japl.android.ev_ride_connect.database.dao.EvConfigDao
 import co.japl.android.ev_ride_connect.database.dao.EvDataDao
 import co.japl.android.ev_ride_connect.database.dao.LlmConfigDao
 import co.japl.android.ev_ride_connect.database.dao.TripDao
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,7 +35,14 @@ object DatabaseModule {
 
     private val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL("ALTER TABLE ev_configs ADD COLUMN image_url TEXT NOT NULL DEFAULT ''")        }
+            db.execSQL("ALTER TABLE ev_configs ADD COLUMN image_url TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE trip_gps ADD COLUMN motion_state TEXT NOT NULL DEFAULT 'STOPPED'")
+        }
     }
 
     @Provides
@@ -46,7 +53,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "app_database.db"
         )
-        .addMigrations(MIGRATION_7_8)
+        .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
         .fallbackToDestructiveMigration(true)
         .build()
     }
