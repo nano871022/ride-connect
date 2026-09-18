@@ -184,26 +184,10 @@ class MainActivity : ComponentActivity() {
             )
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(innerPadding)) {
-                val aboutClass = remember {
-                    try {
-                        Class.forName("co.com.japl.homeconnect.about.ui.AboutKt")
-                    } catch (e: Throwable) {
-                        null
-                    }
-                }
-                if (aboutClass != null) {
-                    val method = remember(aboutClass) {
-                        aboutClass.methods.firstOrNull { it.name == "About" }
-                    }
-                    if (method != null) {
-                        val composer = androidx.compose.runtime.currentComposer
-                        method.invoke(null, version, appId, composer, 0, 0)
-                    } else {
-                        Text("Version: $version ($appId)")
-                    }
-                } else {
-                    Text("Version: $version ($appId)")
-                }
+                About(
+                    versionDetail = version,
+                    applicationId = appId
+                )
             }
 
             else -> {}
