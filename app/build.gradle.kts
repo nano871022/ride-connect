@@ -132,6 +132,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
     implementation(libs.coil.compose)
     implementation(project(":core"))
     implementation(project(":services:ble"))

@@ -1,4 +1,6 @@
 [versions]
+mapsCompose = "4.3.3"
+playServicesMaps = "18.2.0"
 agp = "9.2.1"
 firebaseBom = "34.19.0"
 kotlin = "2.4.10"
@@ -23,6 +25,8 @@ firebaseCrashlythics = "3.0.8"
 googleServices = "4.5.0"
 
 [libraries]
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.6.0" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }

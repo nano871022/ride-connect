@@ -290,4 +290,9 @@
     <string name="ev_add_vehicle_button">Agregar Vehículo</string>
     <string name="ev_image_card_title">Imagen del Vehículo</string>
     <string name="ev_image_not_found">Imagen no disponible</string>
+    <string name="motion_accelerating">Acelerando</string>
+    <string name="motion_braking">Frenando</string>
+    <string name="motion_stationary">Quieto</string>
+    <string name="motion_stationary_time">Quieto: %1$s</string>
+    <string name="motion_last_stationary_time">Estuvo quieto: %1$s</string>
 </resources>

@@ -356,32 +356,6 @@ fun HistoryRecordCard(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(text = viewTelemetryText, style = MaterialTheme.typography.labelSmall)
                         }
-
-                        OutlinedButton(
-                            onClick = { onGpxClick?.invoke() },
-                            modifier = Modifier.height(40.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = gpxText, style = MaterialTheme.typography.labelSmall)
-                        }
-
-                        IconButton(
-                            onClick = { onEditClick?.invoke() },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
                     }
                 } else {
                     // Non-ride cards (Diagnostic & Charging)
