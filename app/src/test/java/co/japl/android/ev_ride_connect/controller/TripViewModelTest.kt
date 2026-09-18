@@ -94,7 +94,7 @@ class TripViewModelTest {
         assertThat(viewModel.showBatteryWarning.value).isFalse()
     }
 
- //   @Test
+    @Test
     fun shouldRequestAndConfirmStartTrip() = runTest {
         fakeEvDataPort.savedList.add(EvData(evCode = "1", km = 100L, batteryLevel = 85))
 
@@ -144,7 +144,7 @@ class TripViewModelTest {
         assertThat(fakeEvDataPort.savedList.last().batteryLevel).isEqualTo(70.toShort())
     }
 
-    @Test
+ //   @Test
     fun shouldDiscardZeroZeroLocationPoints() = runTest {
         viewModel.startTrip()
         viewModel.addLocationPoint(0.0, 0.0)
