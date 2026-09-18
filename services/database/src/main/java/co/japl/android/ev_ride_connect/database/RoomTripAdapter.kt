@@ -28,6 +28,7 @@ class RoomTripAdapter(
             averageSpeed = trip.averageSpeed,
             distanceKm = trip.distance,
             distance = (trip.distance * 1000).toInt(),
+            batteryConsumed = trip.batteryConsumed,
             createTmst = trip.createTmst,
             timestamp = trip.createTmst
         )
@@ -59,6 +60,7 @@ class RoomTripAdapter(
                 timeTrip = if (entity.timeTrip != 0L) entity.timeTrip else entity.duration,
                 averageSpeed = entity.averageSpeed,
                 distance = if (entity.distanceKm != 0.0) entity.distanceKm else entity.distance / 1000.0,
+                batteryConsumed = entity.batteryConsumed,
                 createTmst = if (entity.createTmst != 0L) entity.createTmst else entity.timestamp
             )
         }
@@ -71,6 +73,7 @@ class RoomTripAdapter(
             timeTrip = if (entity.timeTrip != 0L) entity.timeTrip else entity.duration,
             averageSpeed = entity.averageSpeed,
             distance = if (entity.distanceKm != 0.0) entity.distanceKm else entity.distance / 1000.0,
+            batteryConsumed = entity.batteryConsumed,
             createTmst = if (entity.createTmst != 0L) entity.createTmst else entity.timestamp
         )
     }

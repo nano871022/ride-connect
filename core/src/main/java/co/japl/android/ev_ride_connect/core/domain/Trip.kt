@@ -5,5 +5,6 @@ data class Trip(
     val timeTrip: Long = 0,
     val averageSpeed: Double = 0.0,
     val distance: Double = 0.0,
+    val batteryConsumed: Int = 0,
     val createTmst: Long = System.currentTimeMillis()
 )

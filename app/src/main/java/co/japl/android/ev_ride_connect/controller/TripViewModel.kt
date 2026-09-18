@@ -95,6 +95,7 @@ class TripViewModel @Inject constructor(
     private val _calculatedNewKm = MutableStateFlow(0L)
     val calculatedNewKm: StateFlow<Long> = _calculatedNewKm.asStateFlow()
 
+    private var startBatteryLevel: Short = 0
     val recordedGpsPoints = mutableListOf<TripGps>()
     private val motionDetector = MotionDetector(context)
     val motionData: StateFlow<MotionData> = motionDetector.motionData
@@ -128,6 +129,7 @@ class TripViewModel @Inject constructor(
 
     fun confirmStartTrip(batteryLevel: Short) {
         _showStartBatteryDialog.value = false
+        startBatteryLevel = batteryLevel
         viewModelScope.launch {
             try {
                 val evConfig = getEvConfigUseCase.execute()
@@ -221,6 +223,7 @@ class TripViewModel @Inject constructor(
     fun confirmStopTrip(batteryLevel: Short) {
         _showEndBatteryDialog.value = false
         val newKm = _calculatedNewKm.value
+        val consumed = (startBatteryLevel - batteryLevel).coerceAtLeast(0)
         viewModelScope.launch {
             try {
                 val evConfig = getEvConfigUseCase.execute()
@@ -239,7 +242,7 @@ class TripViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
-            stopTrip()
+            stopTrip(consumed)
         }
     }
 
@@ -387,7 +390,7 @@ class TripViewModel @Inject constructor(
         )
     }
 
-    fun stopTrip() {
+    fun stopTrip(batteryConsumed: Int = 0) {
         motionDetector.stop()
         if (!_isTripActive.value) return
         _isTripActive.value = false
@@ -407,6 +410,7 @@ class TripViewModel @Inject constructor(
             timeTrip = totalTime,
             averageSpeed = finalAverageSpeed,
             distance = totalDistance,
+            batteryConsumed = batteryConsumed,
             createTmst = System.currentTimeMillis()
         )
 
