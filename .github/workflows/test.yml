@@ -35,6 +35,7 @@ jobs:
         run: |
           mkdir -p app
           cp properties/ride-connect/google-services.json app/google-services.json    
+          echo api.key.map=${{ secrets.API_KEY_MAP }} > local.properties
 
       - name: Checkout japl about module
         uses: actions/checkout@v4

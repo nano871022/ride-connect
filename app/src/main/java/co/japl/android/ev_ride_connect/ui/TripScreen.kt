@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.ui
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -73,12 +74,17 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import co.com.japl.ui.components.HistoryRecordCard
 import co.com.japl.ui.components.HistoryRecordData
 import co.com.japl.ui.components.HistoryRecordType
 import co.com.japl.ui.components.MapHudCard
+import co.com.japl.ui.components.MapPoint
+import co.com.japl.ui.components.MotionStatusCard
+import co.com.japl.ui.components.SpeedometerGauge
+import co.japl.android.ev_ride_connect.utils.MotionState
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
@@ -98,6 +104,8 @@ fun TripScreen(
     val tripHistory by viewModel.tripHistory.collectAsState()
     val currentDistance by viewModel.currentDistance.collectAsState()
     val currentAverageSpeed by viewModel.currentAverageSpeed.collectAsState()
+    val sateliteMeterPrecision  by viewModel.metersPrecisionSatelite.collectAsState()
+    val sateliteCount by viewModel.sateliteCount.collectAsState()
 
     val showStartBatteryDialog by viewModel.showStartBatteryDialog.collectAsState()
     val showEndBatteryDialog by viewModel.showEndBatteryDialog.collectAsState()
@@ -105,6 +113,18 @@ fun TripScreen(
     val calculatedNewKm by viewModel.calculatedNewKm.collectAsState()
 
     var historyExpanded by remember { mutableStateOf(true) }
+    val motionData by viewModel.motionData.collectAsState()
+    val motionStateText = when (motionData.state) {
+        MotionState.ACCELERATING -> stringResource(R.string.motion_accelerating)
+        MotionState.BRAKING -> stringResource(R.string.motion_braking)
+        MotionState.STATIONARY -> stringResource(R.string.motion_stationary)
+    }
+    val stationaryTimeText = if (motionData.state == MotionState.STATIONARY) {
+        stringResource(R.string.motion_stationary_time, DateUtils.formatDurationSeconds(motionData.currentStationarySeconds))
+    } else if (motionData.lastStationarySeconds > 0) {
+        stringResource(R.string.motion_last_stationary_time, DateUtils.formatDurationSeconds(motionData.lastStationarySeconds))
+    } else ""
+
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -118,265 +138,80 @@ fun TripScreen(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
+        item {
+            ButtonTripStart(
+                isTripActive = isTripActive,
+                showBatteryWarning = showBatteryWarning,
+                permissionLauncher = permissionLauncher,
+                viewModel = viewModel
+            )
+        }
+
+        item {
+            if(isTripActive) {
+                SpeedometerGauge(
+                    speed = currentAverageSpeed,
+                    headerLabel = stringResource(R.string.dashboard_mobile_gps_speed),
+                    subStatusText = stringResource(R.string.dashboard_no_vehicle_connection),
+                    gpsReadyText = stringResource(R.string.dashboard_gps_ready),
+                    noticeText = stringResource(R.string.dashboard_measurement_notice),
+                    sensorStatusText = stringResource(R.string.dashboard_sensor_off)
+                )
+            }
+        }
+
         item {
             MapHudCard(
                 gpsIntervalSeconds = gpsIntervalSeconds,
-                onGpsIntervalSelected = { sec -> viewModel.setGpsInterval(sec) }
+                onGpsIntervalSelected = { sec -> viewModel.setGpsInterval(sec) },
+                points = viewModel.recordedGpsPoints.map { MapPoint(it.x, it.y, "Punto #${it.orderIndex}") },
+                isLiveTelemetry = isTripActive,
+                precisionMt = sateliteMeterPrecision,
+                satellitesCount = sateliteCount.toInt()
             )
         }
 
         item {
-            TelemetryMetricsCard(
-                elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
-                currentDistanceValue = String.format(Locale.getDefault(), "%.2f", currentDistance),
-                currentSpeedValue = String.format(Locale.getDefault(), "%.1f", if (isTripActive) currentAverageSpeed * 1.25 else 0.0),
-                avgSpeedValue = String.format(Locale.getDefault(), "%.1f", currentAverageSpeed)
+            if(isTripActive) {
+                MotionStatusCard(
+                    motionStateText = motionStateText,
+                    stationaryTimeText = stationaryTimeText,
+                    isAccelerating = motionData.state == MotionState.ACCELERATING,
+                    isBraking = motionData.state == MotionState.BRAKING,
+                    isStationary = motionData.state == MotionState.STATIONARY
+                )
+            }
+        }
+
+        item {
+            if(isTripActive) {
+                TelemetryMetricsCard(
+                    elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
+                    currentDistanceValue = String.format(
+                        Locale.getDefault(),
+                        "%.2f",
+                        currentDistance
+                    ),
+                    currentSpeedValue = String.format(
+                        Locale.getDefault(),
+                        "%.1f",
+                        if (isTripActive) currentAverageSpeed * 1.25 else 0.0
+                    ),
+                    avgSpeedValue = String.format(Locale.getDefault(), "%.1f", currentAverageSpeed)
+                )
+            }
+        }
+
+
+        item {
+            CardRecentTrip(
+                tripHistory = tripHistory,
+                viewModel = viewModel,
+                historyExpanded = historyExpanded,
+                historyExpandedM = { historyExpanded = it },
+                navigator = navigator
             )
-        }
-
-        item {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (!isTripActive) {
-                    Button(
-                        onClick = {
-                            val perms = mutableListOf(
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                            )
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                perms.add(Manifest.permission.BLUETOOTH_SCAN)
-                                perms.add(Manifest.permission.BLUETOOTH_CONNECT)
-                            }
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                perms.add(Manifest.permission.POST_NOTIFICATIONS)
-                            }
-                            permissionLauncher.launch(perms.toTypedArray())
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.trip_start_button),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                } else {
-                    Button(
-                        onClick = { viewModel.onStopTripRequested() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.trip_pause_button),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.trip_mark_poi_button),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    Button(
-                        onClick = { },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.trip_sos_lock_button),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                if (showBatteryWarning) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "Battery Warning",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.trip_battery_warning),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.trip_recent_history_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { historyExpanded = !historyExpanded },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (historyExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Toggle History",
-                                tint = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    AnimatedVisibility(
-                        visible = historyExpanded,
-                        enter = expandVertically(),
-                        exit = shrinkVertically()
-                    ) {
-                        if (tripHistory.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.trip_empty_history),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        } else {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                tripHistory.take(5).forEach { trip ->
-                                    HistoryRecordCard(
-                                        record = HistoryRecordData(
-                                            id = trip.id.toString(),
-                                            type = HistoryRecordType.RIDE,
-                                            timestamp = DateUtils.formatTimestamp(trip.createTmst),
-                                            subtitle = "Ruta Urban Connect",
-                                            statusText = stringResource(R.string.history_status_completed),
-                                            distanceValue = String.format(Locale.getDefault(), "%.2f", trip.distance),
-                                            consumptionValue = "310 W",
-                                            durationValue = DateUtils.formatDurationSeconds(trip.timeTrip),
-                                            avgSpeedValue = String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)
-                                        ),
-                                        onViewTelemetryClick = {
-                                            viewModel.loadTripDetail(trip.id)
-                                            navigator?.navigateToTripDetail(trip.id)
-                                        },
-                                        viewTelemetryText = stringResource(R.string.trip_view_full_telemetry)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -458,6 +293,102 @@ fun TripBatteryDialog(
 }
 
 @Composable
+private fun ButtonTripStart(
+    isTripActive: Boolean,
+    showBatteryWarning: Boolean,
+    permissionLauncher: ActivityResultLauncher<Array<String>>,
+    viewModel: TripViewModel
+){
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (!isTripActive) {
+            Button(
+                onClick = {
+                    val perms = mutableListOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        perms.add(Manifest.permission.BLUETOOTH_SCAN)
+                        perms.add(Manifest.permission.BLUETOOTH_CONNECT)
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        perms.add(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    permissionLauncher.launch(perms.toTypedArray())
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.trip_start_button),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        } else {
+            Button(
+                onClick = { viewModel.onStopTripRequested() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Stop,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.trip_pause_button),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        if (showBatteryWarning) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Battery Warning",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = stringResource(R.string.trip_battery_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun TripHistoryItem(
     trip: Trip,
     onClick: () -> Unit
@@ -501,6 +432,113 @@ private fun TripHistoryItem(
                     text = "${stringResource(R.string.trip_avg_speed_label)}: ${String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)}",
                     style = MaterialTheme.typography.bodySmall
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardRecentTrip(
+    tripHistory: List<Trip>,
+    viewModel: TripViewModel,
+    historyExpanded: Boolean,
+    historyExpandedM: (Boolean) -> Unit,
+    navigator: AppNavigator? = null
+){
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.trip_recent_history_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                IconButton(
+                    onClick = { historyExpandedM.invoke(!historyExpanded) },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = if (historyExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Toggle History",
+                        tint = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = historyExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                if (tripHistory.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.trip_empty_history),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        tripHistory.take(5).forEach { trip ->
+                            HistoryRecordCard(
+                                record = HistoryRecordData(
+                                    id = trip.id.toString(),
+                                    type = HistoryRecordType.RIDE,
+                                    timestamp = DateUtils.formatTimestamp(trip.createTmst),
+                                    subtitle = "Ruta Urban Connect",
+                                    statusText = stringResource(R.string.history_status_completed),
+                                    distanceValue = String.format(Locale.getDefault(), "%.2f", trip.distance),
+                                    consumptionValue = "310 W",
+                                    durationValue = DateUtils.formatDurationSeconds(trip.timeTrip),
+                                    avgSpeedValue = String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)
+                                ),
+                                onViewTelemetryClick = {
+                                    viewModel.loadTripDetail(trip.id)
+                                    navigator?.navigateToTripDetail(trip.id)
+                                },
+                                viewTelemetryText = stringResource(R.string.trip_view_full_telemetry)
+                            )
+                        }
+                    }
+                }
             }
         }
     }

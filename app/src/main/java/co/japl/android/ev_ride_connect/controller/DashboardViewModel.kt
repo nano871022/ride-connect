@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.controller
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
@@ -33,6 +34,9 @@ class DashboardViewModel @Inject constructor(
 
     private val _resumedSession = MutableStateFlow<ActiveSession?>(null)
     val resumedSession: StateFlow<ActiveSession?> = _resumedSession.asStateFlow()
+
+    private val _vehicles = MutableStateFlow<List<EvConfig>>( emptyList() )
+    val vehicles: StateFlow<List<EvConfig>> = _vehicles.asStateFlow()
 
     init {
         loadLatestEvData()

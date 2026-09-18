@@ -5,21 +5,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import co.com.japl.ui.components.DualMetricCard
+import co.com.japl.ui.components.MapPoint
+import co.com.japl.ui.components.TripMapView
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.core.domain.Trip
@@ -60,12 +59,33 @@ fun TripDetailScreen(
         }
     } else {
         val (trip, gpsPoints) = tripDetailPair
+        val mapPoints = gpsPoints.map {
+            MapPoint(
+                latitude = it.x,
+                longitude = it.y,
+                title = stringResource(R.string.trip_point_order, it.orderIndex),
+                snippet = "${stringResource(R.string.trip_avg_speed_label)}: ${String.format(Locale.getDefault(), "%.1f km/h", it.speed)}"
+            )
+        }
+
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                TripMapView(points = mapPoints, modifier = Modifier.fillMaxSize())
+            }
+
             TripSummaryCard(trip = trip)
 
             Text(
@@ -74,13 +94,8 @@ fun TripDetailScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(gpsPoints) { sample ->
-                    GpsSampleItem(sample = sample)
-                }
+            gpsPoints.forEach { sample ->
+                GpsSampleItem(sample = sample)
             }
         }
     }

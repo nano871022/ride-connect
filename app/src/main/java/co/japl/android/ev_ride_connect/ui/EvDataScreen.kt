@@ -121,7 +121,14 @@ fun EvDataScreen(
         }
 
         // 4. Chronology Records
-        if (evDataList.isNotEmpty()) {
+        if (records.isNotEmpty()) {
+            items(records) { record ->
+                HistoryRecordCard(
+                    record = record,
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry)
+                )
+            }
+        } else if (evDataList.isNotEmpty()) {
             items(evDataList) { evData ->
                 HistoryRecordCard(
                     record = HistoryRecordData(
@@ -132,21 +139,12 @@ fun EvDataScreen(
                         statusText = stringResource(R.string.history_status_completed),
                         distanceValue = evData.km.toString(),
                         distanceUnit = stringResource(R.string.km_unit),
-                        consumptionValue = "1.2 kWh",
+                        consumptionValue = "--",
                         batteryValue = "${evData.batteryLevel}%",
-                        durationValue = "32m",
-                        avgSpeedValue = "24.6 km/h"
+                        durationValue = "--",
+                        avgSpeedValue = "--"
                     ),
-                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
-                    gpxText = stringResource(R.string.history_gpx)
-                )
-            }
-        } else {
-            items(records) { record ->
-                HistoryRecordCard(
-                    record = record,
-                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
-                    gpxText = stringResource(R.string.history_gpx)
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry)
                 )
             }
         }
@@ -189,7 +187,7 @@ private fun AnalyticsGrid( evDataList: List<EvData>){
 
             AnalyticsStatCard(
                 title = stringResource(R.string.history_trips),
-                value = "18",
+                value = (evDataList.size / 2).toString(),
                 unit = stringResource(R.string.history_routes_unit),
                 icon = Icons.Default.SportsScore,
                 modifier = Modifier.weight(1f),

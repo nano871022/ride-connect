@@ -290,4 +290,9 @@
     <string name="ev_add_vehicle_button">Add Vehicle</string>
     <string name="ev_image_card_title">Vehicle Image</string>
     <string name="ev_image_not_found">No image available</string>
+    <string name="motion_accelerating">Accelerating</string>
+    <string name="motion_braking">Braking</string>
+    <string name="motion_stationary">Stationary</string>
+    <string name="motion_stationary_time">Stationary: %1$s</string>
+    <string name="motion_last_stationary_time">Was stationary: %1$s</string>
 </resources>

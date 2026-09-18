@@ -1,3 +1,28 @@
+## [1.00.2] - 2026-09-18
+
+### Summary of Changes
+f97719b ajustando interfaces para mejorar la experiencia y reducir la complejidad
+c784673 ajustando interfaces para mejorar la experiencia y reducir la complejidad
+5fb2686 Merge remote-tracking branch 'origin/feat/maps' into feat/trip-tracking-maps-motion-5240725390990587463
+aa6c891 updat code fixing issues found
+a467bd1 updat code fixing issues found
+567c9d4 feat: integrate google maps and gyroscope motion detection for trip tracking
+f580284 feat: add vehicle image card with internet search and creation view button (#103)
+530bded Refactor LLM config screen UI and fix validation feedback (#96)
+2c971e9 Delete requirement.md (#87)
+a29e796 Update update-version.yml
+7832148 Update update-version.yml (#90)
+ae7aa93 Update publish-internal.yml
+46a1c7f Update publish-internal.yml
+e83c9cd Update static-check.yml (#75)
+0267f54 Update compile.yml
+cc1673d Update static-check.yml (#69)
+f19ec00 Update ci-qa.yml
+64fc3d2 Update ci-qa.yml
+3715a03 Update ci-qa.yml
+38e12a8 updat code fixing issues found
+
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

@@ -1,115 +1,117 @@
-name: Update Project Version
-
+name: Version Change
 on:
   workflow_dispatch:
     inputs:
-      version_type:
-        description: 'Version bump type (patch, minor, major)'
+      bump_type:
+        description: 'Tipo de incremento base'
         required: true
-        default: 'patch'
         type: choice
+        default: 'patch'
         options:
           - patch
           - minor
           - major
+      version_suffix:
+        description: 'Sufijo para agregar al nombre (ej. -beta, -rc1) [Opcional]'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  update-version:
-    name: Bump Version, Update Changelog & Tag
+  version-bump:
+    name: Bump Version on Target Branch
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Configure Git
+      - name: Calculate New Version
+        id: calc_version
+        run: |
+          # 1. Leer la versión actual (Name) de app/build.gradle.kts
+          CURRENT_VNAME_FULL=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+
+          echo "Versión actual: $CURRENT_VNAME_FULL"
+
+          # 2. Limpiar la versión base (quitar sufijos si existen: 1.00.009-beta -> 1.00.009)
+          BASE_VNAME=$(echo "$CURRENT_VNAME_FULL" | cut -d'-' -f1)
+          BASE_VNAME=$(echo "$BASE_VNAME" | sed 's/ .*//' )
+
+          # 3. Dividir en componentes (Major.Minor.Patch)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VNAME"
+
+          # 4. Limpiar ceros iniciales para evitar errores de base octal en Bash
+          MAJOR_INT=$((10#$MAJOR))
+          MINOR_INT=$((10#$MINOR))
+          PATCH_INT=$((10#$PATCH))
+
+          # 5. Aplicar incremento
+          BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          if [ "$BUMP_TYPE" == "patch" ]; then
+            PATCH_INT=$((PATCH_INT + 1))
+          elif [ "$BUMP_TYPE" == "minor" ]; then
+            MINOR_INT=$((MINOR_INT + 1))
+            PATCH_INT=0
+          elif [ "$BUMP_TYPE" == "major" ]; then
+            MAJOR_INT=$((MAJOR_INT + 1))
+            MINOR_INT=0
+            PATCH_INT=0
+          fi
+
+          # 6. Formatear componentes con ceros a la izquierda
+          NEW_MAJOR=$MAJOR_INT
+          NEW_MINOR=$(printf "%02d" $MINOR_INT)
+          NEW_PATCH=$(printf "%03d" $PATCH_INT)
+
+          # 7. Construir versionName base y versionCodes
+          NEW_VNAME_BASE="${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
+          NEW_VCODE_APP="1${NEW_MAJOR}_${NEW_MINOR}_${NEW_PATCH}"
+
+          # 8. Agregar sufijo al versionName si existe
+          SUFFIX="${{ github.event.inputs.version_suffix }}"
+          if [ -n "$SUFFIX" ]; then
+            NEW_VNAME="${NEW_VNAME_BASE} ${SUFFIX}"
+          else
+            NEW_VNAME="${NEW_VNAME_BASE}"
+          fi
+
+          echo "Nueva versión: $NEW_VNAME"
+          echo "Nuevo versionCode App: $NEW_VCODE_APP"
+
+          # 9. Exportar al entorno
+          echo "NEW_VNAME=$NEW_VNAME" >> $GITHUB_ENV
+          echo "NEW_VCODE_APP=$NEW_VCODE_APP" >> $GITHUB_ENV
+
+      - name: Update Version in app/build.gradle.kts
+        run: |
+          sed -i "s/versionCode = .*/versionCode = ${{ env.NEW_VCODE_APP }}/" app/build.gradle.kts
+          sed -i 's/versionName = .*/versionName = "${{ env.NEW_VNAME }}"/' app/build.gradle.kts
+
+      - name: Commit and Push Changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Calculate New Version
-        id: versioning
-        run: |
-          BUILD_FILE="app/build.gradle.kts"
-          CURRENT_VERSION_NAME=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' $BUILD_FILE | tr -d ' ')
-          CURRENT_VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' $BUILD_FILE | tr -d ' ')
-
-          if [ -z "$CURRENT_VERSION_NAME" ]; then
-            CURRENT_VERSION_NAME="1.0.0"
-          fi
-          if [ -z "$CURRENT_VERSION_CODE" ]; then
-            CURRENT_VERSION_CODE=1
-          fi
-
-          NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
-
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION_NAME"
-          MAJOR=${MAJOR:-1}
-          MINOR=${MINOR:-0}
-          PATCH=${PATCH:-0}
-
-          BUMP_TYPE="${{ github.event.inputs.version_type }}"
-
-          if [ "$BUMP_TYPE" = "major" ]; then
-            MAJOR=$((MAJOR + 1))
-            MINOR=0
-            PATCH=0
-          elif [ "$BUMP_TYPE" = "minor" ]; then
-            MINOR=$((MINOR + 1))
-            PATCH=0
+          git add app/build.gradle.kts
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
           else
-            PATCH=$((PATCH + 1))
+            git commit -m "chore(release): bump version to ${{ env.NEW_VNAME }} (${{ env.NEW_VCODE }})"
+            git push origin ${{ github.ref_name }}
           fi
-
-          NEW_VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
-
-          echo "NEW_VERSION_NAME=$NEW_VERSION_NAME" >> $GITHUB_ENV
-          echo "NEW_VERSION_CODE=$NEW_VERSION_CODE" >> $GITHUB_ENV
-          echo "Calculated version: $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
-
-      - name: Update app/build.gradle.kts
-        run: |
-          BUILD_FILE="app/build.gradle.kts"
-          sed -i "s/versionCode = [0-9]*/versionCode = $NEW_VERSION_CODE/" $BUILD_FILE
-          sed -i "s/versionName = \".*\"/versionName = \"$NEW_VERSION_NAME\"/" $BUILD_FILE
-
-      - name: Generate Changelog Recap
-        id: changelog
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --oneline -n 20)
-          else
-            COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
-          fi
-
-          DATE=$(date +'%Y-%m-%d')
-          CHANGELOG_FILE="CHANGELOG.md"
-
-          ENTRY="## [$NEW_VERSION_NAME] - $DATE\n\n### Summary of Changes\n$COMMITS\n\n"
-
-          if [ -f "$CHANGELOG_FILE" ]; then
-            TEMP_FILE=$(mktemp)
-            echo -e "$ENTRY" > "$TEMP_FILE"
-            cat "$CHANGELOG_FILE" >> "$TEMP_FILE"
-            mv "$TEMP_FILE" "$CHANGELOG_FILE"
-          else
-            echo -e "# Changelog\n\n$ENTRY" > "$CHANGELOG_FILE"
-          fi
-
-      - name: Commit, Tag, and Push
-        run: |
-          TAG_NAME="v$NEW_VERSION_NAME"
-          git add app/build.gradle.kts CHANGELOG.md
-          git commit -m "chore(release): bump version"
-          git push origin HEAD

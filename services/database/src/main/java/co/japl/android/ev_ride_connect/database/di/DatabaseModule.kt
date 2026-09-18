@@ -20,6 +20,8 @@ import co.japl.android.ev_ride_connect.database.dao.EvConfigDao
 import co.japl.android.ev_ride_connect.database.dao.EvDataDao
 import co.japl.android.ev_ride_connect.database.dao.LlmConfigDao
 import co.japl.android.ev_ride_connect.database.dao.TripDao
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,6 +33,11 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE ev_configs ADD COLUMN image_url TEXT NOT NULL DEFAULT ''")        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -38,7 +45,10 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "app_database.db"
-        ).fallbackToDestructiveMigration(true).build()
+        )
+        .addMigrations(MIGRATION_7_8)
+        .fallbackToDestructiveMigration(true)
+        .build()
     }
 
     @Provides

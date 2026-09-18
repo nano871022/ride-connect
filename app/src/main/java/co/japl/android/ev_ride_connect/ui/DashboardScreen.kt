@@ -1,7 +1,6 @@
 package co.japl.android.ev_ride_connect.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -24,26 +22,18 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,10 +51,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import co.com.japl.ui.components.MaintenanceBanner
-import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.TelemetryBentoCard
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
+import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,6 +68,7 @@ fun DashboardScreen(
     val showApiKeyPrompt by viewModel.showApiKeyPrompt.collectAsState()
     var showUpdateDialog by remember { mutableStateOf(false) }
     var isRecordingTrip by remember { mutableStateOf(false) }
+    val vehicles by viewModel.vehicles.collectAsState()
 
     Column(
         modifier = modifier
@@ -87,140 +78,30 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Section 1: Vehicle Header & Status Pod
-        VehicleHeaderPod(
-            onManualInputClick = { showUpdateDialog = true },
-            onHistoryClick = { navigator?.navigateToEvData() }
+        ButtonNavigateTrack(
+            isRecordingTrip = isRecordingTrip,
+            recordingTrip = { isRecordingTrip = it },
+            navigator = navigator
         )
 
-        // Section 2: Central Speedometer HUD
-        SpeedometerGauge(
-            speed = 0.0,
-            headerLabel = stringResource(R.string.dashboard_mobile_gps_speed),
-            subStatusText = stringResource(R.string.dashboard_no_vehicle_connection),
-            gpsReadyText = stringResource(R.string.dashboard_gps_ready),
-            noticeText = stringResource(R.string.dashboard_measurement_notice),
-            sensorStatusText = stringResource(R.string.dashboard_sensor_off)
-        )
-
-        // Section 3: Record Trip Quick Action Button
-        val buttonBgColor by animateColorAsState(
-            targetValue = if (isRecordingTrip) Color(0xFFFF4081) else Color(0xFF00F0FF),
-            label = "RecordButtonColor"
-        )
-        Button(
-            onClick = {
-                isRecordingTrip = !isRecordingTrip
-                navigator?.navigateToTrip()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = buttonBgColor,
-                contentColor = Color(0xFF002022)
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = if (isRecordingTrip) {
-                        stringResource(R.string.dashboard_recording)
-                    } else {
-                        stringResource(R.string.dashboard_record_trip_gps)
-                    }.uppercase(),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+        vehicles.forEach {
+            VehicleHeaderPod(
+                onManualInputClick = { showUpdateDialog = true },
+                onHistoryClick = { navigator?.navigateToEvData() },
+                vehicleName = it.brand,
+                modifier = Modifier
+            )
         }
 
-        // Section 4: Telemetry Bento 2x2 Grid
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // 1. Battery Card
-                val batteryLevel = latestEvData?.batteryLevel?.toInt() ?: 43
-                TelemetryBentoCard(
-                    title = stringResource(R.string.dashboard_battery_tag),
-                    titleIcon = Icons.Default.Info,
-                    accentColor = Color(0xFF34FF8C),
-                    value = batteryLevel.toString(),
-                    unit = stringResource(R.string.battery_postfix),
-                    progress = batteryLevel / 100f,
-                    onEditClick = { showUpdateDialog = true },
-                    statusRows = listOf(
-                        stringResource(R.string.dashboard_battery_record) to stringResource(R.string.dashboard_battery_manual),
-                        stringResource(R.string.dashboard_battery_updated) to "Hoy, 09:30"
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+        Telemetry(
+            latestEvData = latestEvData,
+            showUpdateDialog = { showUpdateDialog = it }
+        )
 
-                // 2. Last Charge Card
-                TelemetryBentoCard(
-                    title = stringResource(R.string.dashboard_last_charge),
-                    titleIcon = Icons.Default.Info,
-                    accentColor = Color(0xFF00F0FF),
-                    value = "52",
-                    unit = "V",
-                    subtitle = stringResource(R.string.dashboard_est_full_charge),
-                    statusRows = listOf(
-                        stringResource(R.string.dashboard_cycles) to stringResource(R.string.dashboard_cycles_est, 48),
-                        stringResource(R.string.dashboard_pack_health) to stringResource(R.string.dashboard_pack_health_optimal)
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // 3. Estimated Consumption
-                TelemetryBentoCard(
-                    title = stringResource(R.string.dashboard_consumption),
-                    titleIcon = Icons.Default.Build,
-                    accentColor = Color(0xFFDDB7FF),
-                    value = "18.2",
-                    unit = stringResource(R.string.dashboard_consumption_unit),
-                    subtitle = stringResource(R.string.dashboard_calculated),
-                    showSparkline = true,
-                    footerBadge = null,
-                    modifier = Modifier.weight(1f)
-                )
-
-                // 4. Odometer Card
-                val kmValue = latestEvData?.km ?: 143L
-                TelemetryBentoCard(
-                    title = stringResource(R.string.odometer_title),
-                    titleIcon = Icons.Default.LocationOn,
-                    accentColor = Color(0xFF00F0FF),
-                    value = kmValue.toString(),
-                    unit = stringResource(R.string.km_unit),
-                    subtitle = stringResource(R.string.dashboard_odometer_manual),
-                    onEditClick = { showUpdateDialog = true },
-                    footerBadge = stringResource(R.string.dashboard_last_record) to "Ayer (+12.4 km)",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        // Section 5: Preventive Maintenance Banner
         MaintenanceBanner(
             title = stringResource(R.string.dashboard_preventive_maintenance),
             badgeText = stringResource(R.string.dashboard_ai_recommendation),
             detailMessage = stringResource(R.string.dashboard_maintenance_detail),
-            onClick = { navigator?.navigateToEvConfig() }
         )
     }
 
@@ -249,6 +130,7 @@ fun DashboardScreen(
 
 @Composable
 private fun VehicleHeaderPod(
+    vehicleName: String,
     onManualInputClick: () -> Unit,
     onHistoryClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -282,7 +164,7 @@ private fun VehicleHeaderPod(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "VSETT C7 Plus",
+                            text = vehicleName,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -310,15 +192,9 @@ private fun VehicleHeaderPod(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.dashboard_manual_input).uppercase(),
                             tint = Color(0xFF00F0FF),
                             modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.dashboard_manual_input).uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF00F0FF)
                         )
                     }
                 }
@@ -493,4 +369,128 @@ fun EvDataUpdateDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ButtonNavigateTrack(
+    isRecordingTrip: Boolean,
+    recordingTrip: (Boolean) -> Unit,
+    navigator: AppNavigator? = null
+){
+    val buttonBgColor by animateColorAsState(
+        targetValue = if (isRecordingTrip) Color(0xFFFF4081) else Color(0xFF00F0FF),
+        label = "RecordButtonColor"
+    )
+    Button(
+        onClick = {
+            recordingTrip.invoke(!isRecordingTrip)
+            navigator?.navigateToTrip()
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = buttonBgColor,
+            contentColor = Color(0xFF002022)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = if (isRecordingTrip) {
+                    stringResource(R.string.dashboard_recording)
+                } else {
+                    stringResource(R.string.dashboard_record_trip_gps)
+                }.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun Telemetry(
+    latestEvData: EvData?,
+    showUpdateDialog: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+){
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 1. Battery Card
+            val batteryLevel = latestEvData?.batteryLevel?.toInt() ?: 43
+            TelemetryBentoCard(
+                title = stringResource(R.string.dashboard_battery_tag),
+                titleIcon = Icons.Default.Info,
+                accentColor = Color(0xFF34FF8C),
+                value = batteryLevel.toString(),
+                unit = stringResource(R.string.battery_postfix),
+                progress = batteryLevel / 100f,
+                onEditClick = { showUpdateDialog.invoke( true ) },
+                statusRows = listOf(
+                    stringResource(R.string.dashboard_battery_record) to stringResource(R.string.dashboard_battery_manual),
+                    stringResource(R.string.dashboard_battery_updated) to "Hoy, 09:30"
+                ),
+                modifier = Modifier.weight(1f)
+            )
+
+            // 2. Last Charge Card
+            TelemetryBentoCard(
+                title = stringResource(R.string.dashboard_last_charge),
+                titleIcon = Icons.Default.Info,
+                accentColor = Color(0xFF00F0FF),
+                value = "52",
+                unit = "V",
+                subtitle = stringResource(R.string.dashboard_est_full_charge),
+                statusRows = listOf(
+                    stringResource(R.string.dashboard_cycles) to stringResource(R.string.dashboard_cycles_est, 48),
+                    stringResource(R.string.dashboard_pack_health) to stringResource(R.string.dashboard_pack_health_optimal)
+                ),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 3. Estimated Consumption
+            TelemetryBentoCard(
+                title = stringResource(R.string.dashboard_consumption),
+                titleIcon = Icons.Default.Build,
+                accentColor = Color(0xFFDDB7FF),
+                value = "18.2",
+                unit = stringResource(R.string.dashboard_consumption_unit),
+                subtitle = stringResource(R.string.dashboard_calculated),
+                showSparkline = true,
+                footerBadge = null,
+                modifier = Modifier.weight(1f)
+            )
+
+            // 4. Odometer Card
+            val kmValue = latestEvData?.km ?: 143L
+            TelemetryBentoCard(
+                title = stringResource(R.string.odometer_title),
+                titleIcon = Icons.Default.LocationOn,
+                accentColor = Color(0xFF00F0FF),
+                value = kmValue.toString(),
+                unit = stringResource(R.string.km_unit),
+                subtitle = stringResource(R.string.dashboard_odometer_manual),
+                onEditClick = { showUpdateDialog.invoke( true ) },
+                footerBadge = stringResource(R.string.dashboard_last_record) to "Ayer (+12.4 km)",
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
 }

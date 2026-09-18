@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 abstract class CopyGoogleServicesTask : DefaultTask() {
     @get:Input
     @get:Optional
@@ -57,13 +60,17 @@ android {
         applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1_00_001
-        versionName = "1.00.001"
+        versionCode = 1_00_002
+        versionName = "1.00.002"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+        val localFile = File(project.rootDir,"local.properties")
+        val properties = Properties();
+        properties.load(localFile.inputStream())
+        manifestPlaceholders["API_KEY_MAP"] = properties.getProperty("api.key.map")?:"NO-API"
     }
 
     signingConfigs {
@@ -132,6 +139,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
     implementation(libs.coil.compose)
     implementation(project(":core"))
     implementation(project(":services:ble"))

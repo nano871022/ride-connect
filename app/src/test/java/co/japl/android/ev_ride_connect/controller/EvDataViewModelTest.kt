@@ -27,7 +27,9 @@ class EvDataViewModelTest {
         fakeEvDataPort = FakeEvDataPort()
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 120L, batteryLevel = 70))
-        viewModel = EvDataViewModel(GetAllEvDataUseCase(fakeEvDataPort))
+        viewModel = EvDataViewModel(
+            GetAllEvDataUseCase(fakeEvDataPort)
+        )
     }
 
     @After

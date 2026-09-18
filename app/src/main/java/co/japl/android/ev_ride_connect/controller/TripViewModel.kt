@@ -25,6 +25,9 @@ import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import co.japl.android.ev_ride_connect.track.ScooterTrackingService
 import co.japl.android.ev_ride_connect.track.TrackingSettings
+import co.japl.android.ev_ride_connect.utils.MotionData
+import co.japl.android.ev_ride_connect.utils.MotionDetector
+import co.japl.android.ev_ride_connect.utils.MotionState
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -56,6 +59,12 @@ class TripViewModel @Inject constructor(
     private val _elapsedTimeSeconds = MutableStateFlow(0L)
     val elapsedTimeSeconds: StateFlow<Long> = _elapsedTimeSeconds.asStateFlow()
 
+    private val _sateliteCount = MutableStateFlow(0L)
+    val sateliteCount: StateFlow<Long> = _sateliteCount.asStateFlow()
+
+    private val _metersPrecisionSatelite = MutableStateFlow(0.0)
+    val metersPrecisionSatelite: StateFlow<Double> = _metersPrecisionSatelite.asStateFlow()
+
     private val _gpsIntervalSeconds = MutableStateFlow(60L)
     val gpsIntervalSeconds: StateFlow<Long> = _gpsIntervalSeconds.asStateFlow()
 
@@ -86,7 +95,10 @@ class TripViewModel @Inject constructor(
     private val _calculatedNewKm = MutableStateFlow(0L)
     val calculatedNewKm: StateFlow<Long> = _calculatedNewKm.asStateFlow()
 
-    private val recordedGpsPoints = mutableListOf<TripGps>()
+    private var startBatteryLevel: Short = 0
+    val recordedGpsPoints = mutableListOf<TripGps>()
+    private val motionDetector = MotionDetector(context)
+    val motionData: StateFlow<MotionData> = motionDetector.motionData
 
     private var timerJob: Job? = null
     private var gpsSamplingJob: Job? = null
@@ -117,6 +129,7 @@ class TripViewModel @Inject constructor(
 
     fun confirmStartTrip(batteryLevel: Short) {
         _showStartBatteryDialog.value = false
+        startBatteryLevel = batteryLevel
         viewModelScope.launch {
             try {
                 val evConfig = getEvConfigUseCase.execute()
@@ -146,6 +159,7 @@ class TripViewModel @Inject constructor(
     }
 
     fun startTrip() {
+        motionDetector.start()
         if (_isTripActive.value) return
         _isTripActive.value = true
         _elapsedTimeSeconds.value = 0L
@@ -209,6 +223,7 @@ class TripViewModel @Inject constructor(
     fun confirmStopTrip(batteryLevel: Short) {
         _showEndBatteryDialog.value = false
         val newKm = _calculatedNewKm.value
+        val consumed = (startBatteryLevel - batteryLevel).coerceAtLeast(0)
         viewModelScope.launch {
             try {
                 val evConfig = getEvConfigUseCase.execute()
@@ -227,7 +242,7 @@ class TripViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
-            stopTrip()
+            stopTrip(consumed)
         }
     }
 
@@ -375,7 +390,8 @@ class TripViewModel @Inject constructor(
         )
     }
 
-    fun stopTrip() {
+    fun stopTrip(batteryConsumed: Int = 0) {
+        motionDetector.stop()
         if (!_isTripActive.value) return
         _isTripActive.value = false
         timerJob?.cancel()
@@ -394,6 +410,7 @@ class TripViewModel @Inject constructor(
             timeTrip = totalTime,
             averageSpeed = finalAverageSpeed,
             distance = totalDistance,
+            batteryConsumed = batteryConsumed,
             createTmst = System.currentTimeMillis()
         )
 
@@ -438,6 +455,7 @@ class TripViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        motionDetector.stop()
         super.onCleared()
         stopLocationUpdates()
     }
