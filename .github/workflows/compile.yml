@@ -45,6 +45,7 @@ jobs:
           mkdir -p app
           cp properties/ride-connect/ride-connect.jks app/ride-connect-sha.jks
           cp properties/ride-connect/google-services.json app/google-services.json
+          echo api.key.map=${{ secrets.API_KEY_MAP }} > local.properties
 
       - name: Build Android App Bundle (.aab) and APK (.apk)
         id: build_app
