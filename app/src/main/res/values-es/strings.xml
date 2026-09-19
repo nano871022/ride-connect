@@ -297,4 +297,13 @@
     <string name="motion_stopped">Detenido</string>
     <string name="motion_stationary_time">Quieto: %1$s</string>
     <string name="motion_last_stationary_time">Estuvo quieto: %1$s</string>
+    <string name="trip_end_button">Finalizar Viaje</string>
+    <string name="trip_status_paused">PAUSADO</string>
+    <string name="trip_summary_title">Resumen del Viaje</string>
+    <string name="trip_summary_distance">Distancia Total</string>
+    <string name="trip_summary_avg_speed">Velocidad Promedio</string>
+    <string name="trip_summary_gps_points">Ubicaciones GPS Capturadas</string>
+    <string name="trip_summary_duration">Tiempo Total de Viaje</string>
+    <string name="trip_summary_battery_consumed">Batería Consumida</string>
+    <string name="trip_summary_close">Cerrar Resumen</string>
 </resources>

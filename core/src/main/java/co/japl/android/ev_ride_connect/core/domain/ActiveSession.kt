@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.core.domain
 data class ActiveSession(
     val id: Long = 1L,
     val isRideActive: Boolean = false,
+    val isPaused: Boolean = false,
     val startTimeMillis: Long = 0L,
     val currentDurationMillis: Long = 0L,
     val currentDistanceKm: Double = 0.0,

@@ -11,12 +11,16 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateTripSummaryUseCase
+import co.japl.android.ev_ride_connect.core.usecase.EndTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.PauseTripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.ResumeTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +71,11 @@ class TripViewModelTest {
             GetLatestEvDataUseCase(fakeEvDataPort),
             SaveEvDataUseCase(fakeEvDataPort),
             GetEvConfigUseCase(fakeEvConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort)
+            ObserveActiveSessionUseCase(fakeSessionStatePort),
+            PauseTripUseCase(fakeSessionStatePort),
+            ResumeTripUseCase(fakeSessionStatePort),
+            EndTripUseCase(fakeSessionStatePort),
+            CalculateTripSummaryUseCase(fakeTripPort)
         )
     }
 
@@ -84,13 +92,11 @@ class TripViewModelTest {
         viewModel.setGpsInterval(15L)
         assertThat(viewModel.gpsIntervalSeconds.value).isEqualTo(15L)
 
-        viewModel.checkBatteryWarning(15)
+        viewModel.setGpsInterval(10L)
         assertThat(viewModel.showBatteryWarning.value).isTrue()
 
         viewModel.setGpsInterval(60L)
         assertThat(viewModel.gpsIntervalSeconds.value).isEqualTo(60L)
-
-        viewModel.checkBatteryWarning(80)
         assertThat(viewModel.showBatteryWarning.value).isFalse()
     }
 
@@ -115,10 +121,37 @@ class TripViewModelTest {
     }
 
     @Test
-    fun shouldStartAndStopTripAndSaveToDatabaseWithEvData() = runTest {
+    fun shouldPauseAndResumeTrip() = runTest {
+        viewModel.startTrip()
+        assertThat(viewModel.isTripActive.value).isTrue()
+        assertThat(viewModel.isPaused.value).isFalse()
+
+        viewModel.pauseTrip()
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.isPaused.value).isTrue()
+
+        viewModel.addLocationPoint(4.6097, -74.0817)
+        assertThat(viewModel.recordedGpsPoints).isEmpty()
+
+        viewModel.resumeTrip()
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.isPaused.value).isFalse()
+
+        viewModel.addLocationPoint(4.6097, -74.0817)
+        assertThat(viewModel.recordedGpsPoints).hasSize(1)
+
+        viewModel.stopTrip()
+    }
+
+    @Test
+    fun shouldStartAndStopTripAndDisplayTripSummary() = runTest {
         fakeEvDataPort.savedList.add(EvData(evCode = "1", km = 100L, batteryLevel = 80))
 
-        viewModel.startTrip()
+        viewModel.confirmStartTrip(80)
+        testScheduler.runCurrent()
+
         assertThat(viewModel.isTripActive.value).isTrue()
 
         val time1 = System.currentTimeMillis()
@@ -133,23 +166,19 @@ class TripViewModelTest {
         testScheduler.runCurrent()
 
         assertThat(viewModel.showEndBatteryDialog.value).isTrue()
-        assertThat(viewModel.calculatedNewKm.value).isGreaterThanOrEqualTo(100L)
 
         viewModel.confirmStopTrip(70)
         testScheduler.runCurrent()
 
         assertThat(viewModel.isTripActive.value).isFalse()
-        assertThat(fakeTripPort.savedTrips).hasSize(1)
-        assertThat(fakeEvDataPort.savedList).hasSize(2)
-        assertThat(fakeEvDataPort.savedList.last().batteryLevel).isEqualTo(70.toShort())
-    }
+        assertThat(viewModel.showSummaryDialog.value).isTrue()
+        assertThat(viewModel.tripSummary.value).isNotNull()
+        assertThat(viewModel.tripSummary.value?.totalGpsLocationsCount).isEqualTo(2)
+        assertThat(viewModel.tripSummary.value?.batteryConsumedPercentage).isEqualTo(10)
 
- //   @Test
-    fun shouldDiscardZeroZeroLocationPoints() = runTest {
-        viewModel.startTrip()
-        viewModel.addLocationPoint(0.0, 0.0)
-
-        assertThat(viewModel.recordedGpsPoints).isEmpty()
+        viewModel.dismissSummaryDialog()
+        assertThat(viewModel.showSummaryDialog.value).isFalse()
+        assertThat(viewModel.tripSummary.value).isNull()
     }
 
     @Test

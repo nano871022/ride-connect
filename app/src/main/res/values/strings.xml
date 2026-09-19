@@ -297,4 +297,13 @@
     <string name="motion_stopped">Stopped</string>
     <string name="motion_stationary_time">Stationary: %1$s</string>
     <string name="motion_last_stationary_time">Was stationary: %1$s</string>
+    <string name="trip_end_button">End Trip</string>
+    <string name="trip_status_paused">PAUSED</string>
+    <string name="trip_summary_title">Trip Summary</string>
+    <string name="trip_summary_distance">Total Distance</string>
+    <string name="trip_summary_avg_speed">Average Speed</string>
+    <string name="trip_summary_gps_points">GPS Locations Captured</string>
+    <string name="trip_summary_duration">Total Trip Time</string>
+    <string name="trip_summary_battery_consumed">Battery Consumed</string>
+    <string name="trip_summary_close">Close Summary</string>
 </resources>

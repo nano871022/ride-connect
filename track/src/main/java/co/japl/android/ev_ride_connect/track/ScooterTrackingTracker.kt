@@ -21,21 +21,28 @@ class ScooterTrackingTracker(
     private val _isTracking = MutableStateFlow(false)
     val isTracking: StateFlow<Boolean> = _isTracking.asStateFlow()
 
-    private var startTimeMillis: Long = 0L
+    private val _isPaused = MutableStateFlow(false)
+    val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
+
+    private var segmentStartTimeMillis: Long = 0L
+    private var accumulatedDurationMillis: Long = 0L
     private val telemetryQueue = mutableListOf<TripGps>()
     private var currentDistanceKm: Double = 0.0
 
     fun startTracking() {
         if (_isTracking.value) return
         _isTracking.value = true
-        startTimeMillis = System.currentTimeMillis()
+        _isPaused.value = false
+        segmentStartTimeMillis = System.currentTimeMillis()
+        accumulatedDurationMillis = 0L
         telemetryQueue.clear()
         currentDistanceKm = 0.0
 
         coroutineScope.launch {
             val session = ActiveSession(
                 isRideActive = true,
-                startTimeMillis = startTimeMillis,
+                isPaused = false,
+                startTimeMillis = segmentStartTimeMillis,
                 currentDurationMillis = 0L,
                 currentDistanceKm = 0.0,
                 cachedTelemetryCount = 0,
@@ -46,6 +53,45 @@ class ScooterTrackingTracker(
         }
     }
 
+    fun pauseTracking() {
+        if (!_isTracking.value || _isPaused.value) return
+        _isPaused.value = true
+        val currentSegmentDuration = System.currentTimeMillis() - segmentStartTimeMillis
+        accumulatedDurationMillis += currentSegmentDuration
+
+        coroutineScope.launch {
+            val existing = sessionStatePort?.getActiveSession() ?: ActiveSession()
+            val updated = existing.copy(
+                isRideActive = true,
+                isPaused = true,
+                currentDurationMillis = accumulatedDurationMillis,
+                currentDistanceKm = currentDistanceKm,
+                cachedTelemetryCount = telemetryQueue.size,
+                lastUpdatedTmst = System.currentTimeMillis()
+            )
+            sessionStatePort?.saveActiveSession(updated)
+        }
+    }
+
+    fun resumeTracking() {
+        if (!_isTracking.value || !_isPaused.value) return
+        _isPaused.value = false
+        segmentStartTimeMillis = System.currentTimeMillis()
+
+        coroutineScope.launch {
+            val existing = sessionStatePort?.getActiveSession() ?: ActiveSession()
+            val updated = existing.copy(
+                isRideActive = true,
+                isPaused = false,
+                currentDurationMillis = accumulatedDurationMillis,
+                currentDistanceKm = currentDistanceKm,
+                cachedTelemetryCount = telemetryQueue.size,
+                lastUpdatedTmst = System.currentTimeMillis()
+            )
+            sessionStatePort?.saveActiveSession(updated)
+        }
+    }
+
     fun recordTelemetry(
         x: Double,
         y: Double,
@@ -53,7 +99,7 @@ class ScooterTrackingTracker(
         distanceDelta: Double,
         motionState: MotionState = MotionState.STOPPED
     ) {
-        if (!_isTracking.value) return
+        if (!_isTracking.value || _isPaused.value) return
         if (x == 0.0 && y == 0.0) return
 
         currentDistanceKm += distanceDelta
@@ -69,13 +115,15 @@ class ScooterTrackingTracker(
         )
         telemetryQueue.add(gpsPoint)
 
+        val totalDuration = getCurrentDurationMillis()
+
         coroutineScope.launch {
-            val duration = System.currentTimeMillis() - startTimeMillis
             val existing = sessionStatePort?.getActiveSession() ?: ActiveSession()
             val updated = existing.copy(
                 isRideActive = true,
-                startTimeMillis = if (existing.startTimeMillis > 0) existing.startTimeMillis else startTimeMillis,
-                currentDurationMillis = duration,
+                isPaused = false,
+                startTimeMillis = if (existing.startTimeMillis > 0) existing.startTimeMillis else segmentStartTimeMillis,
+                currentDurationMillis = totalDuration,
                 currentDistanceKm = currentDistanceKm,
                 cachedTelemetryCount = telemetryQueue.size,
                 lastUpdatedTmst = System.currentTimeMillis(),
@@ -87,12 +135,15 @@ class ScooterTrackingTracker(
 
     suspend fun stopTracking() {
         if (!_isTracking.value) return
+        val finalDuration = getCurrentDurationMillis()
         _isTracking.value = false
-        val duration = System.currentTimeMillis() - startTimeMillis
-        val averageSpeed = if (duration > 0) (currentDistanceKm / (duration / 3600000.0)) else 0.0
+        _isPaused.value = false
+
+        val durationSeconds = finalDuration / 1000L
+        val averageSpeed = if (finalDuration > 0) (currentDistanceKm / (finalDuration / 3600000.0)) else 0.0
 
         val trip = Trip(
-            timeTrip = duration,
+            timeTrip = durationSeconds,
             averageSpeed = averageSpeed,
             distance = currentDistanceKm,
             createTmst = System.currentTimeMillis()
@@ -105,7 +156,8 @@ class ScooterTrackingTracker(
         if (existing != null) {
             val updated = existing.copy(
                 isRideActive = false,
-                currentDurationMillis = duration,
+                isPaused = false,
+                currentDurationMillis = finalDuration,
                 currentDistanceKm = currentDistanceKm,
                 cachedTelemetryCount = 0,
                 lastUpdatedTmst = System.currentTimeMillis(),
@@ -116,6 +168,14 @@ class ScooterTrackingTracker(
             } else {
                 sessionStatePort.saveActiveSession(updated)
             }
+        }
+    }
+
+    fun getCurrentDurationMillis(): Long {
+        return if (_isPaused.value) {
+            accumulatedDurationMillis
+        } else {
+            accumulatedDurationMillis + (System.currentTimeMillis() - segmentStartTimeMillis)
         }
     }
 

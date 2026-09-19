@@ -4,6 +4,8 @@ object TrackingSettings {
     val CHANNEL_ID = "${ScooterTrackingService::class.java.name}.CHANNEL"
     const val NOTIFICATION_ID = 1001
     val ACTION_START_TRACKING = "${ScooterTrackingService::class.java.name}.ACTION_START_TRACKING"
+    val ACTION_PAUSE_TRACKING = "${ScooterTrackingService::class.java.name}.ACTION_PAUSE_TRACKING"
+    val ACTION_RESUME_TRACKING = "${ScooterTrackingService::class.java.name}.ACTION_RESUME_TRACKING"
     val ACTION_STOP_TRACKING = "${ScooterTrackingService::class.java.name}.ACTION_STOP_TRACKING"
     val ACTION_PROCESS_LLM_PROMPT = "${ScooterTrackingService::class.java.name}.ACTION_PROCESS_LLM_PROMPT"
 
