@@ -71,7 +71,7 @@ class ScooterTrackingService : Service() {
     private fun observeBleState() {
         bleScooterPort.observeScooterState()
             .onEach { scooterState ->
-                if (trackingTracker.isTracking.value) {
+                if (trackingTracker.isTracking.value && !trackingTracker.isPaused.value) {
                     trackingTracker.recordTelemetry(
                         x = 0.0,
                         y = 0.0,
@@ -89,7 +89,7 @@ class ScooterTrackingService : Service() {
             .onEach { newState ->
                 val wasStopped = (previousMotionState == MotionState.STOPPED)
                 val isStopped = (newState == MotionState.STOPPED)
-                if (trackingTracker.isTracking.value && wasStopped != isStopped) {
+                if (trackingTracker.isTracking.value && !trackingTracker.isPaused.value && wasStopped != isStopped) {
                     val loc = fetchCurrentLocation()
                     if (loc != null) {
                         trackingTracker.recordTelemetry(
@@ -134,6 +134,12 @@ class ScooterTrackingService : Service() {
                 startForegroundCompat(notification)
                 motionDetectorPort.start()
                 trackingTracker.startTracking()
+            }
+            TrackingSettings.ACTION_PAUSE_TRACKING -> {
+                trackingTracker.pauseTracking()
+            }
+            TrackingSettings.ACTION_RESUME_TRACKING -> {
+                trackingTracker.resumeTracking()
             }
             TrackingSettings.ACTION_STOP_TRACKING -> {
                 serviceScope.launch {
@@ -256,7 +262,7 @@ class ScooterTrackingService : Service() {
             ).apply {
                 description = getString(R.string.notification_channel_description)
             }
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val manager = getSystemService(Context.LOCATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
     }

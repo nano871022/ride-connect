@@ -61,8 +61,8 @@ android {
         applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1_00_004
-        versionName = "1.00.004 Fix duplicate locatios"
+        versionCode = 1_00_005
+        versionName = "1.00.005 End step fix"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -98,6 +98,29 @@ class ScooterTrackingTrackerTest {
     }
 
     @Test
+    fun shouldPauseTrackingAndBlockNewTelemetry() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.pauseTracking()
+
+        assertThat(tracker.isPaused.value).isTrue
+        assertThat(fakeSessionStatePort.activeSession?.isPaused).isTrue
+
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(0)
+    }
+
+    @Test
+    fun shouldResumeTrackingAndAllowTelemetry() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.pauseTracking()
+        tracker.resumeTracking()
+
+        assertThat(tracker.isPaused.value).isFalse
+        assertThat(fakeSessionStatePort.activeSession?.isPaused).isFalse
+
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
+    }
     fun shouldDiscardConsecutiveDuplicateCoordinates() = runTest(testDispatcher) {
         tracker.startTracking()
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
