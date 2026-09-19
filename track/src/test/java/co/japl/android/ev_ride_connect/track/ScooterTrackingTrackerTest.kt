@@ -98,6 +98,41 @@ class ScooterTrackingTrackerTest {
     }
 
     @Test
+    fun shouldDiscardConsecutiveDuplicateCoordinates() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.0, motionState = MotionState.MOVING)
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
+    }
+
+    @Test
+    fun shouldRecordNewLocationAfterDuplicate() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.0, motionState = MotionState.MOVING)
+        tracker.recordTelemetry(x = 10.1, y = 20.1, speed = 30.0, distanceDelta = 0.2, motionState = MotionState.ACCELERATING)
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(2)
+        assertThat(fakeSessionStatePort.activeSession?.currentDistanceKm).isEqualTo(0.7)
+    }
+
+    @Test
+    fun shouldResetLastSavedLocationWhenTrackingRestarted() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
+        tracker.stopTracking()
+
+        fakeTripDatabasePort.savedTrips.clear()
+        fakeTripDatabasePort.savedGpsPoints.clear()
+
+        tracker.startTracking()
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
+    }
+
+    @Test
     fun shouldStopTrackingSaveTripAndClearSession() = runTest(testDispatcher) {
         tracker.startTracking()
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 1.0, motionState = MotionState.ACCELERATING)
