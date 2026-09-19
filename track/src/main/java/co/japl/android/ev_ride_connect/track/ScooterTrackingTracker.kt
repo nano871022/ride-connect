@@ -24,6 +24,7 @@ class ScooterTrackingTracker(
     private var startTimeMillis: Long = 0L
     private val telemetryQueue = mutableListOf<TripGps>()
     private var currentDistanceKm: Double = 0.0
+    private var lastSavedLocation: Pair<Double, Double>? = null
 
     fun startTracking() {
         if (_isTracking.value) return
@@ -31,6 +32,7 @@ class ScooterTrackingTracker(
         startTimeMillis = System.currentTimeMillis()
         telemetryQueue.clear()
         currentDistanceKm = 0.0
+        lastSavedLocation = null
 
         coroutineScope.launch {
             val session = ActiveSession(
@@ -55,7 +57,9 @@ class ScooterTrackingTracker(
     ) {
         if (!_isTracking.value) return
         if (x == 0.0 && y == 0.0) return
+        if (lastSavedLocation?.first == x && lastSavedLocation?.second == y) return
 
+        lastSavedLocation = Pair(x, y)
         currentDistanceKm += distanceDelta
 
         val gpsPoint = TripGps(
@@ -100,6 +104,7 @@ class ScooterTrackingTracker(
 
         val tripId = tripDatabasePort.saveTrip(trip, telemetryQueue.toList())
         telemetryQueue.clear()
+        lastSavedLocation = null
 
         val existing = sessionStatePort?.getActiveSession()
         if (existing != null) {
