@@ -35,6 +35,7 @@ fun TelemetryMetricsCard(
     currentSpeedValue: String,
     avgSpeedValue: String,
     modifier: Modifier = Modifier,
+    sampleCount: Int = -1,
     modeBadgeText: String = stringResource(R.string.trip_mode_sport_plus),
     powerConsumptionValue: String = "310",
     co2SavedValue: String = "-820"
@@ -97,28 +98,41 @@ fun TelemetryMetricsCard(
                     }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = modeBadgeText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (sampleCount >= 0) {
+                        Text(
+                            text = stringResource(R.string.trip_sample_count_label, sampleCount),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = modeBadgeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 

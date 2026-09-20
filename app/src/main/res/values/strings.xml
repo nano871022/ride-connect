@@ -306,4 +306,6 @@
     <string name="trip_summary_duration">Total Trip Time</string>
     <string name="trip_summary_battery_consumed">Battery Consumed</string>
     <string name="trip_summary_close">Close Summary</string>
+    <string name="trip_sample_count_label">Samples: %1$d</string>
+    <string name="scaffold_tracking_title">tracking...</string>
 </resources>
