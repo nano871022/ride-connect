@@ -58,7 +58,8 @@ import kotlinx.coroutines.launch
 fun MainScaffold(
     navigator: AppNavigator,
     currentScreen: AppScreen,
-    title: @Composable () -> Unit = { DefaultTitle(currentScreen) },
+    isTracking: Boolean = false,
+    title: @Composable () -> Unit = { DefaultTitle(currentScreen, isTracking) },
     topBarActions: @Composable RowScope.() -> Unit = {},
     containerColor: Color? = null,
     content: @Composable (PaddingValues) -> Unit
@@ -224,8 +225,9 @@ private fun SettingsMenu(navigator: AppNavigator) {
 }
 
 @Composable
-private fun DefaultTitle(currentScreen: AppScreen) {
-    val screenTitle = getTitleName(currentScreen)
+private fun DefaultTitle(currentScreen: AppScreen, isTracking: Boolean = false) {
+    val trackingText = stringResource(R.string.scaffold_tracking_title)
+    val screenTitle = if (isTracking) trackingText else getTitleName(currentScreen)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

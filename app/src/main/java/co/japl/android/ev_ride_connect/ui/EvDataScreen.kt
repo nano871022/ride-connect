@@ -64,6 +64,9 @@ import co.com.japl.ui.components.MaintenanceHealthCard
 import co.com.japl.ui.components.MaintenanceIndicatorItem
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvDataViewModel
+import co.japl.android.ev_ride_connect.controller.TripViewModel
+import co.japl.android.ev_ride_connect.core.domain.Trip
+import java.util.Locale
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
@@ -76,12 +79,14 @@ enum class HistoryFilter {
 @Composable
 fun EvDataScreen(
     viewModel: EvDataViewModel,
+    tripViewModel: TripViewModel? = null,
     navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
     val evDataList by viewModel.evDataList.collectAsState()
     val records by viewModel.records.collectAsState()
     val maintenanceIndicators by viewModel.maintenanceIndicators.collectAsState()
+    val tripHistory by (tripViewModel?.tripHistory ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyList<Trip>()) }).collectAsState()
     var selectedFilter by remember { mutableStateOf(HistoryFilter.ALL) }
 
     val filterItems = listOf(
@@ -121,11 +126,40 @@ fun EvDataScreen(
         }
 
         // 4. Chronology Records
-        if (records.isNotEmpty()) {
+        if (tripHistory.isNotEmpty()) {
+            items(tripHistory) { trip ->
+                HistoryRecordCard(
+                    record = HistoryRecordData(
+                        id = trip.id.toString(),
+                        type = HistoryRecordType.RIDE,
+                        timestamp = DateUtils.formatTimestamp(trip.createTmst),
+                        subtitle = stringResource(R.string.history_active_session_ended),
+                        statusText = stringResource(R.string.history_status_completed),
+                        distanceValue = String.format(Locale.getDefault(), "%.2f", trip.distance),
+                        distanceUnit = stringResource(R.string.km_unit),
+                        consumptionValue = "310 W",
+                        durationValue = DateUtils.formatDurationSeconds(trip.timeTrip),
+                        avgSpeedValue = String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)
+                    ),
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
+                    onViewTelemetryClick = {
+                        tripViewModel?.loadTripDetail(trip.id)
+                        navigator?.navigateToTripDetail(trip.id)
+                    }
+                )
+            }
+        } else if (records.isNotEmpty()) {
             items(records) { record ->
                 HistoryRecordCard(
                     record = record,
-                    viewTelemetryText = stringResource(R.string.history_view_telemetry)
+                    viewTelemetryText = stringResource(R.string.history_view_telemetry),
+                    onViewTelemetryClick = {
+                        val tId = record.id.toLongOrNull()
+                        if (tId != null) {
+                            tripViewModel?.loadTripDetail(tId)
+                            navigator?.navigateToTripDetail(tId)
+                        }
+                    }
                 )
             }
         } else if (evDataList.isNotEmpty()) {

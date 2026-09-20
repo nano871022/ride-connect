@@ -23,4 +23,5 @@
     <string name="trip_power_consumption_unit">W</string>
     <string name="trip_co2_saved_label">CO₂ Ahorrado</string>
     <string name="trip_co2_saved_unit">g</string>
+    <string name="trip_sample_count_label">Muestras: %1$d</string>
 </resources>
