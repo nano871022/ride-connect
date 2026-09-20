@@ -29,6 +29,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -43,6 +50,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.japl.android.ev_ride_connect.ui.R
 
 @Composable
@@ -54,6 +62,7 @@ fun MapHudCard(
     precisionMt: Double = 0.0,
     isLiveTelemetry: Boolean = false,
     points: List<MapPoint> = emptyList(),
+    sampleTimestamps: List<Long> = emptyList(),
 ) {
     Card(
         modifier = modifier
@@ -65,48 +74,66 @@ fun MapHudCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            TripMapView(
-                points = points,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Column(
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.80f),
-                                Color.Transparent
-                            )
-                        )
-                    )
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
                     .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SatellitesCount(precisionMt, satellitesCount)
+                SatellitesCount(precisionMt, satellitesCount)
+                LiveTelemetry(isLiveTelemetry)
+                val options = listOf(15L, 30L, 60L, 120L, 300L).map { sec ->
+                    SegmentOption(
+                        sec,
+                        stringResource(R.string.trip_interval_seconds, sec.toInt())
+                    )
+                }
+                SegmentedChipGroup(
+                    options = options,
+                    selectedOption = gpsIntervalSeconds,
+                    onOptionSelected = onGpsIntervalSelected
+                )
+            }
 
-                    LiveTelemetry(isLiveTelemetry)
-
-                    val options = listOf(15L, 30L, 60L, 120L, 300L).map { sec ->
-                        SegmentOption(
-                            sec,
-                            stringResource(R.string.trip_interval_seconds, sec.toInt())
+            Row(modifier = Modifier.fillMaxSize()) {
+                if (sampleTimestamps.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .width(110.dp)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.trip_sample_count_label, sampleTimestamps.size),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 4.dp)
                         )
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(sampleTimestamps) { ts ->
+                                Text(
+                                    text = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(ts)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
                     }
+                }
 
-                    SegmentedChipGroup(
-                        options = options,
-                        selectedOption = gpsIntervalSeconds,
-                        onOptionSelected = onGpsIntervalSelected
+                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    TripMapView(
+                        points = points,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
@@ -115,7 +142,7 @@ fun MapHudCard(
 }
 
 @Composable
-private fun RowScope.LiveTelemetry(isLiveTelemetry: Boolean){
+private fun LiveTelemetry(isLiveTelemetry: Boolean){
     if (isLiveTelemetry) {
         Row(
             modifier = Modifier
@@ -143,7 +170,7 @@ private fun RowScope.LiveTelemetry(isLiveTelemetry: Boolean){
 }
 
 @Composable
-private fun RowScope.SatellitesCount(precisionMt: Double, satellitesCount: Int){
+private fun SatellitesCount(precisionMt: Double, satellitesCount: Int){
     if(satellitesCount > 0) {
         Row(
             modifier = Modifier

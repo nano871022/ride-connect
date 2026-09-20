@@ -83,9 +83,11 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Scaffold(navigator: AppNavigator, currentScreen: AppScreen, version: String, appId: String){
+        val isTripActive by tripViewModel.isTripActive.collectAsState()
         MainScaffold(
             navigator = navigator,
             currentScreen = currentScreen,
+            isTracking = isTripActive,
             topBarActions = {
                 TopBarActions(currentScreen)
             }
@@ -167,6 +169,7 @@ class MainActivity : ComponentActivity() {
 
             AppScreen.EV_DATA -> EvDataScreen(
                 viewModel = evDataViewModel,
+                tripViewModel = tripViewModel,
                 navigator = navigator,
                 modifier = Modifier.padding(innerPadding)
             )
