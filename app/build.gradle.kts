@@ -61,8 +61,8 @@ android {
         applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1_00_005
-        versionName = "1.00.005 End step fix"
+        versionCode = 1_00_006
+        versionName = "1.00.006 Fix issue found with notification service"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
