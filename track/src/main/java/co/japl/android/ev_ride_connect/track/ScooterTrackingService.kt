@@ -262,7 +262,7 @@ class ScooterTrackingService : Service() {
             ).apply {
                 description = getString(R.string.notification_channel_description)
             }
-            val manager = getSystemService(Context.LOCATION_SERVICE) as NotificationManager
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
     }
