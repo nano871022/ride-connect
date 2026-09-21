@@ -36,7 +36,15 @@ class RoomTripAdapter(
         val insertedId = tripDao.insertTrip(tripEntity)
 
         if (gpsPoints.isNotEmpty()) {
-            val gpsEntities = gpsPoints.map { gps ->
+            val filteredPoints = mutableListOf<TripGps>()
+            for (gps in gpsPoints) {
+                if (gps.x == 0.0 && gps.y == 0.0) continue
+                val last = filteredPoints.lastOrNull()
+                if (last != null && last.x == gps.x && last.y == gps.y) continue
+                filteredPoints.add(gps)
+            }
+
+            val gpsEntities = filteredPoints.map { gps ->
                 TripGpsEntity(
                     id = gps.id,
                     tripId = insertedId,

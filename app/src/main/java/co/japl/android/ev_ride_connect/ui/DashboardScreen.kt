@@ -2,6 +2,13 @@ package co.japl.android.ev_ride_connect.ui
 
 import android.content.Intent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -67,7 +74,7 @@ fun DashboardScreen(
     val latestEvData by viewModel.latestEvData.collectAsState()
     val showApiKeyPrompt by viewModel.showApiKeyPrompt.collectAsState()
     var showUpdateDialog by remember { mutableStateOf(false) }
-    var isRecordingTrip by remember { mutableStateOf(false) }
+    val isRecordingTrip by viewModel.isTracking.collectAsState()
     val vehicles by viewModel.vehicles.collectAsState()
 
     Column(
@@ -80,7 +87,6 @@ fun DashboardScreen(
     ) {
         ButtonNavigateTrack(
             isRecordingTrip = isRecordingTrip,
-            recordingTrip = { isRecordingTrip = it },
             navigator = navigator
         )
 
@@ -374,16 +380,25 @@ fun EvDataUpdateDialog(
 @Composable
 private fun ButtonNavigateTrack(
     isRecordingTrip: Boolean,
-    recordingTrip: (Boolean) -> Unit,
     navigator: AppNavigator? = null
 ){
     val buttonBgColor by animateColorAsState(
         targetValue = if (isRecordingTrip) Color(0xFFFF4081) else Color(0xFF00F0FF),
         label = "RecordButtonColor"
     )
+    val infiniteTransition = rememberInfiniteTransition(label = "BlinkingGps")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "GpsAlpha"
+    )
+
     Button(
         onClick = {
-            recordingTrip.invoke(!isRecordingTrip)
             navigator?.navigateToTrip()
         },
         modifier = Modifier
@@ -400,9 +415,15 @@ private fun ButtonNavigateTrack(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.PlayArrow,
+                imageVector = if (isRecordingTrip) Icons.Default.LocationOn else Icons.Default.PlayArrow,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer {
+                        if (isRecordingTrip) {
+                            this.alpha = alpha
+                        }
+                    }
             )
             Text(
                 text = if (isRecordingTrip) {

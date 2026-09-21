@@ -4,13 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,150 +42,133 @@ class MainActivity : ComponentActivity() {
 
     private val dashboardViewModel: DashboardViewModel by viewModels()
     private val evConfigViewModel: EvConfigViewModel by viewModels()
-    private val llmConfigViewModel: LlmConfigViewModel by viewModels()
-    private val backupViewModel: BackupViewModel by viewModels()
     private val evDataViewModel: EvDataViewModel by viewModels()
+    private val llmConfigViewModel: LlmConfigViewModel by viewModels()
     private val tripViewModel: TripViewModel by viewModels()
+    private val backupViewModel: BackupViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val context = LocalContext.current
-            val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
-            val appId = context.packageName
-
             MaterialThemeComposeUI {
-                val navigator = remember { AppNavigator() }
-                val currentScreen by navigator.currentScreen.collectAsState()
-
-                if (currentScreen == AppScreen.SPLASH) {
-                    SplashScreen(
-                        navigator = navigator,
-                        dashboardViewModel = dashboardViewModel,
-                        evConfigViewModel = evConfigViewModel,
-                        llmConfigViewModel = llmConfigViewModel
-                    )
-                } else {
-                    Scaffold(
-                        navigator = navigator,
-                        currentScreen = currentScreen,
-                        version = version,
-                        appId = appId
-                    )
-                }
+                MainAppContent(
+                    dashboardViewModel = dashboardViewModel,
+                    evConfigViewModel = evConfigViewModel,
+                    evDataViewModel = evDataViewModel,
+                    llmConfigViewModel = llmConfigViewModel,
+                    tripViewModel = tripViewModel,
+                    backupViewModel = backupViewModel
+                )
             }
         }
     }
+}
 
-    @Composable
-    private fun Scaffold(navigator: AppNavigator, currentScreen: AppScreen, version: String, appId: String){
-        val isTripActive by tripViewModel.isTripActive.collectAsState()
-        MainScaffold(
+@Composable
+fun MainAppContent(
+    dashboardViewModel: DashboardViewModel,
+    evConfigViewModel: EvConfigViewModel,
+    evDataViewModel: EvDataViewModel,
+    llmConfigViewModel: LlmConfigViewModel,
+    tripViewModel: TripViewModel,
+    backupViewModel: BackupViewModel
+) {
+    val navigator = remember { AppNavigator(AppScreen.SPLASH) }
+    val currentScreen by navigator.currentScreen.collectAsState()
+
+    if (currentScreen == AppScreen.SPLASH) {
+        SplashScreen(
             navigator = navigator,
+            dashboardViewModel = dashboardViewModel,
+            evConfigViewModel = evConfigViewModel,
+            llmConfigViewModel = llmConfigViewModel
+        )
+    } else {
+        MainScaffold(
             currentScreen = currentScreen,
-            isTracking = isTripActive,
-            topBarActions = {
-                TopBarActions(currentScreen)
+            navigator = navigator,
+            content = { innerPadding ->
+                AppNavigationContent(
+                    currentScreen = currentScreen,
+                    navigator = navigator,
+                    dashboardViewModel = dashboardViewModel,
+                    evConfigViewModel = evConfigViewModel,
+                    evDataViewModel = evDataViewModel,
+                    llmConfigViewModel = llmConfigViewModel,
+                    tripViewModel = tripViewModel,
+                    backupViewModel = backupViewModel,
+                    innerPadding = innerPadding
+                )
             }
-        ) { innerPadding ->
-            Screen(
-                currentScreen = currentScreen,
-                innerPadding = innerPadding,
-                navigator = navigator,
-                version = version,
-                appId = appId
-            )
+        )
+    }
+}
+
+@Composable
+fun AppNavigationContent(
+    currentScreen: AppScreen,
+    navigator: AppNavigator,
+    dashboardViewModel: DashboardViewModel,
+    evConfigViewModel: EvConfigViewModel,
+    evDataViewModel: EvDataViewModel,
+    llmConfigViewModel: LlmConfigViewModel,
+    tripViewModel: TripViewModel,
+    backupViewModel: BackupViewModel,
+    innerPadding: PaddingValues
+) {
+    val context = LocalContext.current
+    val pInfo = remember(context) {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        } catch (e: Exception) {
+            null
         }
     }
+    val version = pInfo?.versionName ?: "1.0.0"
+    val appId = context.packageName ?: "co.japl.android.ev_ride_connect"
 
-    @Composable
-    private fun TopBarActions(currentScreen: AppScreen){
-        if (currentScreen == AppScreen.EV_DATA && false) {
-            Row(
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(end = 8.dp)
-            ) {
-                Row(
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                            androidx.compose.foundation.shape.RoundedCornerShape(
-                                16.dp
-                            )
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(
-                                MaterialTheme.colorScheme.secondaryContainer,
-                                androidx.compose.foundation.shape.CircleShape
-                            )
-                    )
-                    Text(
-                        text = "%s \n ${stringResource(R.string.history_connected)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun Screen(currentScreen: AppScreen, innerPadding: PaddingValues, navigator: AppNavigator, version: String, appId: String){
+    Box(modifier = Modifier.padding(innerPadding)) {
         when (currentScreen) {
             AppScreen.DASHBOARD -> DashboardScreen(
                 viewModel = dashboardViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
+                navigator = navigator
             )
 
             AppScreen.EV_CONFIG -> EvConfigScreen(
                 viewModel = evConfigViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
-            )
-
-            AppScreen.LLM_CONFIG -> LlmConfigScreen(
-                viewModel = llmConfigViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
-            )
-
-            AppScreen.BACKUP -> BackupScreen(
-                viewModel = backupViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
+                navigator = navigator
             )
 
             AppScreen.EV_DATA -> EvDataScreen(
                 viewModel = evDataViewModel,
-                tripViewModel = tripViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
+                navigator = navigator
+            )
+
+            AppScreen.LLM_CONFIG -> LlmConfigScreen(
+                viewModel = llmConfigViewModel,
+                navigator = navigator
+            )
+
+            AppScreen.BACKUP -> BackupScreen(
+                viewModel = backupViewModel,
+                navigator = navigator
             )
 
             AppScreen.TRIP -> TripScreen(
                 viewModel = tripViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
+                navigator = navigator
             )
 
             AppScreen.TRIP_DETAIL -> TripDetailScreen(
                 viewModel = tripViewModel,
-                navigator = navigator,
-                modifier = Modifier.padding(innerPadding)
+                navigator = navigator
             )
 
-            AppScreen.ABOUT -> Box(modifier = Modifier.padding(innerPadding)) {
-                co.com.japl.homeconnect.about.ui.About(
-                    versionDetail = version,
-                    applicationId = appId
+            AppScreen.ABOUT -> Box(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(R.string.about),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 

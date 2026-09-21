@@ -146,6 +146,24 @@ class TripViewModelTest {
     }
 
     @Test
+    fun shouldDiscardConsecutiveDuplicateLocationPoints() = runTest {
+        viewModel.startTrip()
+
+        viewModel.addLocationPoint(4.6097, -74.0817)
+        assertThat(viewModel.recordedGpsPoints).hasSize(1)
+
+        // Adding exact same coordinates consecutively
+        viewModel.addLocationPoint(4.6097, -74.0817)
+        assertThat(viewModel.recordedGpsPoints).hasSize(1)
+
+        // Adding different coordinates
+        viewModel.addLocationPoint(4.6098, -74.0818)
+        assertThat(viewModel.recordedGpsPoints).hasSize(2)
+
+        viewModel.stopTrip()
+    }
+
+    @Test
     fun shouldStartAndStopTripAndDisplayTripSummary() = runTest {
         fakeEvDataPort.savedList.add(EvData(evCode = "1", km = 100L, batteryLevel = 80))
 

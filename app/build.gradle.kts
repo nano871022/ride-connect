@@ -61,8 +61,8 @@ android {
         applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1_00_007
-        versionName = "1.00.007 Fix issues and improve"
+        versionCode = 1_00_008
+        versionName = "1.00.008 fix issues with bottons in interfaces"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

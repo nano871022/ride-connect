@@ -40,8 +40,8 @@ class RoomTripAdapterUnitTest {
     fun shouldSaveTripAndFetchTripHistoryAndDetail() = runTest {
         val trip = podamFactory.manufacturePojo(Trip::class.java).copy(id = 0)
         val gpsPoints = listOf(
-            podamFactory.manufacturePojo(TripGps::class.java).copy(id = 0, tripId = 0),
-            podamFactory.manufacturePojo(TripGps::class.java).copy(id = 0, tripId = 0)
+            podamFactory.manufacturePojo(TripGps::class.java).copy(id = 0, tripId = 0, x = 4.6000, y = -74.0000),
+            podamFactory.manufacturePojo(TripGps::class.java).copy(id = 0, tripId = 0, x = 4.6001, y = -74.0001)
         )
 
         val tripId = adapter.saveTrip(trip, gpsPoints)
@@ -59,6 +59,23 @@ class RoomTripAdapterUnitTest {
         val fetchedGpsPoints = adapter.getGpsPointsByTripId(tripId)
         assertThat(fetchedGpsPoints).hasSize(2)
         assertThat(fetchedGpsPoints[0].tripId).isEqualTo(tripId)
+    }
+
+    @Test
+    fun shouldFilterOutConsecutiveDuplicateGpsPointsOnSaveTrip() = runTest {
+        val trip = podamFactory.manufacturePojo(Trip::class.java).copy(id = 0)
+        val gpsPoints = listOf(
+            TripGps(orderIndex = 1, speed = 10.0, distance = 0.1, x = 4.6097, y = -74.0817),
+            TripGps(orderIndex = 2, speed = 10.0, distance = 0.1, x = 4.6097, y = -74.0817),
+            TripGps(orderIndex = 3, speed = 12.0, distance = 0.2, x = 4.6098, y = -74.0818)
+        )
+
+        val tripId = adapter.saveTrip(trip, gpsPoints)
+
+        val fetchedGpsPoints = adapter.getGpsPointsByTripId(tripId)
+        assertThat(fetchedGpsPoints).hasSize(2)
+        assertThat(fetchedGpsPoints[0].x).isEqualTo(4.6097)
+        assertThat(fetchedGpsPoints[1].x).isEqualTo(4.6098)
     }
 
     private class FakeTripDao : TripDao {
