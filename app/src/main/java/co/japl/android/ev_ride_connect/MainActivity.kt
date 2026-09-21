@@ -187,7 +187,7 @@ class MainActivity : ComponentActivity() {
             )
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(innerPadding)) {
-                About(
+                co.com.japl.homeconnect.about.ui.About(
                     versionDetail = version,
                     applicationId = appId
                 )
@@ -195,12 +195,5 @@ class MainActivity : ComponentActivity() {
 
             else -> {}
         }
-    }
-}
-
-@Composable
-private fun About(versionDetail: String, applicationId: String) {
-    Box(modifier = Modifier.padding(16.dp)) {
-        Text(text = "App: $applicationId\nVersion: $versionDetail")
     }
 }

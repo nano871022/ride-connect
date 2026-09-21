@@ -88,6 +88,7 @@ import co.com.japl.ui.components.SpeedometerGauge
 import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.theme.MaterialThemeComposeUI
+import co.japl.android.ev_ride_connect.core.domain.TripSummary
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 
@@ -107,7 +108,7 @@ fun TripScreen(
     val showBatteryWarning by viewModel.showBatteryWarning.collectAsState()
     val currentDistance by viewModel.currentDistance.collectAsState()
     val currentAverageSpeed by viewModel.currentAverageSpeed.collectAsState()
-    val sateliteMeterPrecision  by viewModel.metersPrecisionSatelite.collectAsState()
+    val sateliteMeterPrecision by viewModel.metersPrecisionSatelite.collectAsState()
     val sateliteCount by viewModel.sateliteCount.collectAsState()
 
     val showStartBatteryDialog by viewModel.showStartBatteryDialog.collectAsState()
@@ -152,7 +153,19 @@ fun TripScreen(
         }
 
         item {
-            if(isTripActive) {
+            if (isTripActive) {
+                MotionStatusCard(
+                    motionStateText = motionStateText,
+                    stationaryTimeText = stationaryTimeText,
+                    isAccelerating = motionState == MotionState.ACCELERATING,
+                    isBraking = motionState == MotionState.BRAKING,
+                    isStationary = motionState == MotionState.STOPPED
+                )
+            }
+        }
+
+        item {
+            if (isTripActive) {
                 SpeedometerGauge(
                     speed = currentAverageSpeed,
                     headerLabel = stringResource(R.string.dashboard_mobile_gps_speed),
@@ -168,7 +181,13 @@ fun TripScreen(
             MapHudCard(
                 gpsIntervalSeconds = gpsIntervalSeconds,
                 onGpsIntervalSelected = { sec -> viewModel.setGpsInterval(sec) },
-                points = viewModel.recordedGpsPoints.map { MapPoint(it.x, it.y, "Punto #${it.orderIndex}") },
+                points = viewModel.recordedGpsPoints.map {
+                    MapPoint(
+                        it.x,
+                        it.y,
+                        "Punto #${it.orderIndex}"
+                    )
+                },
                 sampleTimestamps = viewModel.recordedGpsPoints.map { it.createTmst },
                 isLiveTelemetry = isTripActive,
                 precisionMt = sateliteMeterPrecision,
@@ -177,19 +196,7 @@ fun TripScreen(
         }
 
         item {
-            if(isTripActive) {
-                MotionStatusCard(
-                    motionStateText = motionStateText,
-                    stationaryTimeText = stationaryTimeText,
-                    isAccelerating = motionState == MotionState.ACCELERATING,
-                    isBraking = motionState == MotionState.BRAKING,
-                    isStationary = motionState == MotionState.STOPPED
-                )
-            }
-        }
-
-        item {
-            if(isTripActive) {
+            if (isTripActive) {
                 TelemetryMetricsCard(
                     elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
                     currentDistanceValue = String.format(
@@ -228,6 +235,19 @@ fun TripScreen(
         )
     }
 
+    TripSummaryDialog(
+        viewModel = viewModel,
+        showSummaryDialog = showSummaryDialog,
+        tripSummary = tripSummary
+    )
+}
+
+@Composable
+private fun TripSummaryDialog (
+    viewModel: TripViewModel,
+    showSummaryDialog: Boolean,
+    tripSummary: TripSummary?
+) {
     if (showSummaryDialog && tripSummary != null) {
         val summary = tripSummary!!
         AlertDialog(

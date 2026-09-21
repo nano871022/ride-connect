@@ -1,5 +1,6 @@
 package co.com.japl.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,7 +59,7 @@ fun <T> SegmentedChipGroup(
     selectedOption: T,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    spacingDp: Dp = 8.dp
+    spacingDp: Dp = 4.dp
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),

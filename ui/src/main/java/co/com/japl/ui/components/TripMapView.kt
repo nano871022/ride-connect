@@ -10,6 +10,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -56,11 +57,17 @@ fun TripMapView(
         }
 
         points.forEachIndexed { index, point ->
-            Marker(
-                state = MarkerState(position = LatLng(point.latitude, point.longitude)),
-                title = point.title ?: "Punto #${index + 1}",
-                snippet = point.snippet
-            )
+            if(index > 1 && index < points.size - 1) {
+                Circle(
+                    center = LatLng(point.latitude, point.longitude)
+                )
+            } else {
+                Marker(
+                    state = MarkerState(position = LatLng(point.latitude, point.longitude)),
+                    title = point.title ?: "Punto #${index + 1}",
+                    snippet = point.snippet
+                )
+            }
         }
     }
 }

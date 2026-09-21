@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,8 +50,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.ui.R
 
 @Composable
@@ -67,77 +70,63 @@ fun MapHudCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(300.dp),
+            .height(600.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SatellitesCount(precisionMt, satellitesCount)
-                LiveTelemetry(isLiveTelemetry)
-                val options = listOf(15L, 30L, 60L, 120L, 300L).map { sec ->
-                    SegmentOption(
-                        sec,
-                        stringResource(R.string.trip_interval_seconds, sec.toInt())
-                    )
-                }
-                SegmentedChipGroup(
-                    options = options,
-                    selectedOption = gpsIntervalSeconds,
-                    onOptionSelected = onGpsIntervalSelected
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                .padding(8.dp),
+        ) {
+            SatellitesCount(precisionMt, satellitesCount)
+
+            LiveTelemetry(isLiveTelemetry)
+            val options = listOf(15L, 30L, 60L, 120L, 300L).map { sec ->
+                SegmentOption(
+                    sec,
+                    stringResource(R.string.trip_interval_seconds, sec.toInt())
                 )
             }
+            SegmentedChipGroup(
+                options = options,
+                selectedOption = gpsIntervalSeconds,
+                onOptionSelected = onGpsIntervalSelected
+            )
 
-            Row(modifier = Modifier.fillMaxSize()) {
-                if (sampleTimestamps.isNotEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .width(110.dp)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.trip_sample_count_label, sampleTimestamps.size),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(sampleTimestamps) { ts ->
-                                Text(
-                                    text = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(ts)),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-                }
+            SampleTelemetry(sampleTimestamps)
 
-                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    TripMapView(
-                        points = points,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+            Box(modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+            ) {
+                TripMapView(
+                    points = points,
+                    modifier = Modifier
+                        .fillMaxSize()
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun SampleTelemetry(sampleTimestamps: List<Long>){
+    if (sampleTimestamps.isNotEmpty()) {
+        Text(
+            text = stringResource(
+                R.string.trip_sample_count_label,
+                sampleTimestamps.size
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
     }
 }
 
@@ -220,4 +209,22 @@ private fun PulsingBeaconDot(color: Color) {
             .clip(CircleShape)
             .background(color.copy(alpha = scale.value))
     )
+}
+
+
+@Preview
+@Composable
+internal fun HUBPreview(){
+    MaterialThemeComposeUI() {
+        MapHudCard(
+            gpsIntervalSeconds = 20,
+            onGpsIntervalSelected = { },
+            modifier = Modifier,
+            satellitesCount = -1,
+            precisionMt = 0.0,
+            isLiveTelemetry = false,
+            points = emptyList(),
+            sampleTimestamps = emptyList(),
+        )
+    }
 }
