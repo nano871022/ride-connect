@@ -30,7 +30,7 @@
     <string name="dashboard_measurement_notice">Active measurement when recording trip</string>
     <string name="dashboard_sensor_off">Scooter Sensor OFF</string>
     <string name="dashboard_record_trip_gps">Record Trip with GPS</string>
-    <string name="dashboard_recording">Recording...</string>
+    <string name="dashboard_recording">Recording trip with GPS</string>
     <string name="dashboard_battery_tag">Battery</string>
     <string name="dashboard_battery_record">Record:</string>
     <string name="dashboard_battery_manual">Manual</string>

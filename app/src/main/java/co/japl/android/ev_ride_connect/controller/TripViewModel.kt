@@ -130,9 +130,11 @@ class TripViewModel @Inject constructor(
             observeActiveSessionUseCase.execute().collect { session ->
                 _activeSession.value = session
                 if (session != null) {
-                    if (session.isPaused != _isPaused.value) {
-                        _isPaused.value = session.isPaused
-                    }
+                    _isTripActive.value = session.isRideActive
+                    _isPaused.value = session.isPaused
+                } else {
+                    _isTripActive.value = false
+                    _isPaused.value = false
                 }
             }
         }
@@ -428,8 +430,10 @@ class TripViewModel @Inject constructor(
         if (!_isTripActive.value || _isPaused.value) return
         if (x == 0.0 && y == 0.0) return
 
-        val orderIndex = recordedGpsPoints.size + 1
         val previousPoint = recordedGpsPoints.lastOrNull()
+        if (previousPoint != null && previousPoint.x == x && previousPoint.y == y) return
+
+        val orderIndex = recordedGpsPoints.size + 1
 
         val distanceSegment = if (previousPoint != null) {
             GpsUtils.calculateDistanceKm(previousPoint.x, previousPoint.y, x, y)

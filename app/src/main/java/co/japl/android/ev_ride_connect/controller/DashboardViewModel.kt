@@ -38,6 +38,12 @@ class DashboardViewModel @Inject constructor(
     private val _vehicles = MutableStateFlow<List<EvConfig>>( emptyList() )
     val vehicles: StateFlow<List<EvConfig>> = _vehicles.asStateFlow()
 
+    private val _isTracking = MutableStateFlow(false)
+    val isTracking: StateFlow<Boolean> = _isTracking.asStateFlow()
+
+    private val _isPaused = MutableStateFlow(false)
+    val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
+
     init {
         loadLatestEvData()
         checkActiveLlmConfigs()
@@ -52,6 +58,8 @@ class DashboardViewModel @Inject constructor(
                 } else {
                     _resumedSession.value = null
                 }
+                _isTracking.value = session?.isRideActive == true
+                _isPaused.value = session?.isPaused == true
             }
         }
     }

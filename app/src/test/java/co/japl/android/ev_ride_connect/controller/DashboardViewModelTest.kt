@@ -78,6 +78,18 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun shouldUpdateIsTrackingAndIsPausedWhenSessionEmits() = runTest {
+        assertThat(viewModel.isTracking.value).isFalse()
+        assertThat(viewModel.isPaused.value).isFalse()
+
+        fakeSessionStatePort.sessionFlow.value = ActiveSession(isRideActive = true, isPaused = true)
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.isTracking.value).isTrue()
+        assertThat(viewModel.isPaused.value).isTrue()
+    }
+
+    @Test
     fun shouldSaveEvDataWithFallbackEvCodeWhenNoConfig() = runTest {
         fakeEvConfigPort.savedConfig = null
 

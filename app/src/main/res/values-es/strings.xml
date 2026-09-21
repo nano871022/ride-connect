@@ -30,7 +30,7 @@
     <string name="dashboard_measurement_notice">Medición activa al grabar viaje</string>
     <string name="dashboard_sensor_off">Sensor Scooter OFF</string>
     <string name="dashboard_record_trip_gps">Grabar Viaje con GPS</string>
-    <string name="dashboard_recording">Grabando...</string>
+    <string name="dashboard_recording">Grabando viaje con GPS</string>
     <string name="dashboard_battery_tag">Batería</string>
     <string name="dashboard_battery_record">Registro:</string>
     <string name="dashboard_battery_manual">Manual</string>
