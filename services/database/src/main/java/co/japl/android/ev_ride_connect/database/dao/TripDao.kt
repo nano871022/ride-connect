@@ -24,4 +24,7 @@ interface TripDao {
 
     @Query("SELECT * FROM trip_gps WHERE trip_id = :tripId ORDER BY order_index ASC")
     suspend fun getGpsPointsByTripId(tripId: Long): List<TripGpsEntity>
+
+    @Query("SELECT * FROM trips WHERE (create_tmst >= :startTimestamp AND create_tmst <= :endTimestamp) OR (create_tmst = 0 AND timestamp >= :startTimestamp AND timestamp <= :endTimestamp) ORDER BY create_tmst DESC, timestamp DESC")
+    suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<TripEntity>
 }

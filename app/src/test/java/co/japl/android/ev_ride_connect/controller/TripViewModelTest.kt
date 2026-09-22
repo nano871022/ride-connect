@@ -18,11 +18,14 @@ import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripDetailsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.PauseTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ResumeTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
+import co.japl.android.ev_ride_connect.ui.HistoryFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -75,7 +78,9 @@ class TripViewModelTest {
             PauseTripUseCase(fakeSessionStatePort),
             ResumeTripUseCase(fakeSessionStatePort),
             EndTripUseCase(fakeSessionStatePort),
-            CalculateTripSummaryUseCase(fakeTripPort)
+            CalculateTripSummaryUseCase(fakeTripPort),
+            GetTripsByDateUseCase(fakeTripPort),
+            GetTripDetailsUseCase(fakeTripPort)
         )
     }
 
@@ -217,6 +222,28 @@ class TripViewModelTest {
         assertThat(detail?.second).hasSize(2)
     }
 
+    @Test
+    fun shouldFilterTripsByDate() = runTest {
+        val now = System.currentTimeMillis()
+        val recentTrip = Trip(id = 1L, createTmst = now - 3600_000L, batteryConsumed = 10)
+        val oldTrip = Trip(id = 2L, createTmst = now - (40L * 24 * 3600 * 1000), batteryConsumed = 0)
+
+        fakeTripPort.saveTrip(recentTrip, emptyList())
+        fakeTripPort.saveTrip(oldTrip, emptyList())
+
+        viewModel.filterTripsByDate(HistoryFilter.WEEK)
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.selectedFilter.value).isEqualTo(HistoryFilter.WEEK)
+        assertThat(viewModel.tripHistory.value).hasSize(1)
+        assertThat(viewModel.tripHistory.value[0].id).isEqualTo(1L)
+
+        viewModel.filterTripsByDate(HistoryFilter.ALL)
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.tripHistory.value).hasSize(2)
+    }
+
     private class FakeTripDatabasePort : TripDatabasePort {
         val savedTrips = mutableListOf<Trip>()
         val savedGpsMap = mutableMapOf<Long, List<TripGps>>()
@@ -242,6 +269,10 @@ class TripViewModelTest {
 
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
             return savedGpsMap[tripId] ?: emptyList()
+        }
+
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
+            return savedTrips.filter { it.createTmst in startTimestamp..endTimestamp }.sortedByDescending { it.createTmst }
         }
     }
 

@@ -175,6 +175,7 @@ dependencies {
     implementation(libs.koin.androidx.compose)
     implementation(libs.org.json)
 
+    testImplementation(project(":core"))
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.podam)

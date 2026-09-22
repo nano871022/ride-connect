@@ -47,6 +47,7 @@ class ScooterTrackingServiceTest {
         trackingTracker = ScooterTrackingTracker(fakeTripPort, fakeSessionPort, this)
 
         trackingTracker.startTracking()
+        trackingTracker.recordTelemetry(x = 10.0, y = 20.0, speed = 20.0, distanceDelta = 1.0)
         testScheduler.runCurrent()
 
         trackingTracker.stopTracking()
@@ -70,6 +71,8 @@ class ScooterTrackingServiceTest {
         override suspend fun getTripById(tripId: Long): Trip? = savedTrips.firstOrNull()
 
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
+
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = savedTrips
     }
 
     private class FakeSessionStatePort : SessionStatePort {

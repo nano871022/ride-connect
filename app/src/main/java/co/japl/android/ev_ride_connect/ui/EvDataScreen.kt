@@ -1,6 +1,5 @@
 package co.japl.android.ev_ride_connect.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,43 +12,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.EvStation
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsScore
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +46,6 @@ import co.com.japl.ui.components.HistoryRecordCard
 import co.com.japl.ui.components.HistoryRecordData
 import co.com.japl.ui.components.HistoryRecordType
 import co.com.japl.ui.components.MaintenanceHealthCard
-import co.com.japl.ui.components.MaintenanceIndicatorItem
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvDataViewModel
 import co.japl.android.ev_ride_connect.controller.TripViewModel
@@ -87,7 +71,7 @@ fun EvDataScreen(
     val records by viewModel.records.collectAsState()
     val maintenanceIndicators by viewModel.maintenanceIndicators.collectAsState()
     val tripHistory by (tripViewModel?.tripHistory ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyList<Trip>()) }).collectAsState()
-    var selectedFilter by remember { mutableStateOf(HistoryFilter.ALL) }
+    val selectedFilter by (tripViewModel?.selectedFilter ?: remember { kotlinx.coroutines.flow.MutableStateFlow(HistoryFilter.ALL) }).collectAsState()
 
     val filterItems = listOf(
         FilterPillItem(HistoryFilter.ALL, stringResource(R.string.history_filter_all), Icons.Default.Tune),
@@ -116,7 +100,9 @@ fun EvDataScreen(
             FilterPillGroup(
                 items = filterItems,
                 selectedItemId = selectedFilter,
-                onItemSelected = { selectedFilter = it }
+                onItemSelected = { filter ->
+                    tripViewModel?.filterTripsByDate(filter)
+                }
             )
         }
 
@@ -137,7 +123,7 @@ fun EvDataScreen(
                         statusText = stringResource(R.string.history_status_completed),
                         distanceValue = String.format(Locale.getDefault(), "%.2f", trip.distance),
                         distanceUnit = stringResource(R.string.km_unit),
-                        consumptionValue = "310 W",
+                        consumptionValue = "${trip.batteryConsumed}%",
                         durationValue = DateUtils.formatDurationSeconds(trip.timeTrip),
                         avgSpeedValue = String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)
                     ),

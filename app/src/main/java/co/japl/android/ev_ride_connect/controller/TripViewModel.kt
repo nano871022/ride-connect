@@ -26,6 +26,8 @@ import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripByIdUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripDetailsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.PauseTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ResumeTripUseCase
@@ -33,6 +35,8 @@ import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 import co.japl.android.ev_ride_connect.track.ScooterTrackingService
 import co.japl.android.ev_ride_connect.track.TrackingSettings
+import co.japl.android.ev_ride_connect.ui.HistoryFilter
+import co.japl.android.ev_ride_connect.utils.DateUtils
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -60,7 +64,9 @@ class TripViewModel @Inject constructor(
     private val pauseTripUseCase: PauseTripUseCase,
     private val resumeTripUseCase: ResumeTripUseCase,
     private val endTripUseCase: EndTripUseCase,
-    private val calculateTripSummaryUseCase: CalculateTripSummaryUseCase
+    private val calculateTripSummaryUseCase: CalculateTripSummaryUseCase,
+    private val getTripsByDateUseCase: GetTripsByDateUseCase,
+    private val getTripDetailsUseCase: GetTripDetailsUseCase
 ) : ViewModel() {
 
     private val _isTripActive = MutableStateFlow(false)
@@ -86,6 +92,9 @@ class TripViewModel @Inject constructor(
 
     private val _tripHistory = MutableStateFlow<List<Trip>>(emptyList())
     val tripHistory: StateFlow<List<Trip>> = _tripHistory.asStateFlow()
+
+    private val _selectedFilter = MutableStateFlow(HistoryFilter.ALL)
+    val selectedFilter: StateFlow<HistoryFilter> = _selectedFilter.asStateFlow()
 
     private val _selectedTripDetail = MutableStateFlow<Pair<Trip, List<TripGps>>?>(null)
     val selectedTripDetail: StateFlow<Pair<Trip, List<TripGps>>?> = _selectedTripDetail.asStateFlow()
@@ -504,10 +513,21 @@ class TripViewModel @Inject constructor(
         }
     }
 
-    fun loadTripHistory() {
+    fun filterTripsByDate(filter: HistoryFilter) {
+        _selectedFilter.value = filter
+        loadTripHistory(filter)
+    }
+
+    fun loadTripHistory(filter: HistoryFilter = _selectedFilter.value) {
         viewModelScope.launch {
             _tripHistory.value = try {
-                getAllTripsUseCase.execute()
+                val now = System.currentTimeMillis()
+                when (filter) {
+                    HistoryFilter.ALL -> getAllTripsUseCase.execute()
+                    HistoryFilter.WEEK -> getTripsByDateUseCase.execute(DateUtils.getStartOfDaysAgo(7, now), now)
+                    HistoryFilter.MONTH -> getTripsByDateUseCase.execute(DateUtils.getStartOfDaysAgo(30, now), now)
+                    HistoryFilter.CHARGE -> getAllTripsUseCase.execute().filter { it.batteryConsumed > 0 }
+                }
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
                 emptyList()
@@ -518,13 +538,7 @@ class TripViewModel @Inject constructor(
     fun loadTripDetail(tripId: Long) {
         viewModelScope.launch {
             try {
-                val trip = getTripByIdUseCase.execute(tripId)
-                if (trip != null) {
-                    val gpsPoints = getGpsPointsByTripIdUseCase.execute(tripId)
-                    _selectedTripDetail.value = Pair(trip, gpsPoints)
-                } else {
-                    _selectedTripDetail.value = null
-                }
+                _selectedTripDetail.value = getTripDetailsUseCase.execute(tripId)
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
                 _selectedTripDetail.value = null

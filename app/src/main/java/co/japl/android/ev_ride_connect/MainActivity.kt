@@ -141,6 +141,7 @@ fun AppNavigationContent(
 
             AppScreen.EV_DATA -> EvDataScreen(
                 viewModel = evDataViewModel,
+                tripViewModel = tripViewModel,
                 navigator = navigator
             )
 

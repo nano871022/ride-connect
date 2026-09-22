@@ -23,6 +23,8 @@ class TripUseCasesTest {
     private lateinit var resumeTripUseCase: ResumeTripUseCase
     private lateinit var endTripUseCase: EndTripUseCase
     private lateinit var calculateTripSummaryUseCase: CalculateTripSummaryUseCase
+    private lateinit var getTripsByDateUseCase: GetTripsByDateUseCase
+    private lateinit var getTripDetailsUseCase: GetTripDetailsUseCase
 
     private class FakeSessionStatePort : SessionStatePort {
         private var session: ActiveSession? = null
@@ -59,6 +61,10 @@ class TripUseCasesTest {
         override suspend fun getTripById(tripId: Long): Trip? = trips[tripId]
 
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = gpsPoints[tripId] ?: emptyList()
+
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
+            return trips.values.filter { it.createTmst in startTimestamp..endTimestamp }
+        }
     }
 
     @Before
@@ -70,6 +76,8 @@ class TripUseCasesTest {
         resumeTripUseCase = ResumeTripUseCase(fakeSessionStatePort)
         endTripUseCase = EndTripUseCase(fakeSessionStatePort)
         calculateTripSummaryUseCase = CalculateTripSummaryUseCase(fakeTripDatabasePort)
+        getTripsByDateUseCase = GetTripsByDateUseCase(fakeTripDatabasePort)
+        getTripDetailsUseCase = GetTripDetailsUseCase(fakeTripDatabasePort)
     }
 
     @Test
@@ -143,5 +151,38 @@ class TripUseCasesTest {
         assertThat(summary.totalGpsLocationsCount).isEqualTo(5)
         assertThat(summary.totalDurationSeconds).isEqualTo(1800L)
         assertThat(summary.batteryConsumedPercentage).isEqualTo(20)
+    }
+
+    @Test
+    fun shouldGetTripsByDate() = runTest {
+        val trip1 = Trip(createTmst = 1000L)
+        val trip2 = Trip(createTmst = 2000L)
+        val trip3 = Trip(createTmst = 3000L)
+
+        fakeTripDatabasePort.saveTrip(trip1, emptyList())
+        fakeTripDatabasePort.saveTrip(trip2, emptyList())
+        fakeTripDatabasePort.saveTrip(trip3, emptyList())
+
+        val result = getTripsByDateUseCase.execute(1500L, 2500L)
+
+        assertThat(result).hasSize(1)
+        assertThat(result[0].createTmst).isEqualTo(2000L)
+    }
+
+    @Test
+    fun shouldGetTripDetailsWithGpsPoints() = runTest {
+        val trip = Trip(id = 1L, distance = 5.0)
+        val points = listOf(
+            TripGps(orderIndex = 1, x = 4.0, y = -74.0),
+            TripGps(orderIndex = 2, x = 4.1, y = -74.1)
+        )
+        val savedId = fakeTripDatabasePort.saveTrip(trip, points)
+
+        val details = getTripDetailsUseCase.execute(savedId)
+
+        assertThat(details).isNotNull
+        assertThat(details!!.first.id).isEqualTo(savedId)
+        assertThat(details.second).hasSize(2)
+        assertThat(details.second[0].x).isEqualTo(4.0)
     }
 }
