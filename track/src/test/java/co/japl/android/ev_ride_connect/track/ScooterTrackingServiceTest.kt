@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.track
 
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
@@ -56,13 +57,31 @@ class ScooterTrackingServiceTest {
         assertThat(fakeTripPort.savedTrips).hasSize(1)
     }
 
+    @Test
+    fun shouldRecordMultipleContinuousTelemetryPoints() = runTest {
+        trackingTracker = ScooterTrackingTracker(fakeTripPort, fakeSessionPort, this)
+
+        trackingTracker.startTracking()
+        trackingTracker.recordTelemetry(x = 10.0001, y = 20.0001, speed = 15.0, distanceDelta = 0.05, motionState = MotionState.MOVING)
+        trackingTracker.recordTelemetry(x = 10.0002, y = 20.0002, speed = 18.0, distanceDelta = 0.05, motionState = MotionState.ACCELERATING)
+        trackingTracker.recordTelemetry(x = 10.0003, y = 20.0003, speed = 12.0, distanceDelta = 0.05, motionState = MotionState.BRAKING)
+        testScheduler.runCurrent()
+
+        assertThat(trackingTracker.getCachedTelemetryCount()).isEqualTo(3)
+
+        trackingTracker.stopTracking()
+        assertThat(fakeTripPort.savedGpsPoints).hasSize(3)
+    }
+
     private class FakeTripDatabasePort : TripDatabasePort {
         val savedTrips = mutableListOf<Trip>()
+        val savedGpsPoints = mutableListOf<TripGps>()
 
         override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
 
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
             savedTrips.add(trip)
+            savedGpsPoints.addAll(gpsPoints)
             return 1L
         }
 
@@ -70,7 +89,7 @@ class ScooterTrackingServiceTest {
 
         override suspend fun getTripById(tripId: Long): Trip? = savedTrips.firstOrNull()
 
-        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = savedGpsPoints
 
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = savedTrips
     }
