@@ -7,6 +7,7 @@ import java.util.Locale
 object DateUtils {
 
     private const val DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm"
+    private const val MILLIS_PER_DAY = 24 * 60 * 60 * 1000L
 
     fun formatTimestamp(timestamp: Long, locale: Locale = Locale.getDefault()): String {
         if (timestamp <= 0) return ""
@@ -23,5 +24,10 @@ object DateUtils {
         } else {
             String.format(Locale.getDefault(), "%02d:%02d", minutes, secs)
         }
+    }
+
+    fun getStartOfDaysAgo(days: Int, currentTimeMillis: Long = System.currentTimeMillis()): Long {
+        if (days <= 0) return 0L
+        return (currentTimeMillis - (days * MILLIS_PER_DAY)).coerceAtLeast(0L)
     }
 }

@@ -40,6 +40,7 @@ class ScooterTrackingTrackerTest {
         override suspend fun getAllTrips(): List<Trip> = savedTrips
         override suspend fun getTripById(tripId: Long): Trip? = savedTrips.firstOrNull()
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = savedGpsPoints
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = savedTrips
     }
 
     private class FakeSessionStatePort : SessionStatePort {
@@ -121,6 +122,8 @@ class ScooterTrackingTrackerTest {
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
         assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
     }
+
+    @Test
     fun shouldDiscardConsecutiveDuplicateCoordinates() = runTest(testDispatcher) {
         tracker.startTracking()
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)

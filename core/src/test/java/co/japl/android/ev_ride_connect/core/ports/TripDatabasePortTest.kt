@@ -40,6 +40,20 @@ class TripDatabasePortTest {
         assertThat(port.getGpsPointsByTripId(id)).hasSize(2)
     }
 
+    @Test
+    fun shouldGetTripsByDate() = runTest {
+        val port = FakeTripDatabasePort()
+        val trip1 = Trip(createTmst = 1000L)
+        val trip2 = Trip(createTmst = 2000L)
+
+        port.saveTrip(trip1, emptyList())
+        port.saveTrip(trip2, emptyList())
+
+        val result = port.getTripsByDate(1500L, 2500L)
+        assertThat(result).hasSize(1)
+        assertThat(result[0].createTmst).isEqualTo(2000L)
+    }
+
     private class FakeTripDatabasePort : TripDatabasePort {
         var savedDistance: Int? = null
         var savedBatteryConsumed: Int? = null
@@ -71,6 +85,10 @@ class TripDatabasePortTest {
 
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
             return gpsMap[tripId] ?: emptyList()
+        }
+
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
+            return trips.filter { it.createTmst in startTimestamp..endTimestamp }.sortedByDescending { it.createTmst }
         }
     }
 }

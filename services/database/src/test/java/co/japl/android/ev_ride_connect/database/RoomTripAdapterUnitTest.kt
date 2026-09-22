@@ -78,6 +78,21 @@ class RoomTripAdapterUnitTest {
         assertThat(fetchedGpsPoints[1].x).isEqualTo(4.6098)
     }
 
+    @Test
+    fun shouldGetTripsByDateRange() = runTest {
+        val trip1 = Trip(id = 0, createTmst = 1000L)
+        val trip2 = Trip(id = 0, createTmst = 2000L)
+        val trip3 = Trip(id = 0, createTmst = 3000L)
+
+        adapter.saveTrip(trip1, emptyList())
+        adapter.saveTrip(trip2, emptyList())
+        adapter.saveTrip(trip3, emptyList())
+
+        val result = adapter.getTripsByDate(1500L, 2500L)
+        assertThat(result).hasSize(1)
+        assertThat(result[0].createTmst).isEqualTo(2000L)
+    }
+
     private class FakeTripDao : TripDao {
         private val trips = mutableListOf<TripEntity>()
         private val gpsList = mutableListOf<TripGpsEntity>()
@@ -108,6 +123,12 @@ class RoomTripAdapterUnitTest {
 
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGpsEntity> {
             return gpsList.filter { it.tripId == tripId }.sortedBy { it.orderIndex }
+        }
+
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<TripEntity> {
+            return trips.filter {
+                (it.createTmst in startTimestamp..endTimestamp) || (it.createTmst == 0L && it.timestamp in startTimestamp..endTimestamp)
+            }.sortedByDescending { it.createTmst }
         }
     }
 }

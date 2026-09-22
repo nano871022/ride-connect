@@ -44,11 +44,11 @@ class RoomTripAdapter(
                 filteredPoints.add(gps)
             }
 
-            val gpsEntities = filteredPoints.map { gps ->
+            val gpsEntities = filteredPoints.mapIndexed { index, gps ->
                 TripGpsEntity(
-                    id = gps.id,
+                    id = if (gps.id > 0) gps.id else 0L,
                     tripId = insertedId,
-                    orderIndex = gps.orderIndex,
+                    orderIndex = if (gps.orderIndex > 0) gps.orderIndex else index + 1,
                     speed = gps.speed,
                     distance = gps.distance,
                     x = gps.x,
@@ -105,6 +105,19 @@ class RoomTripAdapter(
                 y = entity.y,
                 createTmst = entity.createTmst,
                 motionState = motionState
+            )
+        }
+    }
+
+    override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
+        return tripDao.getTripsByDate(startTimestamp, endTimestamp).map { entity ->
+            Trip(
+                id = entity.id,
+                timeTrip = if (entity.timeTrip != 0L) entity.timeTrip else entity.duration,
+                averageSpeed = entity.averageSpeed,
+                distance = if (entity.distanceKm != 0.0) entity.distanceKm else entity.distance / 1000.0,
+                batteryConsumed = entity.batteryConsumed,
+                createTmst = if (entity.createTmst != 0L) entity.createTmst else entity.timestamp
             )
         }
     }
