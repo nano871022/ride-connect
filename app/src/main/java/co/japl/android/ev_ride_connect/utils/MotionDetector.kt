@@ -26,8 +26,9 @@ data class MotionData(
 class MotionDetector(context: Context) : SensorEventListener {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-    private val gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private val linearAccelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
     private val accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val activeSensor = linearAccelerometer ?: accelerometer
 
     private val _motionData = MutableStateFlow(MotionData())
     val motionData: StateFlow<MotionData> = _motionData.asStateFlow()
@@ -35,15 +36,19 @@ class MotionDetector(context: Context) : SensorEventListener {
     private var stationaryStartTmst: Long = 0L
     private var isListening: Boolean = false
 
+    private val alpha = 0.2f
+    private var filteredAccX = 0f
+    private var filteredAccY = 0f
+    private var filteredAccZ = 0f
+    private var isFilterInitialized = false
+
     fun start() {
         if (isListening) return
         isListening = true
         stationaryStartTmst = System.currentTimeMillis()
+        resetFilter()
 
-        gyroscope?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
-        }
-        accelerometer?.let {
+        activeSensor?.let {
             sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
         }
     }
@@ -52,7 +57,29 @@ class MotionDetector(context: Context) : SensorEventListener {
         if (!isListening) return
         isListening = false
         sensorManager?.unregisterListener(this)
+        resetFilter()
         _motionData.value = MotionData()
+    }
+
+    private fun resetFilter() {
+        filteredAccX = 0f
+        filteredAccY = 0f
+        filteredAccZ = 0f
+        isFilterInitialized = false
+    }
+
+    private fun applyLowPassFilter(x: Float, y: Float, z: Float): Triple<Float, Float, Float> {
+        if (!isFilterInitialized) {
+            filteredAccX = x
+            filteredAccY = y
+            filteredAccZ = z
+            isFilterInitialized = true
+        } else {
+            filteredAccX += alpha * (x - filteredAccX)
+            filteredAccY += alpha * (y - filteredAccY)
+            filteredAccZ += alpha * (z - filteredAccZ)
+        }
+        return Triple(filteredAccX, filteredAccY, filteredAccZ)
     }
 
     fun processSensorData(
@@ -60,17 +87,18 @@ class MotionDetector(context: Context) : SensorEventListener {
         gyroX: Float = 0f, gyroY: Float = 0f, gyroZ: Float = 0f,
         currentTimestamp: Long = System.currentTimeMillis()
     ) {
-        val magnitude = sqrt((accX * accX + accY * accY + accZ * accZ).toDouble())
-        val gyroMagnitude = sqrt((gyroX * gyroX + gyroY * gyroY + gyroZ * gyroZ).toDouble())
+        val (smX, smY, smZ) = applyLowPassFilter(accX, accY, accZ)
+        val rawMagnitude = sqrt((smX * smX + smY * smY + smZ * smZ).toDouble())
 
         val gravity = SensorManager.GRAVITY_EARTH.toDouble()
-        val deltaAcc = magnitude - gravity
-        val isMoving = abs(deltaAcc) > 0.6 || gyroMagnitude > 0.4
+        val deltaAcc = if (rawMagnitude > 5.0) rawMagnitude - gravity else rawMagnitude
+
+        val isMoving = abs(deltaAcc) > 0.8
 
         val newState = when {
             !isMoving -> MotionState.STATIONARY
-            deltaAcc > 0.5 -> MotionState.ACCELERATING
-            deltaAcc < -0.5 -> MotionState.BRAKING
+            deltaAcc > 1.2 -> MotionState.ACCELERATING
+            deltaAcc < -1.2 -> MotionState.BRAKING
             else -> MotionState.STATIONARY
         }
 
@@ -106,10 +134,8 @@ class MotionDetector(context: Context) : SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
-        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+        if (event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION || event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             processSensorData(event.values[0], event.values[1], event.values[2])
-        } else if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
-            processSensorData(0f, 0f, SensorManager.GRAVITY_EARTH, event.values[0], event.values[1], event.values[2])
         }
     }
 

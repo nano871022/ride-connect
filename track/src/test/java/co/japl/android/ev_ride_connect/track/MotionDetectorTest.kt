@@ -22,24 +22,32 @@ class MotionDetectorTest {
     }
 
     @Test
-    fun shouldDetectAcceleratingWhenDeltaAccPositive() {
-        motionDetector.processSensorData(0f, 0f, 10.8f, 0.5f, 0f, 0f)
+    fun shouldDetectAcceleratingWhenDeltaAccExceedsThreshold() {
+        motionDetector.processSensorData(0f, 0f, 11.81f, 0f, 0f, 0f)
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.ACCELERATING)
     }
 
     @Test
-    fun shouldDetectBrakingWhenDeltaAccNegative() {
-        motionDetector.processSensorData(0f, 0f, 8.8f, 0.5f, 0f, 0f)
+    fun shouldDetectBrakingWhenDeltaAccBelowThreshold() {
+        motionDetector.processSensorData(0f, 0f, 7.81f, 0f, 0f, 0f)
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.BRAKING)
     }
 
     @Test
-    fun shouldDetectMovingWhenGyroHighButDeltaAccModerate() {
-        motionDetector.processSensorData(0f, 0f, 10.0f, 0.5f, 0f, 0f)
+    fun shouldDetectMovingWhenDeltaAccModerate() {
+        motionDetector.processSensorData(0f, 0f, 10.81f, 0f, 0f, 0f)
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.MOVING)
+    }
+
+    @Test
+    fun shouldIgnoreGyroDataForStateTransitions() {
+        // Even with high gyro rates, motion state is derived purely from accelerometer
+        motionDetector.processSensorData(0f, 0f, 9.81f, 5.0f, 5.0f, 5.0f)
+
+        assertThat(motionDetector.motionState.value).isEqualTo(MotionState.STOPPED)
     }
 
     @Test

@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
@@ -25,6 +27,7 @@ import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
+import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +63,9 @@ class ScooterTrackingService : Service() {
     private lateinit var trackingTracker: ScooterTrackingTracker
     private var previousMotionState: MotionState = MotionState.STOPPED
 
+    private var locationListener: LocationListener? = null
+    private var lastLocation: Location? = null
+
     override fun onCreate() {
         super.onCreate()
         trackingTracker = ScooterTrackingTracker(tripDatabasePort, sessionStatePort, serviceScope)
@@ -73,8 +79,8 @@ class ScooterTrackingService : Service() {
             .onEach { scooterState ->
                 if (trackingTracker.isTracking.value && !trackingTracker.isPaused.value) {
                     trackingTracker.recordTelemetry(
-                        x = 0.0,
-                        y = 0.0,
+                        x = lastLocation?.latitude ?: 0.0,
+                        y = lastLocation?.longitude ?: 0.0,
                         speed = scooterState.currentSpeed.toDouble(),
                         distanceDelta = 0.01,
                         motionState = motionDetectorPort.motionState.value
@@ -125,6 +131,80 @@ class ScooterTrackingService : Service() {
         }
     }
 
+    private fun startLocationUpdates() {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
+        val hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!hasFine && !hasCoarse) return
+
+        if (locationListener == null) {
+            locationListener = object : LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    if (location.latitude == 0.0 && location.longitude == 0.0) return
+                    if (!trackingTracker.isTracking.value || trackingTracker.isPaused.value) return
+
+                    val prevLoc = lastLocation
+                    var distanceKm = 0.0
+                    if (prevLoc != null) {
+                        distanceKm = GpsUtils.calculateDistanceKm(
+                            prevLoc.latitude, prevLoc.longitude,
+                            location.latitude, location.longitude
+                        )
+                    }
+                    lastLocation = location
+
+                    val speedKmH = if (location.hasSpeed()) {
+                        (location.speed * 3.6)
+                    } else if (prevLoc != null && location.time > prevLoc.time) {
+                        GpsUtils.calculateSpeedKmH(distanceKm, location.time - prevLoc.time)
+                    } else 0.0
+
+                    trackingTracker.recordTelemetry(
+                        x = location.latitude,
+                        y = location.longitude,
+                        speed = speedKmH,
+                        distanceDelta = distanceKm,
+                        motionState = motionDetectorPort.motionState.value
+                    )
+                }
+            }
+        }
+
+        try {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    2000L,
+                    1f,
+                    locationListener!!
+                )
+            }
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    2000L,
+                    1f,
+                    locationListener!!
+                )
+            }
+        } catch (e: SecurityException) {
+            // Handle permission error gracefully
+        }
+    }
+
+    private fun stopLocationUpdates() {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
+        locationListener?.let {
+            try {
+                locationManager.removeUpdates(it)
+            } catch (e: Exception) {
+                // Handle error gracefully
+            }
+        }
+        locationListener = null
+        lastLocation = null
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action ?: TrackingSettings.ACTION_START_TRACKING
 
@@ -134,6 +214,7 @@ class ScooterTrackingService : Service() {
                 startForegroundCompat(notification)
                 motionDetectorPort.start()
                 trackingTracker.startTracking()
+                startLocationUpdates()
             }
             TrackingSettings.ACTION_PAUSE_TRACKING -> {
                 trackingTracker.pauseTracking()
@@ -143,6 +224,7 @@ class ScooterTrackingService : Service() {
             }
             TrackingSettings.ACTION_STOP_TRACKING -> {
                 serviceScope.launch {
+                    stopLocationUpdates()
                     motionDetectorPort.stop()
                     trackingTracker.stopTracking()
                     val session = sessionStatePort.getActiveSession()
@@ -249,6 +331,7 @@ class ScooterTrackingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopLocationUpdates()
         motionDetectorPort.stop()
         serviceScope.cancel()
     }
