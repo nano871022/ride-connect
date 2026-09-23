@@ -125,7 +125,7 @@ fun SpeedometerGauge(
                         modifier = Modifier.padding(vertical = 4.dp)
                     ) {
                         Text(
-                            text = if (speed % 1.0 == 0.0) speed.toInt().toString() else String.format("%.1f", speed),
+                            text = if (speed % 1.0 == 0.0) speed.toInt().toString() else String.format(java.util.Locale.getDefault(), "%.1f", speed),
                             fontSize = 44.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
