@@ -1,4 +1,3 @@
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 package co.japl.android.ev_ride_connect.ui
 
 import android.content.Intent
@@ -112,17 +111,12 @@ fun DashboardScreen(
         )
     }
 
-    val vehicles by viewModel.vehicles.collectAsState()
-    val isVoltageMode = vehicles.firstOrNull()?.batteryMode == BatteryMode.VOLTAGE
-
     if (showUpdateDialog) {
         EvDataUpdateDialog(
             initialKm = latestEvData?.km ?: 0L,
             initialBatteryLevel = latestEvData?.batteryLevel ?: 0,
-            isVoltageMode = isVoltageMode,
             onDismiss = { showUpdateDialog = false },
-            onSave = { km, batteryInput ->
-                val batteryLevel = viewModel.convertInputToBatteryPercentage(batteryInput)
+            onSave = { km, batteryLevel ->
                 viewModel.saveEvData(km, batteryLevel)
                 showUpdateDialog = false
             }
@@ -328,12 +322,11 @@ private fun StartupApiKeyDialog(
 fun EvDataUpdateDialog(
     initialKm: Long,
     initialBatteryLevel: Short,
-    isVoltageMode: Boolean = false,
     onDismiss: () -> Unit,
-    onSave: (Long, String) -> Unit
+    onSave: (Long, Short) -> Unit
 ) {
     var kmInput by remember { mutableStateOf(initialKm.toString()) }
-    var batteryInput by remember { mutableStateOf(if (isVoltageMode) "" else initialBatteryLevel.toString()) }
+    var batteryInput by remember { mutableStateOf(initialBatteryLevel.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -351,20 +344,16 @@ fun EvDataUpdateDialog(
                 OutlinedTextField(
                     value = batteryInput,
                     onValueChange = {
-                        val filtered = if (isVoltageMode) it.replace(Regex("[^0-9.]"), "") else it.filter { char -> char.isDigit() }
-                        if (!isVoltageMode) {
-                            val num = filtered.toIntOrNull()
-                            if (filtered.isEmpty() || (num != null && num in 0..100)) {
-                                batteryInput = filtered
-                            }
-                        } else {
+                        val filtered = it.filter { char -> char.isDigit() }
+                        val num = filtered.toIntOrNull()
+                        if (filtered.isEmpty() || (num != null && num in 0..100)) {
                             batteryInput = filtered
                         }
                     },
-                    label = { Text(if (isVoltageMode) stringResource(R.string.enter_battery_voltage) else stringResource(R.string.enter_battery)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = if (isVoltageMode) KeyboardType.Decimal else KeyboardType.Number),
+                    label = { Text(stringResource(R.string.enter_battery)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    suffix = { Text(if (isVoltageMode) stringResource(R.string.voltage_postfix) else stringResource(R.string.battery_postfix)) },
+                    suffix = { Text(stringResource(R.string.battery_postfix)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -373,7 +362,8 @@ fun EvDataUpdateDialog(
             Button(
                 onClick = {
                     val km = kmInput.toLongOrNull() ?: 0L
-                    onSave(km, batteryInput)
+                    val battery = batteryInput.toShortOrNull() ?: 0
+                    onSave(km, battery)
                 }
             ) {
                 Text(stringResource(R.string.save_button))
