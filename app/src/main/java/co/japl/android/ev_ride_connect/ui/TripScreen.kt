@@ -124,22 +124,6 @@ fun TripScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.trip_title)) },
-                navigationIcon = {
-                    IconButton(onClick = { navigator?.navigateToDashboard() }) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = null
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -148,14 +132,14 @@ fun TripScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatusCard(
-                title = stringResource(R.string.trip_title),
-                isLoading = false,
-                statusMessage = motionStateText,
-                isSuccessStatus = isTripActive && !isPaused
-            )
-
             if (isTripActive) {
+                StatusCard(
+                    title = stringResource(R.string.trip_title),
+                    isLoading = false,
+                    statusMessage = motionStateText,
+                    isSuccessStatus = !isPaused
+                )
+
                 ActiveTripPanel(
                     elapsedTimeSeconds = elapsedTimeSeconds,
                     currentDistance = currentDistance,
@@ -179,28 +163,7 @@ fun TripScreen(
             )
 
             if (showBatteryWarning) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = stringResource(R.string.trip_battery_warning),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
-                }
+                ShowBatteryWarning()
             }
 
             TripHistorySection(
@@ -239,6 +202,32 @@ fun TripScreen(
         tripSummary = tripSummary,
         viewModel = viewModel
     )
+}
+
+@Composable
+private fun ShowBatteryWarning(){
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Text(
+                text = stringResource(R.string.trip_battery_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
 }
 
 @Composable

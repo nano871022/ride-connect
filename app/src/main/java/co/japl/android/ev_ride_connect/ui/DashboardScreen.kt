@@ -72,22 +72,6 @@ fun DashboardScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.dashboard_title)) },
-                navigationIcon = {
-                    IconButton(onClick = { navigator.navigateToDashboard() }) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = null
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
     ) { paddingValues ->
         DashboardContent(
             latestEvData = latestEvData,

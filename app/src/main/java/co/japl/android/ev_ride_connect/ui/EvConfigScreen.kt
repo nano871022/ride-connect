@@ -110,15 +110,7 @@ fun EvConfigScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.ev_config_title)) },
-                navigationIcon = {
-                    IconButton(onClick = { navigator?.navigateToDashboard() }) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = null
-                        )
-                    }
-                },
+                title = { },
                 actions = {
                     IconButton(onClick = { viewModel.onPrepareNewVehicle() }) {
                         Icon(
