@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.controller
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.Trip
@@ -11,6 +12,7 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateTripSummaryUseCase
 import co.japl.android.ev_ride_connect.core.usecase.EndTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
@@ -80,7 +82,8 @@ class TripViewModelTest {
             EndTripUseCase(fakeSessionStatePort),
             CalculateTripSummaryUseCase(fakeTripPort),
             GetTripsByDateUseCase(fakeTripPort),
-            GetTripDetailsUseCase(fakeTripPort)
+            GetTripDetailsUseCase(fakeTripPort),
+            CalculateDynamicBatteryPercentageUseCase()
         )
     }
 
@@ -115,7 +118,7 @@ class TripViewModelTest {
         assertThat(viewModel.showStartBatteryDialog.value).isTrue()
         assertThat(viewModel.latestBatteryLevel.value).isEqualTo(85.toShort())
 
-        viewModel.confirmStartTrip(80)
+        viewModel.confirmStartTrip(80.0)
         testScheduler.runCurrent()
 
         assertThat(viewModel.showStartBatteryDialog.value).isFalse()
@@ -172,7 +175,7 @@ class TripViewModelTest {
     fun shouldStartAndStopTripAndDisplayTripSummary() = runTest {
         fakeEvDataPort.savedList.add(EvData(evCode = "1", km = 100L, batteryLevel = 80))
 
-        viewModel.confirmStartTrip(80)
+        viewModel.confirmStartTrip(80.0)
         testScheduler.runCurrent()
 
         assertThat(viewModel.isTripActive.value).isTrue()
@@ -190,7 +193,7 @@ class TripViewModelTest {
 
         assertThat(viewModel.showEndBatteryDialog.value).isTrue()
 
-        viewModel.confirmStopTrip(70)
+        viewModel.confirmStopTrip(70.0)
         testScheduler.runCurrent()
 
         assertThat(viewModel.isTripActive.value).isFalse()
@@ -202,6 +205,38 @@ class TripViewModelTest {
         viewModel.dismissSummaryDialog()
         assertThat(viewModel.showSummaryDialog.value).isFalse()
         assertThat(viewModel.tripSummary.value).isNull()
+    }
+
+    @Test
+    fun shouldStartAndStopTripInVoltageMode() = runTest {
+        fakeEvConfigPort.config = EvConfig(
+            id = 1L,
+            batteryMode = BatteryMode.VOLTAGE,
+            minVoltage = 39.0,
+            maxVoltage = 54.6
+        )
+
+        viewModel.loadEvConfig()
+        testScheduler.runCurrent()
+
+        // 54.6V = 100%
+        viewModel.confirmStartTrip(54.6)
+        testScheduler.runCurrent()
+
+        val time1 = System.currentTimeMillis()
+        viewModel.addLocationPoint(4.6097, -74.0817, time1)
+        val time2 = time1 + 900_000L
+        viewModel.addLocationPoint(4.7097, -74.0817, time2)
+
+        viewModel.onStopTripRequested()
+        testScheduler.runCurrent()
+
+        // 46.8V = 50%
+        viewModel.confirmStopTrip(46.8)
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.showSummaryDialog.value).isTrue()
+        assertThat(viewModel.tripSummary.value?.batteryConsumedPercentage).isEqualTo(50)
     }
 
     @Test

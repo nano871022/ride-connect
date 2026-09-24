@@ -20,6 +20,8 @@ class EvConfigMapperTest {
               "batteryTechnology": "Lithium-ion",
               "batteryVolts": 36,
               "batteryAmpers": 14.0,
+              "minVoltage": 30.0,
+              "maxVoltage": 42.0,
               "brakeQuantity": 2,
               "brakeTechnology": "Hydraulic disc brakes",
               "suspensionTechnology": "Front suspension fork",
@@ -42,6 +44,8 @@ class EvConfigMapperTest {
         assertThat(result.batteryTechnology).isEqualTo("Lithium-ion")
         assertThat(result.batteryVolts).isEqualTo("36")
         assertThat(result.batteryAmpers).isEqualTo("14.0")
+        assertThat(result.minVoltage).isEqualTo(30.0)
+        assertThat(result.maxVoltage).isEqualTo(42.0)
         assertThat(result.brakeQuantity).isEqualTo(2)
         assertThat(result.brakeTechnology).isEqualTo("Hydraulic disc brakes")
         assertThat(result.suspensionTechnology).isEqualTo("Front suspension fork")

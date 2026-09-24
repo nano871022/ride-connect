@@ -7,6 +7,14 @@ import org.json.JSONObject
 
 object EvConfigMapper {
 
+    private fun parseDoubleVal(optVal: Any?, defaultVal: Double): Double {
+        if (optVal == null) return defaultVal
+        return when (optVal) {
+            is Number -> optVal.toDouble()
+            else -> optVal.toString().replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: defaultVal
+        }
+    }
+
     fun fromLlmResponse(userRequest: String, responseText: String): EvConfig {
         var cleanedText = responseText.trim()
         if (cleanedText.contains("```json")) {
@@ -29,6 +37,12 @@ object EvConfigMapper {
             val suspensionTechnology = json.optString("suspensionTechnology", "")
             val chargePower = json.optString("chargePower", "")
             val imageUrl = json.optString("imageUrl", "")
+
+            val maxVoltageOpt = if (json.has("maxVoltage")) json.opt("maxVoltage") else json.opt("max_voltage")
+            val minVoltageOpt = if (json.has("minVoltage")) json.opt("minVoltage") else json.opt("min_voltage")
+
+            val maxVoltage = parseDoubleVal(maxVoltageOpt, 54.6)
+            val minVoltage = parseDoubleVal(minVoltageOpt, 39.0)
 
             val otherCharacteristics = when (val opt = json.opt("otherCharacteristics")) {
                 is JSONArray -> (0 until opt.length()).map { opt.get(it).toString() }.joinToString(", ")
@@ -64,7 +78,9 @@ object EvConfigMapper {
                     suspensionTechnology = suspensionTechnology,
                     chargePower = chargePower,
                     otherCharacteristics = otherCharacteristics,
-                    imageUrl = imageUrl
+                    imageUrl = imageUrl,
+                    maxVoltage = maxVoltage,
+                    minVoltage = minVoltage
                 )
             }
         } catch (e: Exception) {
@@ -81,6 +97,11 @@ object EvConfigMapper {
             return regex.find(responseText)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         }
 
+        fun extractDoubleKey(key: String, defaultVal: Double): Double {
+            val regex = Regex(""""$key"\s*:\s*"?([0-9.]+)[Vv]?"?""", RegexOption.IGNORE_CASE)
+            return regex.find(responseText)?.groupValues?.get(1)?.toDoubleOrNull() ?: defaultVal
+        }
+
         val brand = extractKey("brand")
         val version = extractKey("version")
         val manufactoryYear = extractKey("manufactoryYear")
@@ -94,6 +115,9 @@ object EvConfigMapper {
         val chargePower = extractKey("chargePower")
         val otherCharacteristics = extractKey("otherCharacteristics")
         val imageUrl = extractKey("imageUrl")
+
+        val maxVoltage = extractDoubleKey("maxVoltage", extractDoubleKey("max_voltage", 54.6))
+        val minVoltage = extractDoubleKey("minVoltage", extractDoubleKey("min_voltage", 39.0))
 
         val motorsList = mutableListOf<MotorSpec>()
         val motorRegex = Regex("""\{\s*"name"\s*:\s*"([^"]+)"\s*,\s*"watts"\s*:\s*(\d+)\s*\}""", RegexOption.IGNORE_CASE)
@@ -118,7 +142,9 @@ object EvConfigMapper {
                 suspensionTechnology = suspensionTechnology,
                 chargePower = chargePower,
                 otherCharacteristics = otherCharacteristics,
-                imageUrl = imageUrl
+                imageUrl = imageUrl,
+                maxVoltage = maxVoltage,
+                minVoltage = minVoltage
             )
         }
 

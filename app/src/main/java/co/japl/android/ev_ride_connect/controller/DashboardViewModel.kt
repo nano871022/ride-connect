@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
@@ -23,7 +24,8 @@ class DashboardViewModel @Inject constructor(
     private val saveEvDataUseCase: SaveEvDataUseCase,
     private val getEvConfigUseCase: GetEvConfigUseCase,
     private val getActiveLlmConfigsUseCase: GetActiveLlmConfigsUseCase,
-    private val observeActiveSessionUseCase: ObserveActiveSessionUseCase
+    private val observeActiveSessionUseCase: ObserveActiveSessionUseCase,
+    private val calculateDynamicBatteryPercentageUseCase: CalculateDynamicBatteryPercentageUseCase
 ) : ViewModel() {
 
     private val _latestEvData = MutableStateFlow<EvData?>(null)
@@ -44,10 +46,20 @@ class DashboardViewModel @Inject constructor(
     private val _isPaused = MutableStateFlow(false)
     val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
 
+    private val _evConfig = MutableStateFlow<EvConfig?>(null)
+    val evConfig: StateFlow<EvConfig?> = _evConfig.asStateFlow()
+
     init {
         loadLatestEvData()
+        loadEvConfig()
         checkActiveLlmConfigs()
         observeActiveSession()
+    }
+
+    fun loadEvConfig() {
+        viewModelScope.launch {
+            _evConfig.value = getEvConfigUseCase.execute()
+        }
     }
 
     private fun observeActiveSession() {
@@ -81,17 +93,19 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun saveEvData(km: Long, batteryLevel: Short) {
+    fun saveEvData(km: Long, batteryInputValue: Double) {
         viewModelScope.launch {
-            val evConfig = getEvConfigUseCase.execute()
-            val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
-                ?: evConfig?.request?.takeIf { it.isNotBlank() }
+            val config = _evConfig.value ?: getEvConfigUseCase.execute()
+            val evCode = config?.id?.takeIf { it > 0 }?.toString()
+                ?: config?.request?.takeIf { it.isNotBlank() }
                 ?: "EV01"
+
+            val calculatedPercentage = calculateDynamicBatteryPercentageUseCase.execute(batteryInputValue, config)
 
             val evData = EvData(
                 evCode = evCode,
                 km = km,
-                batteryLevel = batteryLevel,
+                batteryLevel = calculatedPercentage,
                 createTmst = System.currentTimeMillis()
             )
             saveEvDataUseCase.execute(evData)

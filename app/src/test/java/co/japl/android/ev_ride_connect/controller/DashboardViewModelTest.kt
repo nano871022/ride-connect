@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.controller
 
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
@@ -8,6 +9,7 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
@@ -49,7 +51,8 @@ class DashboardViewModelTest {
             SaveEvDataUseCase(fakeEvDataPort),
             GetEvConfigUseCase(fakeEvConfigPort),
             GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort)
+            ObserveActiveSessionUseCase(fakeSessionStatePort),
+            CalculateDynamicBatteryPercentageUseCase()
         )
     }
 
@@ -92,8 +95,10 @@ class DashboardViewModelTest {
     @Test
     fun shouldSaveEvDataWithFallbackEvCodeWhenNoConfig() = runTest {
         fakeEvConfigPort.savedConfig = null
+        viewModel.loadEvConfig()
+        testScheduler.runCurrent()
 
-        viewModel.saveEvData(100L, 85)
+        viewModel.saveEvData(100L, 85.0)
         testScheduler.runCurrent()
 
         val saved = fakeEvDataPort.savedEvData
@@ -101,6 +106,28 @@ class DashboardViewModelTest {
         assertThat(saved?.evCode).isEqualTo("EV01")
         assertThat(saved?.km).isEqualTo(100L)
         assertThat(saved?.batteryLevel).isEqualTo(85.toShort())
+    }
+
+    @Test
+    fun shouldSaveEvDataInVoltageMode() = runTest {
+        fakeEvConfigPort.savedConfig = EvConfig(
+            id = 5L,
+            request = "VSETT C7",
+            batteryMode = BatteryMode.VOLTAGE,
+            minVoltage = 39.0,
+            maxVoltage = 54.6
+        )
+
+        viewModel.loadEvConfig()
+        testScheduler.runCurrent()
+
+        viewModel.saveEvData(150L, 46.8)
+        testScheduler.runCurrent()
+
+        val saved = fakeEvDataPort.savedEvData
+        assertThat(saved).isNotNull
+        assertThat(saved?.km).isEqualTo(150L)
+        assertThat(saved?.batteryLevel).isEqualTo(50.toShort())
     }
 
     private class FakeEvDataPort : EvDataPort {
