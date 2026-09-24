@@ -1,4 +1,5 @@
-# VSETT C7 Plus Scooter Controller App (ride-connect)
+[For Agents AI](.github/agents.md)
+# Scooter Controller App (ride-connect)
 
 [![Android CI](https://github.com/nano871022/ride-connect/actions/workflows/test.yml/badge.svg)](https://github.com/nano871022/ride-connect/actions/workflows/test.yml)
 [![Bundle Release](https://github.com/nano871022/ride-connect/actions/workflows/compile.yml/badge.svg)](https://github.com/nano871022/ride-connect/actions/workflows/compile.yml)
