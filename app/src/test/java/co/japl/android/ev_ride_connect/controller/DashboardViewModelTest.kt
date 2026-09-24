@@ -1,4 +1,3 @@
-import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 package co.japl.android.ev_ride_connect.controller
 
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession

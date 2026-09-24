@@ -1,4 +1,3 @@
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 package co.japl.android.ev_ride_connect.ui
 
 import androidx.compose.foundation.clickable
@@ -99,9 +98,6 @@ fun DashboardScreen(
             modifier = Modifier.padding(paddingValues)
         )
     }
-
-    val vehicles by viewModel.vehicles.collectAsState()
-    val isVoltageMode = vehicles.firstOrNull()?.batteryMode == BatteryMode.VOLTAGE
 
     if (showUpdateDialog) {
         EvDataUpdateDialog(
@@ -280,11 +276,12 @@ fun EvDataUpdateDialog(
     onDismiss: () -> Unit,
     onSave: (Long, Double) -> Unit
 ) {
+    val isVoltageMode = batteryMode == BatteryMode.VOLTAGE
     var kmInput by remember { mutableStateOf(initialKm.toString()) }
     var batteryInput by remember { mutableStateOf(if (isVoltageMode) "" else initialBatteryLevel.toString()) }
 
-    val labelRes = if (batteryMode == BatteryMode.VOLTAGE) R.string.enter_voltage else R.string.enter_battery
-    val suffixRes = if (batteryMode == BatteryMode.VOLTAGE) R.string.voltage_postfix else R.string.battery_postfix
+    val labelRes = if (isVoltageMode) R.string.enter_voltage else R.string.enter_battery
+    val suffixRes = if (isVoltageMode) R.string.voltage_postfix else R.string.battery_postfix
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -302,7 +299,7 @@ fun EvDataUpdateDialog(
                 OutlinedTextField(
                     value = batteryInput,
                     onValueChange = { input ->
-                        if (batteryMode == BatteryMode.VOLTAGE) {
+                        if (isVoltageMode) {
                             batteryInput = input.filter { char -> char.isDigit() || char == '.' }
                         } else {
                             val filtered = input.filter { char -> char.isDigit() }
