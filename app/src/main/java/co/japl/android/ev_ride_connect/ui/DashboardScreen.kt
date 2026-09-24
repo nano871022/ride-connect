@@ -15,23 +15,18 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,15 +39,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import co.com.japl.ui.components.BatteryLevelCard
+import co.com.japl.ui.components.ConsumptionCard
+import co.com.japl.ui.components.LastChargeCard
 import co.com.japl.ui.components.MaintenanceBanner
-import co.com.japl.ui.components.TelemetryBentoCard
+import co.com.japl.ui.components.OdometerCard
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
+import co.japl.android.ev_ride_connect.utils.DateUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
@@ -61,14 +59,22 @@ fun DashboardScreen(
 ) {
     val latestEvData by viewModel.latestEvData.collectAsState()
     val showApiKeyPrompt by viewModel.showApiKeyPrompt.collectAsState()
-    val resumedSession by viewModel.resumedSession.collectAsState()
 
     val isTracking by viewModel.isTracking.collectAsState()
     val isPaused by viewModel.isPaused.collectAsState()
     val evConfig = viewModel.evConfig.collectAsState().value
     val batteryMode = evConfig?.batteryMode ?: BatteryMode.PERCENTAGE
 
-    var showUpdateDialog by remember { mutableStateOf(false) }
+    val lastTrip by viewModel.lastTrip.collectAsState()
+    val consumptionWhPerKm by viewModel.consumptionWhPerKm.collectAsState()
+    val cyclesUsed by viewModel.cyclesUsed.collectAsState()
+    val optimalBatteryPercentage by viewModel.optimalBatteryPercentage.collectAsState()
+    val estimatedVoltage by viewModel.estimatedVoltage.collectAsState()
+    val lastMaxChargeDate by viewModel.lastMaxChargeDate.collectAsState()
+    val lastHigherChargeDayInfo by viewModel.lastHigherChargeDayInfo.collectAsState()
+
+    var showBatteryEditDialog by remember { mutableStateOf(false) }
+    var showOdometerEditDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -77,21 +83,39 @@ fun DashboardScreen(
             latestEvData = latestEvData,
             isTracking = isTracking,
             isPaused = isPaused,
-            onManualInputClick = { showUpdateDialog = true },
+            consumptionWhPerKm = consumptionWhPerKm,
+            cyclesUsed = cyclesUsed,
+            optimalBatteryPercentage = optimalBatteryPercentage,
+            estimatedVoltage = estimatedVoltage,
+            lastMaxChargeDate = lastMaxChargeDate,
+            lastTripKm = lastTrip?.distance ?: 0.0,
+            lastHigherChargeDayInfo = lastHigherChargeDayInfo,
+            onBatteryEditClick = { showBatteryEditDialog = true },
+            onOdometerEditClick = { showOdometerEditDialog = true },
             onStartTrackingClick = { navigator.navigateToTrip() },
             modifier = Modifier.padding(paddingValues)
         )
     }
 
-    if (showUpdateDialog) {
-        EvDataUpdateDialog(
-            initialKm = latestEvData?.km ?: 0L,
-            initialBatteryLevel = latestEvData?.batteryLevel ?: 0,
+    if (showBatteryEditDialog) {
+        ManualBatteryEditDialog(
+            initialBatteryLevel = latestEvData?.batteryLevel ?: 100,
             batteryMode = batteryMode,
-            onDismiss = { showUpdateDialog = false },
-            onSave = { km, batteryValue ->
-                viewModel.saveEvData(km, batteryValue)
-                showUpdateDialog = false
+            onDismiss = { showBatteryEditDialog = false },
+            onSave = { batteryValue ->
+                viewModel.saveBatteryLevel(batteryValue)
+                showBatteryEditDialog = false
+            }
+        )
+    }
+
+    if (showOdometerEditDialog) {
+        ManualOdometerEditDialog(
+            initialKm = latestEvData?.km ?: 0L,
+            onDismiss = { showOdometerEditDialog = false },
+            onSave = { newKm ->
+                viewModel.saveOdometer(newKm)
+                showOdometerEditDialog = false
             }
         )
     }
@@ -112,7 +136,15 @@ private fun DashboardContent(
     latestEvData: EvData?,
     isTracking: Boolean,
     isPaused: Boolean,
-    onManualInputClick: () -> Unit,
+    consumptionWhPerKm: Double,
+    cyclesUsed: Int,
+    optimalBatteryPercentage: Double,
+    estimatedVoltage: String,
+    lastMaxChargeDate: String,
+    lastTripKm: Double,
+    lastHigherChargeDayInfo: String,
+    onBatteryEditClick: () -> Unit,
+    onOdometerEditClick: () -> Unit,
     onStartTrackingClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -172,7 +204,7 @@ private fun DashboardContent(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        if(isTracking) {
+                        if (isTracking) {
                             Text(
                                 text = stringResource(R.string.scaffold_tracking_title),
                                 style = MaterialTheme.typography.bodySmall,
@@ -194,14 +226,28 @@ private fun DashboardContent(
             }
         }
 
-        TelemetryBentoCard(
-            title = stringResource(R.string.trip_distance_label),
-            titleIcon = Icons.Default.Timeline,
-            accentColor = MaterialTheme.colorScheme.primary,
-            value = (latestEvData?.km ?: 0L).toString(),
-            unit = stringResource(R.string.km_unit),
-            onEditClick = onManualInputClick,
-            modifier = Modifier.fillMaxWidth()
+        BatteryLevelCard(
+            batteryPercentage = latestEvData?.batteryLevel ?: 100,
+            timestamp = latestEvData?.createTmst?.let { DateUtils.formatTimestamp(it) } ?: "N/A"
+        )
+
+        LastChargeCard(
+            voltage = estimatedVoltage,
+            cyclesUsed = cyclesUsed,
+            optimalPercentage = optimalBatteryPercentage,
+            lastMaxChargeDate = lastMaxChargeDate,
+            onEditClick = onBatteryEditClick
+        )
+
+        ConsumptionCard(
+            whPerKm = consumptionWhPerKm
+        )
+
+        OdometerCard(
+            totalKm = latestEvData?.km ?: 0L,
+            lastTripKm = lastTripKm,
+            lastHigherChargeDayInfo = lastHigherChargeDayInfo,
+            onEditClick = onOdometerEditClick
         )
 
         MaintenanceBanner(
@@ -255,15 +301,13 @@ private fun StartupApiKeyDialog(
 }
 
 @Composable
-fun EvDataUpdateDialog(
-    initialKm: Long,
+fun ManualBatteryEditDialog(
     initialBatteryLevel: Short,
     batteryMode: BatteryMode = BatteryMode.PERCENTAGE,
     onDismiss: () -> Unit,
-    onSave: (Long, Double) -> Unit
+    onSave: (Double) -> Unit
 ) {
     val isVoltageMode = batteryMode == BatteryMode.VOLTAGE
-    var kmInput by remember { mutableStateOf(initialKm.toString()) }
     var batteryInput by remember { mutableStateOf(if (isVoltageMode) "" else initialBatteryLevel.toString()) }
 
     val labelRes = if (isVoltageMode) R.string.enter_voltage else R.string.enter_battery
@@ -271,17 +315,9 @@ fun EvDataUpdateDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.update_ev_data_title)) },
+        title = { Text(stringResource(R.string.edit_battery_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = kmInput,
-                    onValueChange = { kmInput = it.filter { char -> char.isDigit() } },
-                    label = { Text(stringResource(R.string.enter_km)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
                 OutlinedTextField(
                     value = batteryInput,
                     onValueChange = { input ->
@@ -306,9 +342,52 @@ fun EvDataUpdateDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val km = kmInput.toLongOrNull() ?: 0L
                     val battery = batteryInput.toDoubleOrNull() ?: 0.0
-                    onSave(km, battery)
+                    onSave(battery)
+                }
+            ) {
+                Text(stringResource(R.string.save_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        }
+    )
+}
+
+@Composable
+fun ManualOdometerEditDialog(
+    initialKm: Long,
+    onDismiss: () -> Unit,
+    onSave: (Long) -> Unit
+) {
+    var kmInput by remember { mutableStateOf(initialKm.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_odometer_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = kmInput,
+                    onValueChange = { input ->
+                        kmInput = input.filter { char -> char.isDigit() || char == '.' }
+                    },
+                    label = { Text(stringResource(R.string.enter_km)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    suffix = { Text(stringResource(R.string.km_unit)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val km = kmInput.toDoubleOrNull()?.toLong() ?: 0L
+                    onSave(km)
                 }
             ) {
                 Text(stringResource(R.string.save_button))

@@ -12,6 +12,8 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateCo2SavedUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateTripSummaryUseCase
 import co.japl.android.ev_ride_connect.core.usecase.EndTripUseCase
@@ -83,7 +85,9 @@ class TripViewModelTest {
             CalculateTripSummaryUseCase(fakeTripPort),
             GetTripsByDateUseCase(fakeTripPort),
             GetTripDetailsUseCase(fakeTripPort),
-            CalculateDynamicBatteryPercentageUseCase()
+            CalculateDynamicBatteryPercentageUseCase(),
+            CalculateCo2SavedUseCase(),
+            CalculateConsumptionUseCase()
         )
     }
 

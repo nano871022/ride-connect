@@ -12,7 +12,14 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.domain.Trip
+import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateOptimalBatteryPercentageUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
@@ -68,13 +75,26 @@ class DashboardScreenScreenshotTest {
             override suspend fun clearActiveSession() {}
         }
 
+        val fakeTripPort = object : TripDatabasePort {
+            override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+            override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
+            override suspend fun getAllTrips(): List<Trip> = emptyList()
+            override suspend fun getTripById(tripId: Long): Trip? = null
+            override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
+            override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+        }
+
         val viewModel = DashboardViewModel(
             GetLatestEvDataUseCase(fakeEvDataPort),
             SaveEvDataUseCase(fakeEvDataPort),
             GetEvConfigUseCase(fakeEvConfigPort),
             GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
             ObserveActiveSessionUseCase(fakeSessionStatePort),
-            CalculateDynamicBatteryPercentageUseCase()
+            CalculateDynamicBatteryPercentageUseCase(),
+            CalculateOptimalBatteryPercentageUseCase(),
+            CalculateConsumptionUseCase(),
+            UpdateOdometerUseCase(fakeEvDataPort, GetLatestEvDataUseCase(fakeEvDataPort)),
+            GetAllTripsUseCase(fakeTripPort)
         )
 
         val navigator = AppNavigator()

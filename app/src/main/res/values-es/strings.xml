@@ -316,4 +316,21 @@
     <string name="min_voltage_label">Voltaje Mínimo (V)</string>
     <string name="enter_voltage">Ingrese Voltaje (V)</string>
     <string name="voltage_postfix">V</string>
+
+    <!-- Dashboard Cards & Dialogs -->
+    <string name="card_battery_level_title">Nivel de Batería</string>
+    <string name="card_last_charge_title">Última Carga</string>
+    <string name="card_consumption_title">Consumo</string>
+    <string name="card_odometer_title">Odómetro</string>
+    <string name="last_updated_label">Última actualización: %1$s</string>
+    <string name="estimated_voltage_label">Voltaje</string>
+    <string name="cycles_used_label">Ciclos usados</string>
+    <string name="optimal_battery_label">Salud óptima</string>
+    <string name="last_max_charge_date_label">Última carga máx: %1$s</string>
+    <string name="last_trip_km_label">Último viaje: %1$s km</string>
+    <string name="last_higher_charge_day_label">Día de mayor carga: %1$s</string>
+    <string name="edit_battery_title">Editar Nivel de Batería</string>
+    <string name="edit_odometer_title">Editar Odómetro</string>
+    <string name="wh_per_km_unit">Wh/km</string>
+
 </resources>

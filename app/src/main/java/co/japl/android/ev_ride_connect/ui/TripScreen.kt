@@ -5,47 +5,34 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,21 +41,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import co.com.japl.ui.components.HistoryRecordCard
-import co.com.japl.ui.components.HistoryRecordData
-import co.com.japl.ui.components.HistoryRecordType
+import co.com.japl.ui.components.MapPoint
+import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.StatusCard
+import co.com.japl.ui.components.TelemetryMetricsCard
+import co.com.japl.ui.components.TripMapView
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.domain.TripSummary
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
@@ -83,8 +68,6 @@ fun TripScreen(
 ) {
     val isTripActive by viewModel.isTripActive.collectAsState()
     val isPaused by viewModel.isPaused.collectAsState()
-    val tripHistory by viewModel.tripHistory.collectAsState()
-    val selectedFilter by viewModel.selectedFilter.collectAsState()
     val tripSummary by viewModel.tripSummary.collectAsState()
     val showSummaryDialog by viewModel.showSummaryDialog.collectAsState()
     val elapsedTimeSeconds by viewModel.elapsedTimeSeconds.collectAsState()
@@ -92,8 +75,11 @@ fun TripScreen(
     val showBatteryWarning by viewModel.showBatteryWarning.collectAsState()
     val currentDistance by viewModel.currentDistance.collectAsState()
     val currentAverageSpeed by viewModel.currentAverageSpeed.collectAsState()
-    val sateliteMeterPrecision by viewModel.metersPrecisionSatelite.collectAsState()
-    val sateliteCount by viewModel.sateliteCount.collectAsState()
+    val currentSpeed by viewModel.currentSpeed.collectAsState()
+    val co2SavedGrams by viewModel.co2SavedGrams.collectAsState()
+    val estimatedConsumptionWh by viewModel.estimatedConsumptionWh.collectAsState()
+    val gpsPointsList by viewModel.gpsPointsList.collectAsState()
+    val recordedGpsCount by viewModel.recordedGpsCount.collectAsState()
 
     val showStartBatteryDialog by viewModel.showStartBatteryDialog.collectAsState()
     val showEndBatteryDialog by viewModel.showEndBatteryDialog.collectAsState()
@@ -122,6 +108,8 @@ fun TripScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->
@@ -129,9 +117,11 @@ fun TripScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 1. Elapsed Time & Top Action Controls
             if (isTripActive) {
                 StatusCard(
                     title = stringResource(R.string.trip_title),
@@ -140,10 +130,8 @@ fun TripScreen(
                     isSuccessStatus = !isPaused
                 )
 
-                ActiveTripPanel(
+                ActiveTripTimeHeader(
                     elapsedTimeSeconds = elapsedTimeSeconds,
-                    currentDistance = currentDistance,
-                    currentAverageSpeed = currentAverageSpeed,
                     isPaused = isPaused,
                     viewModel = viewModel
                 )
@@ -156,6 +144,35 @@ fun TripScreen(
                     viewModel = viewModel
                 )
             }
+
+            // 2. Map View
+            TripMapView(
+                points = gpsPointsList.map { MapPoint(it.first, it.second) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+            )
+
+            // 3. Speedometer Tachometer when active sampling is on
+            if (isTripActive) {
+                SpeedometerGauge(
+                    speed = currentSpeed,
+                    headerLabel = stringResource(R.string.trip_current_speed_label),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // 4. Detailed Telemetry Grid/List below map
+            TelemetryMetricsCard(
+                elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
+                sampleCount = recordedGpsCount,
+                currentDistanceValue = String.format("%.2f", currentDistance),
+                currentSpeedValue = String.format("%.1f", currentSpeed),
+                avgSpeedValue = String.format("%.1f", currentAverageSpeed),
+                powerConsumptionValue = String.format("%.1f", estimatedConsumptionWh),
+                co2SavedValue = String.format("%.1f", co2SavedGrams),
+                modifier = Modifier.fillMaxWidth()
+            )
 
             GpsIntervalSelector(
                 currentInterval = gpsIntervalSeconds,
@@ -197,7 +214,79 @@ fun TripScreen(
 }
 
 @Composable
-private fun ShowBatteryWarning(){
+private fun ActiveTripTimeHeader(
+    elapsedTimeSeconds: Long,
+    isPaused: Boolean,
+    viewModel: TripViewModel
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.trip_timer_label),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (isPaused) viewModel.resumeTrip() else viewModel.pauseTrip()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isPaused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (isPaused) stringResource(R.string.trip_resume_button) else stringResource(R.string.trip_pause_button),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Button(
+                    onClick = { viewModel.onStopTripRequested() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.trip_end_button),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShowBatteryWarning() {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer
@@ -239,10 +328,7 @@ private fun TripSummaryDialog(
                 )
             },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -254,22 +340,6 @@ private fun TripSummaryDialog(
                         )
                         Text(
                             text = "${String.format("%.2f", tripSummary.totalDistanceKm)} ${stringResource(R.string.km_unit)}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = stringResource(R.string.trip_summary_duration),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = DateUtils.formatDurationSeconds(tripSummary.totalDurationSeconds),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -296,15 +366,14 @@ private fun TripSummaryDialog(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = stringResource(R.string.trip_summary_battery_consumed),
+                            text = stringResource(R.string.trip_summary_duration),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${tripSummary.batteryConsumedPercentage}%",
+                            text = DateUtils.formatDurationSeconds(tripSummary.totalDurationSeconds),
                             style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
@@ -406,7 +475,7 @@ private fun ButtonTripStart(
     showBatteryWarning: Boolean,
     permissionLauncher: ActivityResultLauncher<Array<String>>,
     viewModel: TripViewModel
-){
+) {
     Button(
         onClick = {
             if (isTripActive) {
@@ -435,114 +504,6 @@ private fun ButtonTripStart(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-    }
-}
-
-@Composable
-private fun ActiveTripPanel(
-    elapsedTimeSeconds: Long,
-    currentDistance: Double,
-    currentAverageSpeed: Double,
-    isPaused: Boolean,
-    viewModel: TripViewModel
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.trip_timer_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.trip_distance_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "${String.format("%.2f", currentDistance)} ${stringResource(R.string.km_unit)}",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.trip_avg_speed_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "${String.format("%.1f", currentAverageSpeed)} ${stringResource(R.string.km_unit)}/h",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Button(
-                    onClick = {
-                        if (isPaused) viewModel.resumeTrip() else viewModel.pauseTrip()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isPaused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = if (isPaused) stringResource(R.string.trip_resume_button) else stringResource(R.string.trip_pause_button),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Button(
-                    onClick = { viewModel.onStopTripRequested() },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.trip_end_button),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
     }
 }
 
