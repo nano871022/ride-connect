@@ -1,3 +1,4 @@
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 package co.japl.android.ev_ride_connect.ui
 
 import androidx.compose.foundation.clickable
@@ -98,6 +99,9 @@ fun DashboardScreen(
             modifier = Modifier.padding(paddingValues)
         )
     }
+
+    val vehicles by viewModel.vehicles.collectAsState()
+    val isVoltageMode = vehicles.firstOrNull()?.batteryMode == BatteryMode.VOLTAGE
 
     if (showUpdateDialog) {
         EvDataUpdateDialog(
@@ -277,7 +281,7 @@ fun EvDataUpdateDialog(
     onSave: (Long, Double) -> Unit
 ) {
     var kmInput by remember { mutableStateOf(initialKm.toString()) }
-    var batteryInput by remember { mutableStateOf(initialBatteryLevel.toString()) }
+    var batteryInput by remember { mutableStateOf(if (isVoltageMode) "" else initialBatteryLevel.toString()) }
 
     val labelRes = if (batteryMode == BatteryMode.VOLTAGE) R.string.enter_voltage else R.string.enter_battery
     val suffixRes = if (batteryMode == BatteryMode.VOLTAGE) R.string.voltage_postfix else R.string.battery_postfix
