@@ -308,4 +308,12 @@
     <string name="trip_summary_close">Cerrar Resumen</string>
     <string name="trip_sample_count_label">Muestras: %1$d</string>
     <string name="scaffold_tracking_title">tracking...</string>
+    <!-- Battery Mode & Configuration -->
+    <string name="battery_mode_label">Modo de Batería</string>
+    <string name="battery_mode_percentage">Porcentaje (%)</string>
+    <string name="battery_mode_voltage">Voltaje (V)</string>
+    <string name="max_voltage_label">Voltaje Máximo (V)</string>
+    <string name="min_voltage_label">Voltaje Mínimo (V)</string>
+    <string name="enter_voltage">Ingrese Voltaje (V)</string>
+    <string name="voltage_postfix">V</string>
 </resources>

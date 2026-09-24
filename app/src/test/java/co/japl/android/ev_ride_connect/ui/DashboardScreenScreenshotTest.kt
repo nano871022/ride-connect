@@ -12,11 +12,13 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
+import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -71,12 +73,15 @@ class DashboardScreenScreenshotTest {
             SaveEvDataUseCase(fakeEvDataPort),
             GetEvConfigUseCase(fakeEvConfigPort),
             GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort)
+            ObserveActiveSessionUseCase(fakeSessionStatePort),
+            CalculateDynamicBatteryPercentageUseCase()
         )
+
+        val navigator = AppNavigator()
 
         composeTestRule.setContent {
             MaterialThemeComposeUI {
-                DashboardScreen(viewModel = viewModel)
+                DashboardScreen(viewModel = viewModel, navigator = navigator)
             }
         }
 

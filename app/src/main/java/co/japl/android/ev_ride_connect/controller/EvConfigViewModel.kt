@@ -2,6 +2,7 @@ package co.japl.android.ev_ride_connect.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
@@ -153,6 +154,18 @@ class EvConfigViewModel @Inject constructor(
 
     fun onBatteryAmpersChanged(value: String) {
         _evConfig.update { it.copy(batteryAmpers = value) }
+    }
+
+    fun onBatteryModeChanged(mode: BatteryMode) {
+        _evConfig.update { it.copy(batteryMode = mode) }
+    }
+
+    fun onMaxVoltageChanged(value: Double) {
+        _evConfig.update { it.copy(maxVoltage = value) }
+    }
+
+    fun onMinVoltageChanged(value: Double) {
+        _evConfig.update { it.copy(minVoltage = value) }
     }
 
     fun onBrakeQuantityChanged(value: Int) {
