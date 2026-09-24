@@ -19,6 +19,16 @@ object BatteryCalculator {
         return percentage.coerceIn(0, 100)
     }
 
+    fun calculateVoltage(
+        percentage: Short,
+        minVoltage: Double = DEFAULT_13S_MIN_VOLTAGE,
+        maxVoltage: Double = DEFAULT_13S_MAX_VOLTAGE
+    ): Double {
+        if (maxVoltage <= minVoltage) return minVoltage
+        val pctRatio = (percentage.toDouble() / 100.0).coerceIn(0.0, 1.0)
+        return minVoltage + pctRatio * (maxVoltage - minVoltage)
+    }
+
     fun calculate13SPercentage(voltage: Int): Int {
         val inputVoltage = voltage.toDouble() / 10.0
         return calculatePercentage(inputVoltage, DEFAULT_13S_MIN_VOLTAGE, DEFAULT_13S_MAX_VOLTAGE)
