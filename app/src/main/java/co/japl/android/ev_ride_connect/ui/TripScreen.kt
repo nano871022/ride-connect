@@ -165,14 +165,6 @@ fun TripScreen(
             if (showBatteryWarning) {
                 ShowBatteryWarning()
             }
-
-            TripHistorySection(
-                trips = tripHistory,
-                selectedFilter = selectedFilter,
-                onFilterSelected = { viewModel.filterTripsByDate(it) },
-                onTripClick = onTripClick,
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 
@@ -577,87 +569,6 @@ private fun GpsIntervalSelector(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = intervals.size)
                 ) {
                     Text(stringResource(R.string.trip_interval_seconds, interval))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TripHistorySection(
-    trips: List<Trip>,
-    selectedFilter: HistoryFilter,
-    onFilterSelected: (HistoryFilter) -> Unit,
-    onTripClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var isFilterMenuExpanded by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.trip_history_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Box {
-                IconButton(onClick = { isFilterMenuExpanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = isFilterMenuExpanded,
-                    onDismissRequest = { isFilterMenuExpanded = false }
-                ) {
-                    HistoryFilter.entries.forEach { filter ->
-                        DropdownMenuItem(
-                            text = { Text(filter.name) },
-                            onClick = {
-                                onFilterSelected(filter)
-                                isFilterMenuExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        if (trips.isEmpty()) {
-            Text(
-                text = stringResource(R.string.trip_empty_history),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(trips, key = { it.id }) { trip ->
-                    val record = HistoryRecordData(
-                        id = trip.id.toString(),
-                        type = HistoryRecordType.RIDE,
-                        timestamp = DateUtils.formatTimestamp(trip.createTmst),
-                        subtitle = DateUtils.formatDurationSeconds(trip.timeTrip),
-                        statusText = "Completed",
-                        distanceValue = String.format("%.2f km", trip.distance),
-                        consumptionValue = "${trip.batteryConsumed}%",
-                        avgSpeedValue = String.format("%.1f km/h", trip.averageSpeed)
-                    )
-                    Box(modifier = Modifier.clickable { onTripClick(trip.id) }) {
-                        HistoryRecordCard(record = record)
-                    }
                 }
             }
         }
