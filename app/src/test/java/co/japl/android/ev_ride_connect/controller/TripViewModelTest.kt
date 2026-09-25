@@ -54,40 +54,44 @@ class TripViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val podamFactory = PodamFactoryImpl()
+
     private lateinit var context: Context
     private lateinit var fakeTripPort: FakeTripDatabasePort
     private lateinit var fakeEvDataPort: FakeEvDataPort
     private lateinit var fakeEvConfigPort: FakeEvConfigPort
     private lateinit var fakeSessionStatePort: FakeSessionStatePort
+
     private lateinit var viewModel: TripViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
+
         fakeTripPort = FakeTripDatabasePort()
         fakeEvDataPort = FakeEvDataPort()
         fakeEvConfigPort = FakeEvConfigPort()
         fakeSessionStatePort = FakeSessionStatePort()
+
         viewModel = TripViewModel(
-            context,
-            SaveTripUseCase(fakeTripPort),
-            GetAllTripsUseCase(fakeTripPort),
-            GetTripByIdUseCase(fakeTripPort),
-            GetGpsPointsByTripIdUseCase(fakeTripPort),
-            GetLatestEvDataUseCase(fakeEvDataPort),
-            SaveEvDataUseCase(fakeEvDataPort),
-            GetEvConfigUseCase(fakeEvConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort),
-            PauseTripUseCase(fakeSessionStatePort),
-            ResumeTripUseCase(fakeSessionStatePort),
-            EndTripUseCase(fakeSessionStatePort),
-            CalculateTripSummaryUseCase(fakeTripPort),
-            GetTripsByDateUseCase(fakeTripPort),
-            GetTripDetailsUseCase(fakeTripPort),
-            CalculateDynamicBatteryPercentageUseCase(),
-            CalculateCo2SavedUseCase(),
-            CalculateConsumptionUseCase()
+            context = context,
+            saveTripUseCase = SaveTripUseCase(fakeTripPort),
+            getAllTripsUseCase = GetAllTripsUseCase(fakeTripPort),
+            getTripByIdUseCase = GetTripByIdUseCase(fakeTripPort),
+            getGpsPointsByTripIdUseCase = GetGpsPointsByTripIdUseCase(fakeTripPort),
+            getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort),
+            saveEvDataUseCase = SaveEvDataUseCase(fakeEvDataPort),
+            getEvConfigUseCase = GetEvConfigUseCase(fakeEvConfigPort),
+            observeActiveSessionUseCase = ObserveActiveSessionUseCase(fakeSessionStatePort),
+            pauseTripUseCase = PauseTripUseCase(fakeSessionStatePort),
+            resumeTripUseCase = ResumeTripUseCase(fakeSessionStatePort),
+            endTripUseCase = EndTripUseCase(fakeSessionStatePort),
+            calculateTripSummaryUseCase = CalculateTripSummaryUseCase(fakeTripPort),
+            getTripsByDateUseCase = GetTripsByDateUseCase(fakeTripPort),
+            getTripDetailsUseCase = GetTripDetailsUseCase(fakeTripPort),
+            calculateDynamicBatteryPercentageUseCase = CalculateDynamicBatteryPercentageUseCase(),
+            calculateCo2SavedUseCase = CalculateCo2SavedUseCase(),
+            calculateConsumptionUseCase = CalculateConsumptionUseCase()
         )
     }
 
@@ -134,7 +138,8 @@ class TripViewModelTest {
 
     @Test
     fun shouldPauseAndResumeTrip() = runTest {
-        viewModel.startTrip()
+        viewModel.confirmStartTrip(80.0)
+        testScheduler.runCurrent()
         assertThat(viewModel.isTripActive.value).isTrue()
         assertThat(viewModel.isPaused.value).isFalse()
 
@@ -159,7 +164,8 @@ class TripViewModelTest {
 
     @Test
     fun shouldDiscardConsecutiveDuplicateLocationPoints() = runTest {
-        viewModel.startTrip()
+        viewModel.confirmStartTrip(80.0)
+        testScheduler.runCurrent()
 
         viewModel.addLocationPoint(4.6097, -74.0817)
         assertThat(viewModel.recordedGpsPoints).hasSize(1)
@@ -313,6 +319,10 @@ class TripViewModelTest {
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
             return savedTrips.filter { it.createTmst in startTimestamp..endTimestamp }.sortedByDescending { it.createTmst }
         }
+
+        override suspend fun getTotalTripsCount(): Int = savedTrips.size
+        override suspend fun getTotalDistanceKm(): Double = savedTrips.sumOf { it.distance }
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = savedTrips.count { it.batteryConsumed >= threshold }
     }
 
     private class FakeEvDataPort : EvDataPort {

@@ -27,4 +27,13 @@ interface TripDao {
 
     @Query("SELECT * FROM trips WHERE (create_tmst >= :startTimestamp AND create_tmst <= :endTimestamp) OR (create_tmst = 0 AND timestamp >= :startTimestamp AND timestamp <= :endTimestamp) ORDER BY create_tmst DESC, timestamp DESC")
     suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<TripEntity>
+
+    @Query("SELECT COUNT(*) FROM trips")
+    suspend fun getTotalTripsCount(): Int
+
+    @Query("SELECT SUM(CASE WHEN distance_km > 0 THEN distance_km ELSE distance / 1000.0 END) FROM trips")
+    suspend fun getTotalDistanceKm(): Double?
+
+    @Query("SELECT COUNT(*) FROM trips WHERE battery_consumed >= :threshold")
+    suspend fun getChargeDetectionsCount(threshold: Int): Int
 }

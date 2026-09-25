@@ -121,4 +121,16 @@ class RoomTripAdapter(
             )
         }
     }
+
+    override suspend fun getTotalTripsCount(): Int {
+        return tripDao.getTotalTripsCount()
+    }
+
+    override suspend fun getTotalDistanceKm(): Double {
+        return tripDao.getTotalDistanceKm() ?: 0.0
+    }
+
+    override suspend fun getChargeDetectionsCount(threshold: Int): Int {
+        return tripDao.getChargeDetectionsCount(threshold)
+    }
 }

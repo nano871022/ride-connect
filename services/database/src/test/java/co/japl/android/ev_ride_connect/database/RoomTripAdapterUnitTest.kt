@@ -93,6 +93,19 @@ class RoomTripAdapterUnitTest {
         assertThat(result[0].createTmst).isEqualTo(2000L)
     }
 
+    @Test
+    fun shouldReturnRecapAggregationValues() = runTest {
+        val trip1 = Trip(id = 0, distance = 10.0, batteryConsumed = 20, createTmst = 1000L)
+        val trip2 = Trip(id = 0, distance = 15.5, batteryConsumed = 10, createTmst = 2000L)
+
+        adapter.saveTrip(trip1, emptyList())
+        adapter.saveTrip(trip2, emptyList())
+
+        assertThat(adapter.getTotalTripsCount()).isEqualTo(2)
+        assertThat(adapter.getTotalDistanceKm()).isEqualTo(25.5)
+        assertThat(adapter.getChargeDetectionsCount(15)).isEqualTo(1)
+    }
+
     private class FakeTripDao : TripDao {
         private val trips = mutableListOf<TripEntity>()
         private val gpsList = mutableListOf<TripGpsEntity>()
@@ -130,5 +143,11 @@ class RoomTripAdapterUnitTest {
                 (it.createTmst in startTimestamp..endTimestamp) || (it.createTmst == 0L && it.timestamp in startTimestamp..endTimestamp)
             }.sortedByDescending { it.createTmst }
         }
+
+        override suspend fun getTotalTripsCount(): Int = trips.size
+
+        override suspend fun getTotalDistanceKm(): Double? = trips.sumOf { if (it.distanceKm > 0) it.distanceKm else it.distance / 1000.0 }
+
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = trips.count { it.batteryConsumed >= threshold }
     }
 }
