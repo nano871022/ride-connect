@@ -82,6 +82,9 @@ class DashboardScreenScreenshotTest {
             override suspend fun getTripById(tripId: Long): Trip? = null
             override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
             override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+            override suspend fun getTotalTripsCount(): Int = 0
+            override suspend fun getTotalDistanceKm(): Double = 0.0
+            override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
         }
 
         val viewModel = DashboardViewModel(

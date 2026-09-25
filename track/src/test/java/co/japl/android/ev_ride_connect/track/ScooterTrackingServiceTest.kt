@@ -92,6 +92,10 @@ class ScooterTrackingServiceTest {
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = savedGpsPoints
 
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = savedTrips
+
+        override suspend fun getTotalTripsCount(): Int = savedTrips.size
+        override suspend fun getTotalDistanceKm(): Double = savedTrips.sumOf { it.distance }
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = savedTrips.count { it.batteryConsumed >= threshold }
     }
 
     private class FakeSessionStatePort : SessionStatePort {

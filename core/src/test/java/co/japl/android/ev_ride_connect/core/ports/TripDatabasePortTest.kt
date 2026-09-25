@@ -90,5 +90,9 @@ class TripDatabasePortTest {
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
             return trips.filter { it.createTmst in startTimestamp..endTimestamp }.sortedByDescending { it.createTmst }
         }
+
+        override suspend fun getTotalTripsCount(): Int = trips.size
+        override suspend fun getTotalDistanceKm(): Double = trips.sumOf { it.distance }
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = trips.count { it.batteryConsumed >= threshold }
     }
 }

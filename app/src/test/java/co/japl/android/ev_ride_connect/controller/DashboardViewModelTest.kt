@@ -45,6 +45,7 @@ class DashboardViewModelTest {
     private lateinit var fakeLlmConfigPort: FakeLlmConfigPort
     private lateinit var fakeSessionStatePort: FakeSessionStatePort
     private lateinit var viewModel: DashboardViewModel
+
     private class FakeTripDatabasePort : TripDatabasePort {
         override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
@@ -52,6 +53,9 @@ class DashboardViewModelTest {
         override suspend fun getTripById(tripId: Long): Trip? = null
         override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+        override suspend fun getTotalTripsCount(): Int = 0
+        override suspend fun getTotalDistanceKm(): Double = 0.0
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 
     @Before
