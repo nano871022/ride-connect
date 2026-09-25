@@ -65,6 +65,10 @@ class TripUseCasesTest {
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
             return trips.values.filter { it.createTmst in startTimestamp..endTimestamp }
         }
+
+        override suspend fun getTotalTripsCount(): Int = trips.size
+        override suspend fun getTotalDistanceKm(): Double = trips.values.sumOf { it.distance }
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = trips.values.count { it.batteryConsumed >= threshold }
     }
 
     @Before

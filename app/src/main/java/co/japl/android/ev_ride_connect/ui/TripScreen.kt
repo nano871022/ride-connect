@@ -5,43 +5,34 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,49 +45,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import co.com.japl.ui.components.DualMetricCard
-import co.com.japl.ui.components.SegmentOption
-import co.com.japl.ui.components.SegmentedChipGroup
+import co.com.japl.ui.components.MapPoint
+import co.com.japl.ui.components.SpeedometerGauge
+import co.com.japl.ui.components.StatusCard
+import co.com.japl.ui.components.TelemetryMetricsCard
+import co.com.japl.ui.components.TripMapView
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.core.domain.Trip
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
+import co.japl.android.ev_ride_connect.core.domain.MotionState
+import co.japl.android.ev_ride_connect.core.domain.TripSummary
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
-import java.util.Locale
-
-
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import co.com.japl.ui.components.HistoryRecordCard
-import co.com.japl.ui.components.HistoryRecordData
-import co.com.japl.ui.components.HistoryRecordType
-import co.com.japl.ui.components.MapHudCard
-import co.com.japl.ui.components.MapPoint
-import co.com.japl.ui.components.MotionStatusCard
-import co.com.japl.ui.components.SpeedometerGauge
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.com.japl.ui.components.TelemetryMetricsCard
-import co.com.japl.ui.theme.MaterialThemeComposeUI
-import co.japl.android.ev_ride_connect.core.domain.TripSummary
-import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripScreen(
     viewModel: TripViewModel,
     navigator: AppNavigator? = null,
+    onTripClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isTripActive by viewModel.isTripActive.collectAsState()
@@ -108,8 +75,11 @@ fun TripScreen(
     val showBatteryWarning by viewModel.showBatteryWarning.collectAsState()
     val currentDistance by viewModel.currentDistance.collectAsState()
     val currentAverageSpeed by viewModel.currentAverageSpeed.collectAsState()
-    val sateliteMeterPrecision by viewModel.metersPrecisionSatelite.collectAsState()
-    val sateliteCount by viewModel.sateliteCount.collectAsState()
+    val currentSpeed by viewModel.currentSpeed.collectAsState()
+    val co2SavedGrams by viewModel.co2SavedGrams.collectAsState()
+    val estimatedConsumptionWh by viewModel.estimatedConsumptionWh.collectAsState()
+    val gpsPointsList by viewModel.gpsPointsList.collectAsState()
+    val recordedGpsCount by viewModel.recordedGpsCount.collectAsState()
 
     val showStartBatteryDialog by viewModel.showStartBatteryDialog.collectAsState()
     val showEndBatteryDialog by viewModel.showEndBatteryDialog.collectAsState()
@@ -117,6 +87,9 @@ fun TripScreen(
     val calculatedNewKm by viewModel.calculatedNewKm.collectAsState()
 
     val activeSession by viewModel.activeSession.collectAsState()
+    val evConfig = viewModel.evConfig.collectAsState().value
+    val batteryMode = evConfig?.batteryMode ?: BatteryMode.PERCENTAGE
+
     val motionState = activeSession?.motionState ?: MotionState.STOPPED
     val motionStateText = when (motionState) {
         MotionState.MOVING -> stringResource(R.string.motion_moving)
@@ -124,94 +97,90 @@ fun TripScreen(
         MotionState.BRAKING -> stringResource(R.string.motion_braking)
         MotionState.STOPPED -> stringResource(R.string.motion_stopped)
     }
-    val stationaryTimeText = if (motionState == MotionState.STOPPED) {
-        stringResource(R.string.motion_stopped)
-    } else ""
-
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        viewModel.onStartTripRequested()
+    ) { permissions ->
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        if (fineGranted || coarseGranted) {
+            viewModel.onStartTripRequested()
+        }
     }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    val scrollState = rememberScrollState()
 
-        item {
-            ButtonTripStart(
-                isTripActive = isTripActive,
-                isPaused = isPaused,
-                showBatteryWarning = showBatteryWarning,
-                permissionLauncher = permissionLauncher,
-                viewModel = viewModel
-            )
-        }
-
-        item {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 1. Elapsed Time & Top Action Controls
             if (isTripActive) {
-                MotionStatusCard(
-                    motionStateText = motionStateText,
-                    stationaryTimeText = stationaryTimeText,
-                    isAccelerating = motionState == MotionState.ACCELERATING,
-                    isBraking = motionState == MotionState.BRAKING,
-                    isStationary = motionState == MotionState.STOPPED
+                StatusCard(
+                    title = stringResource(R.string.trip_title),
+                    isLoading = false,
+                    statusMessage = motionStateText,
+                    isSuccessStatus = !isPaused
+                )
+
+                ActiveTripTimeHeader(
+                    elapsedTimeSeconds = elapsedTimeSeconds,
+                    isPaused = isPaused,
+                    viewModel = viewModel
+                )
+            } else {
+                ButtonTripStart(
+                    isTripActive = false,
+                    isPaused = false,
+                    showBatteryWarning = showBatteryWarning,
+                    permissionLauncher = permissionLauncher,
+                    viewModel = viewModel
                 )
             }
-        }
 
-        item {
+            // 2. Map View
+            TripMapView(
+                points = gpsPointsList.map { MapPoint(it.first, it.second) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+            )
+
+            // 3. Speedometer Tachometer when active sampling is on
             if (isTripActive) {
                 SpeedometerGauge(
-                    speed = currentAverageSpeed,
-                    headerLabel = stringResource(R.string.dashboard_mobile_gps_speed),
-                    subStatusText = stringResource(R.string.dashboard_no_vehicle_connection),
-                    gpsReadyText = stringResource(R.string.dashboard_gps_ready),
-                    noticeText = stringResource(R.string.dashboard_measurement_notice),
-                    sensorStatusText = stringResource(R.string.dashboard_sensor_off)
+                    speed = currentSpeed,
+                    headerLabel = stringResource(R.string.trip_current_speed_label),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-        }
 
-        item {
-            MapHudCard(
-                gpsIntervalSeconds = gpsIntervalSeconds,
-                onGpsIntervalSelected = { sec -> viewModel.setGpsInterval(sec) },
-                points = viewModel.recordedGpsPoints.map {
-                    MapPoint(
-                        it.x,
-                        it.y,
-                        "Punto #${it.orderIndex}"
-                    )
-                },
-                sampleTimestamps = viewModel.recordedGpsPoints.map { it.createTmst },
-                isLiveTelemetry = isTripActive,
-                precisionMt = sateliteMeterPrecision,
-                satellitesCount = sateliteCount.toInt()
+            // 4. Detailed Telemetry Grid/List below map
+            TelemetryMetricsCard(
+                elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
+                sampleCount = recordedGpsCount,
+                currentDistanceValue = String.format("%.2f", currentDistance),
+                currentSpeedValue = String.format("%.1f", currentSpeed),
+                avgSpeedValue = String.format("%.1f", currentAverageSpeed),
+                powerConsumptionValue = String.format("%.1f", estimatedConsumptionWh),
+                co2SavedValue = String.format("%.1f", co2SavedGrams),
+                modifier = Modifier.fillMaxWidth()
             )
-        }
 
-        item {
-            if (isTripActive) {
-                TelemetryMetricsCard(
-                    elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
-                    currentDistanceValue = String.format(
-                        Locale.getDefault(),
-                        "%.2f",
-                        currentDistance
-                    ),
-                    currentSpeedValue = String.format(
-                        Locale.getDefault(),
-                        "%.1f",
-                        if (isTripActive) currentAverageSpeed * 1.25 else 0.0
-                    ),
-                    avgSpeedValue = String.format(Locale.getDefault(), "%.1f", currentAverageSpeed),
-                    sampleCount = viewModel.recordedGpsPoints.size
-                )
+            GpsIntervalSelector(
+                currentInterval = gpsIntervalSeconds,
+                onIntervalSelected = { viewModel.setGpsInterval(it) }
+            )
+
+            if (showBatteryWarning) {
+                ShowBatteryWarning()
             }
         }
     }
@@ -220,8 +189,9 @@ fun TripScreen(
         TripBatteryDialog(
             title = stringResource(R.string.start_trip_battery_title),
             initialBattery = latestBatteryLevel,
+            batteryMode = batteryMode,
             onDismiss = { viewModel.cancelStartTrip() },
-            onConfirm = { batteryLevel -> viewModel.confirmStartTrip(batteryLevel) }
+            onConfirm = { batteryVal -> viewModel.confirmStartTrip(batteryVal) }
         )
     }
 
@@ -230,26 +200,124 @@ fun TripScreen(
             title = stringResource(R.string.end_trip_battery_title),
             subtitle = "${stringResource(R.string.km_label)}: $calculatedNewKm ${stringResource(R.string.km_unit)}",
             initialBattery = latestBatteryLevel,
+            batteryMode = batteryMode,
             onDismiss = { viewModel.cancelStopTrip() },
-            onConfirm = { batteryLevel -> viewModel.confirmStopTrip(batteryLevel) }
+            onConfirm = { batteryVal -> viewModel.confirmStopTrip(batteryVal) }
         )
     }
 
     TripSummaryDialog(
-        viewModel = viewModel,
         showSummaryDialog = showSummaryDialog,
-        tripSummary = tripSummary
+        tripSummary = tripSummary,
+        viewModel = viewModel
     )
 }
 
 @Composable
-private fun TripSummaryDialog (
-    viewModel: TripViewModel,
+private fun ActiveTripTimeHeader(
+    elapsedTimeSeconds: Long,
+    isPaused: Boolean,
+    viewModel: TripViewModel
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.trip_timer_label),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (isPaused) viewModel.resumeTrip() else viewModel.pauseTrip()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isPaused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (isPaused) stringResource(R.string.trip_resume_button) else stringResource(R.string.trip_pause_button),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Button(
+                    onClick = { viewModel.onStopTripRequested() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.trip_end_button),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShowBatteryWarning() {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Text(
+                text = stringResource(R.string.trip_battery_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun TripSummaryDialog(
     showSummaryDialog: Boolean,
-    tripSummary: TripSummary?
+    tripSummary: TripSummary?,
+    viewModel: TripViewModel
 ) {
     if (showSummaryDialog && tripSummary != null) {
-        val summary = tripSummary!!
         AlertDialog(
             onDismissRequest = { viewModel.dismissSummaryDialog() },
             title = {
@@ -260,39 +328,19 @@ private fun TripSummaryDialog (
                 )
             },
             text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = stringResource(R.string.trip_summary_distance),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = String.format(Locale.getDefault(), "%.2f km", summary.totalDistanceKm),
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = stringResource(R.string.trip_summary_avg_speed),
-                            style = MaterialTheme.typography.bodyMedium
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = String.format(Locale.getDefault(), "%.1f km/h", summary.averageSpeedKmH),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "${String.format("%.2f", tripSummary.totalDistanceKm)} ${stringResource(R.string.km_unit)}",
+                            style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -302,12 +350,13 @@ private fun TripSummaryDialog (
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = stringResource(R.string.trip_summary_gps_points),
-                            style = MaterialTheme.typography.bodyMedium
+                            text = stringResource(R.string.trip_summary_avg_speed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${summary.totalGpsLocationsCount}",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "${String.format("%.1f", tripSummary.averageSpeedKmH)} ${stringResource(R.string.km_unit)}/h",
+                            style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -318,11 +367,12 @@ private fun TripSummaryDialog (
                     ) {
                         Text(
                             text = stringResource(R.string.trip_summary_duration),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = DateUtils.formatDurationSeconds(summary.totalDurationSeconds),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = DateUtils.formatDurationSeconds(tripSummary.totalDurationSeconds),
+                            style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -332,21 +382,21 @@ private fun TripSummaryDialog (
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = stringResource(R.string.trip_summary_battery_consumed),
-                            style = MaterialTheme.typography.bodyMedium
+                            text = stringResource(R.string.trip_summary_gps_points),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${summary.batteryConsumedPercentage}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary
+                            text = "${tripSummary.totalGpsLocationsCount}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             },
             confirmButton = {
                 Button(onClick = { viewModel.dismissSummaryDialog() }) {
-                    Text(text = stringResource(R.string.trip_summary_close))
+                    Text(stringResource(R.string.trip_summary_close))
                 }
             }
         )
@@ -358,10 +408,14 @@ fun TripBatteryDialog(
     title: String,
     subtitle: String? = null,
     initialBattery: Short,
+    batteryMode: BatteryMode = BatteryMode.PERCENTAGE,
     onDismiss: () -> Unit,
-    onConfirm: (Short) -> Unit
+    onConfirm: (Double) -> Unit
 ) {
     var batteryInput by remember { mutableStateOf(initialBattery.toString()) }
+
+    val labelRes = if (batteryMode == BatteryMode.VOLTAGE) R.string.enter_voltage else R.string.enter_battery
+    val suffixRes = if (batteryMode == BatteryMode.VOLTAGE) R.string.voltage_postfix else R.string.battery_postfix
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -377,17 +431,21 @@ fun TripBatteryDialog(
                 }
                 OutlinedTextField(
                     value = batteryInput,
-                    onValueChange = {
-                        val filtered = it.filter { char -> char.isDigit() }
-                        val num = filtered.toIntOrNull()
-                        if (filtered.isEmpty() || (num != null && num in 0..100)) {
-                            batteryInput = filtered
+                    onValueChange = { input ->
+                        if (batteryMode == BatteryMode.VOLTAGE) {
+                            batteryInput = input.filter { char -> char.isDigit() || char == '.' }
+                        } else {
+                            val filtered = input.filter { char -> char.isDigit() }
+                            val num = filtered.toIntOrNull()
+                            if (filtered.isEmpty() || (num != null && num in 0..100)) {
+                                batteryInput = filtered
+                            }
                         }
                     },
-                    label = { Text(stringResource(R.string.enter_battery)) },
+                    label = { Text(stringResource(labelRes)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    suffix = { Text(stringResource(R.string.battery_postfix)) },
+                    suffix = { Text(stringResource(suffixRes)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -395,7 +453,7 @@ fun TripBatteryDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val battery = batteryInput.toShortOrNull() ?: 0
+                    val battery = batteryInput.toDoubleOrNull() ?: 0.0
                     onConfirm(battery)
                 }
             ) {
@@ -417,128 +475,63 @@ private fun ButtonTripStart(
     showBatteryWarning: Boolean,
     permissionLauncher: ActivityResultLauncher<Array<String>>,
     viewModel: TripViewModel
-){
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    Button(
+        onClick = {
+            if (isTripActive) {
+                viewModel.onStopTripRequested()
+            } else {
+                val permissions = mutableListOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                permissionLauncher.launch(permissions.toTypedArray())
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isTripActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        if (!isTripActive) {
-            Button(
-                onClick = {
-                    val perms = mutableListOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        perms.add(Manifest.permission.BLUETOOTH_SCAN)
-                        perms.add(Manifest.permission.BLUETOOTH_CONNECT)
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        perms.add(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                    permissionLauncher.launch(perms.toTypedArray())
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.trip_start_button),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = {
-                        if (isPaused) {
-                            viewModel.resumeTrip()
-                        } else {
-                            viewModel.pauseTrip()
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isPaused) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = if (isPaused) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isPaused) stringResource(R.string.trip_resume_button) else stringResource(R.string.trip_pause_button),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+        Text(
+            text = if (isTripActive) stringResource(R.string.trip_end_button) else stringResource(R.string.trip_start_button),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
-                Button(
-                    onClick = { viewModel.onStopTripRequested() },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Stop,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.trip_end_button),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GpsIntervalSelector(
+    currentInterval: Long,
+    onIntervalSelected: (Long) -> Unit
+) {
+    val intervals = listOf(5L, 10L, 30L, 60L, 120L)
 
-        if (showBatteryWarning) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "Battery Warning",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = stringResource(R.string.trip_battery_warning),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.trip_gps_interval_label),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            intervals.forEachIndexed { index, interval ->
+                SegmentedButton(
+                    selected = interval == currentInterval,
+                    onClick = { onIntervalSelected(interval) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = intervals.size)
+                ) {
+                    Text(stringResource(R.string.trip_interval_seconds, interval))
+                }
             }
         }
     }
 }
-

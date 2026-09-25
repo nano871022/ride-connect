@@ -1,5 +1,6 @@
 package co.japl.android.ev_ride_connect.database
 
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
 import co.japl.android.ev_ride_connect.database.dao.EvConfigDao
@@ -32,7 +33,10 @@ class RoomEvConfigAdapterTest {
             manufactoryYear = "2023",
             batteryVolts = "60V",
             imageUrl = "https://example.com/scooter.jpg",
-            isLoaded = true
+            isLoaded = true,
+            batteryMode = BatteryMode.VOLTAGE,
+            maxVoltage = 67.2,
+            minVoltage = 48.0
         )
 
         val id = adapter.saveEvConfig(config)
@@ -45,6 +49,9 @@ class RoomEvConfigAdapterTest {
         assertThat(savedEntity.motorsJson).contains("Front").contains("1000")
         assertThat(savedEntity.imageUrl).isEqualTo("https://example.com/scooter.jpg")
         assertThat(savedEntity.isLoaded).isTrue()
+        assertThat(savedEntity.batteryMode).isEqualTo("VOLTAGE")
+        assertThat(savedEntity.maxVoltage).isEqualTo(67.2)
+        assertThat(savedEntity.minVoltage).isEqualTo(48.0)
     }
 
     @Test
@@ -58,7 +65,10 @@ class RoomEvConfigAdapterTest {
             manufactoryYear = "2023",
             batteryVolts = "60V",
             imageUrl = "https://example.com/scooter.jpg",
-            isLoaded = true
+            isLoaded = true,
+            batteryMode = "VOLTAGE",
+            maxVoltage = 67.2,
+            minVoltage = 48.0
         )
         fakeEvConfigDao.configs.add(entity)
 
@@ -71,6 +81,9 @@ class RoomEvConfigAdapterTest {
         assertThat(retrieved?.motors?.first()?.name).isEqualTo("Front")
         assertThat(retrieved?.motors?.first()?.watts).isEqualTo(1000)
         assertThat(retrieved?.imageUrl).isEqualTo("https://example.com/scooter.jpg")
+        assertThat(retrieved?.batteryMode).isEqualTo(BatteryMode.VOLTAGE)
+        assertThat(retrieved?.maxVoltage).isEqualTo(67.2)
+        assertThat(retrieved?.minVoltage).isEqualTo(48.0)
     }
 
     @Test

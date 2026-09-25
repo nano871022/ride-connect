@@ -10,4 +10,7 @@ interface TripDatabasePort {
     suspend fun getTripById(tripId: Long): Trip?
     suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps>
     suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip>
+    suspend fun getTotalTripsCount(): Int
+    suspend fun getTotalDistanceKm(): Double
+    suspend fun getChargeDetectionsCount(threshold: Int = 15): Int
 }

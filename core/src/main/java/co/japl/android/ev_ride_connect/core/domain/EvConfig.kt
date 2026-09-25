@@ -18,5 +18,8 @@ data class EvConfig(
     val chargePower: String = "",
     val otherCharacteristics: String = "",
     val imageUrl: String = "",
-    val isLoaded: Boolean = false
+    val isLoaded: Boolean = false,
+    val batteryMode: BatteryMode = BatteryMode.PERCENTAGE,
+    val maxVoltage: Double = 54.6,
+    val minVoltage: Double = 39.0
 )

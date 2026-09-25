@@ -14,11 +14,15 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.domain.TripSummary
+import co.japl.android.ev_ride_connect.core.usecase.CalculateCo2SavedUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateTripSummaryUseCase
 import co.japl.android.ev_ride_connect.core.usecase.EndTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
@@ -66,7 +70,10 @@ class TripViewModel @Inject constructor(
     private val endTripUseCase: EndTripUseCase,
     private val calculateTripSummaryUseCase: CalculateTripSummaryUseCase,
     private val getTripsByDateUseCase: GetTripsByDateUseCase,
-    private val getTripDetailsUseCase: GetTripDetailsUseCase
+    private val getTripDetailsUseCase: GetTripDetailsUseCase,
+    private val calculateDynamicBatteryPercentageUseCase: CalculateDynamicBatteryPercentageUseCase,
+    private val calculateCo2SavedUseCase: CalculateCo2SavedUseCase,
+    private val calculateConsumptionUseCase: CalculateConsumptionUseCase
 ) : ViewModel() {
 
     private val _isTripActive = MutableStateFlow(false)
@@ -105,6 +112,21 @@ class TripViewModel @Inject constructor(
     private val _currentAverageSpeed = MutableStateFlow(0.0)
     val currentAverageSpeed: StateFlow<Double> = _currentAverageSpeed.asStateFlow()
 
+    private val _currentSpeed = MutableStateFlow(0.0)
+    val currentSpeed: StateFlow<Double> = _currentSpeed.asStateFlow()
+
+    private val _co2SavedGrams = MutableStateFlow(0.0)
+    val co2SavedGrams: StateFlow<Double> = _co2SavedGrams.asStateFlow()
+
+    private val _estimatedConsumptionWh = MutableStateFlow(0.0)
+    val estimatedConsumptionWh: StateFlow<Double> = _estimatedConsumptionWh.asStateFlow()
+
+    private val _gpsPointsList = MutableStateFlow<List<Pair<Double, Double>>>(emptyList())
+    val gpsPointsList: StateFlow<List<Pair<Double, Double>>> = _gpsPointsList.asStateFlow()
+
+    private val _recordedGpsCount = MutableStateFlow(0)
+    val recordedGpsCount: StateFlow<Int> = _recordedGpsCount.asStateFlow()
+
     private val _showStartBatteryDialog = MutableStateFlow(false)
     val showStartBatteryDialog: StateFlow<Boolean> = _showStartBatteryDialog.asStateFlow()
 
@@ -126,6 +148,9 @@ class TripViewModel @Inject constructor(
     private val _activeSession = MutableStateFlow<ActiveSession?>(null)
     val activeSession: StateFlow<ActiveSession?> = _activeSession.asStateFlow()
 
+    private val _evConfig = MutableStateFlow<EvConfig?>(null)
+    val evConfig: StateFlow<EvConfig?> = _evConfig.asStateFlow()
+
     private var startBatteryLevel: Short = 0
     val recordedGpsPoints = mutableListOf<TripGps>()
 
@@ -135,6 +160,7 @@ class TripViewModel @Inject constructor(
 
     init {
         loadTripHistory()
+        loadEvConfig()
         viewModelScope.launch {
             observeActiveSessionUseCase.execute().collect { session ->
                 _activeSession.value = session
@@ -149,8 +175,15 @@ class TripViewModel @Inject constructor(
         }
     }
 
+    fun loadEvConfig() {
+        viewModelScope.launch {
+            _evConfig.value = getEvConfigUseCase.execute()
+        }
+    }
+
     fun onStartTripRequested() {
         viewModelScope.launch {
+            loadEvConfig()
             val latestEvData = try {
                 getLatestEvDataUseCase.execute()
             } catch (e: Exception) {
@@ -163,9 +196,10 @@ class TripViewModel @Inject constructor(
         }
     }
 
-    fun confirmStartTrip(batteryLevel: Short) {
+    fun confirmStartTrip(inputBatteryValue: Double) {
         _showStartBatteryDialog.value = false
-        startBatteryLevel = batteryLevel
+        val calculatedPercentage = calculateDynamicBatteryPercentageUseCase.execute(inputBatteryValue, _evConfig.value)
+        startBatteryLevel = calculatedPercentage
         startTrip()
     }
 
@@ -272,6 +306,7 @@ class TripViewModel @Inject constructor(
     fun onStopTripRequested() {
         if (!_isTripActive.value) return
         viewModelScope.launch {
+            loadEvConfig()
             val totalDistance = recordedGpsPoints.sumOf { it.distance }
             val latestEvData = try {
                 getLatestEvDataUseCase.execute()
@@ -287,10 +322,11 @@ class TripViewModel @Inject constructor(
         }
     }
 
-    fun confirmStopTrip(batteryLevel: Short) {
+    fun confirmStopTrip(inputBatteryValue: Double) {
         _showEndBatteryDialog.value = false
         val newKm = _calculatedNewKm.value
-        val consumed = (startBatteryLevel - batteryLevel).coerceAtLeast(0)
+        val calculatedPercentage = calculateDynamicBatteryPercentageUseCase.execute(inputBatteryValue, _evConfig.value)
+        val consumed = (startBatteryLevel - calculatedPercentage).coerceAtLeast(0)
 
         val summary = calculateTripSummaryUseCase.calculateFromRawData(
             distanceKm = _currentDistance.value,
@@ -303,16 +339,16 @@ class TripViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val evConfig = getEvConfigUseCase.execute()
-                val evCode = evConfig?.id?.takeIf { it > 0 }?.toString()
-                    ?: evConfig?.request?.takeIf { it.isNotBlank() }
+                val config = _evConfig.value ?: getEvConfigUseCase.execute()
+                val evCode = config?.id?.takeIf { it > 0 }?.toString()
+                    ?: config?.request?.takeIf { it.isNotBlank() }
                     ?: "EV01"
 
                 saveEvDataUseCase.execute(
                     EvData(
                         evCode = evCode,
                         km = newKm,
-                        batteryLevel = batteryLevel,
+                        batteryLevel = calculatedPercentage,
                         createTmst = System.currentTimeMillis()
                     )
                 )
@@ -474,6 +510,19 @@ class TripViewModel @Inject constructor(
         _currentAverageSpeed.value = GpsUtils.calculateAverageSpeed(
             _currentDistance.value,
             _elapsedTimeSeconds.value
+        )
+        _currentSpeed.value = speedSegment
+        _recordedGpsCount.value = recordedGpsPoints.size
+        _gpsPointsList.value = recordedGpsPoints.map { Pair(it.x, it.y) }
+        _co2SavedGrams.value = calculateCo2SavedUseCase.execute(_currentDistance.value)
+        val config = _evConfig.value
+        val voltageVal = config?.batteryVolts?.replace("V", "")?.toDoubleOrNull() ?: 52.0
+        val ampersVal = config?.batteryAmpers?.replace("Ah", "")?.toDoubleOrNull() ?: 20.0
+        _estimatedConsumptionWh.value = calculateConsumptionUseCase.execute(
+            batteryConsumedPercentage = 10,
+            batteryVoltage = voltageVal,
+            batteryAmperes = ampersVal,
+            distanceKm = _currentDistance.value
         )
     }
 
