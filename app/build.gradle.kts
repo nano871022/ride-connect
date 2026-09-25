@@ -54,13 +54,13 @@ plugins {
 
 android {
     namespace = "co.japl.android.ev_ride_connect"
-    compileSdk = 36
+    compileSdk = 37
     buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "co.japl.android.ev_ride_connect"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1_00_010
         versionName = "1.00.010 Fix history view"
 
