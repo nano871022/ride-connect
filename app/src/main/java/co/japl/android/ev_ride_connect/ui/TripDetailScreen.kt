@@ -21,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,6 +55,8 @@ fun TripDetailScreen(
     val selectedTripDetail by viewModel.selectedTripDetail.collectAsState()
 
     val tripDetailPair = selectedTripDetail
+    val currentLocale = LocalConfiguration.current.locales[0]
+
     if (tripDetailPair == null) {
         Column(
             modifier = modifier
@@ -73,7 +76,7 @@ fun TripDetailScreen(
                 latitude = it.x,
                 longitude = it.y,
                 title = stringResource(R.string.trip_point_order, it.orderIndex),
-                snippet = "${stringResource(R.string.trip_avg_speed_label)}: ${String.format(Locale.getDefault(), "%.1f km/h", it.speed)}"
+                snippet = "${stringResource(R.string.trip_avg_speed_label)}: ${String.format(currentLocale, "%.1f km/h", it.speed)}"
             )
         }
 
@@ -140,11 +143,12 @@ private fun TripSummaryCard(trip: Trip, gpsPointCnt: Short = 0) {
                 color = MaterialTheme.colorScheme.primary
             )
 
+            val currentLocale = LocalConfiguration.current.locales[0]
             DualMetricCard(
                 primaryTitle = stringResource(R.string.trip_distance_label),
-                primaryValue = String.format(Locale.getDefault(), "%.2f km", trip.distance),
+                primaryValue = String.format(currentLocale, "%.2f km", trip.distance),
                 secondaryTitle = stringResource(R.string.trip_avg_speed_label),
-                secondaryValue = String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)
+                secondaryValue = String.format(currentLocale, "%.1f km/h", trip.averageSpeed)
             )
         }
     }

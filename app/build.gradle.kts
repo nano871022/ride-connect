@@ -55,7 +55,6 @@ plugins {
 android {
     namespace = "co.japl.android.ev_ride_connect"
     compileSdk = 37
-    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "co.japl.android.ev_ride_connect"
