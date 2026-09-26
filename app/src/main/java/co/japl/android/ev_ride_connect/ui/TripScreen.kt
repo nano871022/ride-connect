@@ -76,6 +76,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import co.com.japl.ui.components.HistoryRecordCard
@@ -197,19 +198,20 @@ fun TripScreen(
 
         item {
             if (isTripActive) {
+                val currentLocale = LocalConfiguration.current.locales[0]
                 TelemetryMetricsCard(
                     elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
                     currentDistanceValue = String.format(
-                        Locale.getDefault(),
+                        currentLocale,
                         "%.2f",
                         currentDistance
                     ),
                     currentSpeedValue = String.format(
-                        Locale.getDefault(),
+                        currentLocale,
                         "%.1f",
                         if (isTripActive) currentAverageSpeed * 1.25 else 0.0
                     ),
-                    avgSpeedValue = String.format(Locale.getDefault(), "%.1f", currentAverageSpeed),
+                    avgSpeedValue = String.format(currentLocale, "%.1f", currentAverageSpeed),
                     sampleCount = viewModel.recordedGpsPoints.size
                 )
             }
@@ -266,6 +268,7 @@ private fun TripSummaryDialog (
                         .padding(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    val currentLocale = LocalConfiguration.current.locales[0]
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -275,7 +278,7 @@ private fun TripSummaryDialog (
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = String.format(Locale.getDefault(), "%.2f km", summary.totalDistanceKm),
+                            text = String.format(currentLocale, "%.2f km", summary.totalDistanceKm),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -291,7 +294,7 @@ private fun TripSummaryDialog (
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = String.format(Locale.getDefault(), "%.1f km/h", summary.averageSpeedKmH),
+                            text = String.format(currentLocale, "%.1f km/h", summary.averageSpeedKmH),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
