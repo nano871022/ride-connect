@@ -131,6 +131,7 @@ jobs:
             Please analyze the following error logs and apply a fix to the repository:
             ${{ env.log_content }}
           jules_api_key: ${{ secrets.API_KEY_JULES }}
+          starting_branch: ${{ github.ref_name }}
 
       - name: Fail workflow if test step failed
         if: steps.run_tests.outcome != 'success'
