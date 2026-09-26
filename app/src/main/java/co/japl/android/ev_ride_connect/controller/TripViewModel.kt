@@ -394,11 +394,7 @@ class TripViewModel @Inject constructor(
             val intent = Intent(context, ScooterTrackingService::class.java).apply {
                 action = TrackingSettings.ACTION_START_TRACKING
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            context.startForegroundService(intent)
         } catch (e: Exception) {
             Log.e(this@TripViewModel.javaClass.name, e.message, e)
         }
