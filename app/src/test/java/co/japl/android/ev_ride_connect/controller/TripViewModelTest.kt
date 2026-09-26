@@ -45,7 +45,7 @@ import uk.co.jemos.podam.api.PodamFactoryImpl
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [33])
 class TripViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
