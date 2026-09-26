@@ -65,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -573,8 +574,9 @@ private fun BatterySpecsSection(
 ) {
     val voltsNum = evConfig.batteryVolts.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 0.0
     val ampersNum = evConfig.batteryAmpers.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 0.0
+    val currentLocale = LocalConfiguration.current.locales[0]
     val calculatedEnergyWh = if (voltsNum > 0 && ampersNum > 0) {
-        String.format("%.1f Wh", voltsNum * ampersNum)
+        String.format(currentLocale, "%.1f Wh", voltsNum * ampersNum)
     } else {
         "374.4 Wh"
     }
