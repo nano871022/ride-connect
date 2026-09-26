@@ -49,7 +49,9 @@ jobs:
       - name: Run unit tests
         id: run_tests
         continue-on-error: true
-        run: ./gradlew test -x :about:test
+        run: |
+          set -o pipefail
+          ./gradlew test -x :about:test | tee build_errors.log
 
       - name: Package test and lint results as zip
         if: always()
@@ -104,6 +106,30 @@ jobs:
           Please check the workflow artifacts (\`test-results-zip\`, \`lint-results-zip\`) and job summary for detailed test and lint outputs."
 
           gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."
+
+      - name: Read Error Log
+        if: failure() || steps.run_tests.outcome != 'success'
+        id: error_log
+        run: |
+          if [ -f build_errors.log ]; then
+            ERROR_CONTENT=$(tail -n 50 build_errors.log)
+          else
+            ERROR_CONTENT="No build_errors.log file found."
+          fi
+          echo "log_content<<EOF" >> $GITHUB_ENV
+          echo "$ERROR_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Request Jules Fix
+        if: failure() || steps.run_tests.outcome != 'success'
+        uses: google-labs-code/jules-invoke@v1.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            The CI pipeline failed during the lint/test phase.
+            Please analyze the following error logs and apply a fix to the repository:
+            ${{ env.log_content }}
+          jules_api_key: ${{ secrets.API_KEY_JULES }}
 
       - name: Fail workflow if test step failed
         if: steps.run_tests.outcome != 'success'
