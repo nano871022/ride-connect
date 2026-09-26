@@ -122,7 +122,7 @@ jobs:
 
       - name: Request Jules Fix
         if: failure() || steps.run_tests.outcome != 'success'
-        uses: google/jules-sdk@v1
+        uses: google-labs-code/jules-invoke@v1.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
