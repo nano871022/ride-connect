@@ -1,0 +1,58 @@
+name: Jules Invoke Request
+
+on:
+  workflow_call:
+    inputs:
+      error_log_test:
+        description: "El log de error que viene del paso de tests"
+        type: string
+        required: false
+      error_log_lint:
+        description: "El log de error que viene del paso de lint"
+        type: string
+        required: false
+
+jobs:
+  jules-connect:
+    name: Get issues in lint/test and call jules
+    runs-on: ubuntu-latest
+    environment: PROD
+
+    steps:
+      - name: Combine Error Logs
+        id: combine_logs
+        run: |
+          LINT_LOG="${{ inputs.error_log_lint }}"
+          TEST_LOG="${{ inputs.error_log_test }}"
+
+          {
+            echo "=== LINT ERRORS ==="
+            if [ -n "$LINT_LOG" ]; then
+              echo "$LINT_LOG"
+            else
+              echo "No lint errors reported."
+            fi
+            echo ""
+            echo "=== TEST ERRORS ==="
+            if [ -n "$TEST_LOG" ]; then
+              echo "$TEST_LOG"
+            else
+              echo "No test errors reported."
+            fi
+          } > combined_errors.log
+
+          echo "log_content<<EOF" >> $GITHUB_OUTPUT
+          cat combined_errors.log >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Request Jules Fix
+        if: always()
+        uses: google-labs-code/jules-invoke@v1.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            The CI pipeline failed during the lint/test phase.
+            Please analyze the following error logs and apply a fix to the repository:
+            ${{ steps.combine_logs.outputs.log_content }}
+          jules_api_key: ${{ secrets.API_KEY_JULES }}
+          starting_branch: ${{ github.head_ref || github.ref_name }}
