@@ -25,7 +25,7 @@ val tuyaAppSecretEnv: String = resolveEnvOrProp(settingsProperties.getProperty("
 
 android {
     namespace = "co.japl.android.ev_ride_connect.ble"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26

@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -72,6 +73,7 @@ fun EvDataScreen(
     val maintenanceIndicators by viewModel.maintenanceIndicators.collectAsState()
     val tripHistory by (tripViewModel?.tripHistory ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyList<Trip>()) }).collectAsState()
     val selectedFilter by (tripViewModel?.selectedFilter ?: remember { kotlinx.coroutines.flow.MutableStateFlow(HistoryFilter.ALL) }).collectAsState()
+    val currentLocale = LocalConfiguration.current.locales[0]
 
     val filterItems = listOf(
         FilterPillItem(HistoryFilter.ALL, stringResource(R.string.history_filter_all), Icons.Default.Tune),
@@ -121,11 +123,11 @@ fun EvDataScreen(
                         timestamp = DateUtils.formatTimestamp(trip.createTmst),
                         subtitle = stringResource(R.string.history_active_session_ended),
                         statusText = stringResource(R.string.history_status_completed),
-                        distanceValue = String.format(Locale.getDefault(), "%.2f", trip.distance),
+                        distanceValue = String.format(currentLocale, "%.2f", trip.distance),
                         distanceUnit = stringResource(R.string.km_unit),
                         consumptionValue = "${trip.batteryConsumed}%",
                         durationValue = DateUtils.formatDurationSeconds(trip.timeTrip),
-                        avgSpeedValue = String.format(Locale.getDefault(), "%.1f km/h", trip.averageSpeed)
+                        avgSpeedValue = String.format(currentLocale, "%.1f km/h", trip.averageSpeed)
                     ),
                     viewTelemetryText = stringResource(R.string.history_view_telemetry),
                     onViewTelemetryClick = {

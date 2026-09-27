@@ -11,3 +11,18 @@ plugins {
     alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.google.services) apply false
 }
+
+subprojects {
+    afterEvaluate {
+        plugins.withId("com.android.library") {
+            configure<com.android.build.api.dsl.LibraryExtension> {
+                compileSdk = 37
+            }
+        }
+        plugins.withId("com.android.application") {
+            configure<com.android.build.api.dsl.ApplicationExtension> {
+                compileSdk = 37
+            }
+        }
+    }
+}
