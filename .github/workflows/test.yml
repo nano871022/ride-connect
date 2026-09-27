@@ -116,9 +116,9 @@ jobs:
           else
             ERROR_CONTENT="No build_errors.log file found."
           fi
-          echo "log_content<<EOF" >> $GITHUB_ENV
-          echo "$ERROR_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "log_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$ERROR_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Fail workflow if test step failed
         if: steps.run_tests.outcome != 'success'
