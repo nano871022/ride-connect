@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":utils"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.org.json)
     implementation(libs.javax.inject)

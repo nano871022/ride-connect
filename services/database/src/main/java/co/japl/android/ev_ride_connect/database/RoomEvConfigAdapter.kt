@@ -1,5 +1,6 @@
 package co.japl.android.ev_ride_connect.database
 
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
@@ -21,6 +22,12 @@ class RoomEvConfigAdapter(
     }
 
     private fun EvConfigEntity.toDomain(): EvConfig {
+        val mode = try {
+            BatteryMode.valueOf(batteryMode)
+        } catch (e: Exception) {
+            BatteryMode.PERCENTAGE
+        }
+
         return EvConfig(
             id = id,
             request = request,
@@ -39,7 +46,10 @@ class RoomEvConfigAdapter(
             chargePower = chargePower,
             otherCharacteristics = otherCharacteristics,
             imageUrl = imageUrl,
-            isLoaded = isLoaded
+            isLoaded = isLoaded,
+            batteryMode = mode,
+            maxVoltage = maxVoltage,
+            minVoltage = minVoltage
         )
     }
 
@@ -62,7 +72,10 @@ class RoomEvConfigAdapter(
             chargePower = chargePower,
             otherCharacteristics = otherCharacteristics,
             imageUrl = imageUrl,
-            isLoaded = isLoaded
+            isLoaded = isLoaded,
+            batteryMode = batteryMode.name,
+            maxVoltage = maxVoltage,
+            minVoltage = minVoltage
         )
     }
 
