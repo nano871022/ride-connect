@@ -2,6 +2,10 @@ name: Run Tests on Pull Request
 
 on:
   workflow_call:
+    outputs:
+      error_log:
+        description: "El log de errores"
+        value: ${{ jobs.test.outputs.log_output }}
 
 jobs:
   test:
@@ -11,6 +15,8 @@ jobs:
       contents: read
       issues: write
     environment: PROD
+    outputs:
+      log_output: ${{ steps.error_log.outputs.log_content }}
 
     steps:
       - name: Checkout repository
@@ -87,28 +93,8 @@ jobs:
           echo "WARNINGS_FOUND=$WARNINGS_FOUND" >> $GITHUB_OUTPUT
           echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT
 
-      - name: Automatically Create Issue on Errors or Warnings
-        if: always() && (steps.analyze_results.outputs.ERRORS_FOUND == 'true' || steps.analyze_results.outputs.WARNINGS_FOUND == 'true')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE_TITLE="[CI Alert] Test Errors or Warnings in Commit ${{ github.sha }}"
-          ISSUE_BODY="Automated issue created by GitHub Actions.
-
-          **Workflow:** ${{ github.workflow }}
-          **Run Number:** ${{ github.run_number }}
-          **Commit:** ${{ github.sha }}
-          **Branch/Ref:** ${{ github.ref }}
-
-          ### Status
-          - **Test Execution Status:** ${{ steps.run_tests.outcome }}
-
-          Please check the workflow artifacts (\`test-results-zip\`, \`lint-results-zip\`) and job summary for detailed test and lint outputs."
-
-          gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."
-
       - name: Read Error Log
-        if: failure() || steps.run_tests.outcome != 'success'
+        if: always()
         id: error_log
         run: |
           if [ -f build_errors.log ]; then
@@ -116,21 +102,9 @@ jobs:
           else
             ERROR_CONTENT="No build_errors.log file found."
           fi
-          echo "log_content<<EOF" >> $GITHUB_ENV
-          echo "$ERROR_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Request Jules Fix
-        if: failure() || steps.run_tests.outcome != 'success'
-        uses: google-labs-code/jules-invoke@v1.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            The CI pipeline failed during the lint/test phase.
-            Please analyze the following error logs and apply a fix to the repository:
-            ${{ env.log_content }}
-          jules_api_key: ${{ secrets.API_KEY_JULES }}
-          starting_branch: ${{ github.head_ref || github.ref_name }}
+          echo "log_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$ERROR_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Fail workflow if test step failed
         if: steps.run_tests.outcome != 'success'
