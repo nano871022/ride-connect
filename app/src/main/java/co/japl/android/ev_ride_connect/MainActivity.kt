@@ -170,8 +170,8 @@ fun AppNavigationContent(
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(16.dp)) {
                 co.com.japl.homeconnect.about.ui.About(
-                    version = version,
-                    appId = appId
+                    versionDetail = version,
+                    applicationId = appId
                 )
             }
 
