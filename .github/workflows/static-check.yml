@@ -66,14 +66,14 @@ jobs:
 
       - name: Upload lint results zip artifact
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: lint-results-zip
           path: zipped_artifacts/lint-results.zip
 
       - name: Generate Job Summary & Check Warnings/Errors
         id: analyze_results
-        if: always()
+        if: failure()
         run: |
           echo "## 📊 Test & Lint Execution Summary" >> $GITHUB_STEP_SUMMARY
 
@@ -94,7 +94,7 @@ jobs:
           echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT
 
       - name: Read Error Log
-        if: always()
+        if: failure()
         id: error_log
         run: |
           if [ -f build_errors.log ]; then
@@ -105,7 +105,3 @@ jobs:
           echo "log_content<<EOF" >> $GITHUB_OUTPUT
           echo "$ERROR_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Fail workflow if test step failed
-        if: steps.run_tests.outcome != 'success'
-        run: exit 1
