@@ -332,7 +332,7 @@ class TripViewModel @Inject constructor(
             distanceKm = _currentDistance.value,
             durationSeconds = _elapsedTimeSeconds.value,
             gpsPointsCount = recordedGpsPoints.size,
-            batteryConsumed = consumed.toInt()
+            batteryConsumed = consumed
         )
         _tripSummary.value = summary
         _showSummaryDialog.value = true
@@ -356,7 +356,7 @@ class TripViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
-            stopTrip(consumed.toInt())
+            stopTrip(consumed)
         }
     }
 

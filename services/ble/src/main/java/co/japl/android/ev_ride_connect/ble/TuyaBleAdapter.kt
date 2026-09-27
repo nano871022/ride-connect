@@ -194,6 +194,7 @@ class TuyaBleAdapter(
                     parsedData = "CONNECTING_TO_MAC: $targetMac",
                     isValid = true
                 )
+                @Suppress("DEPRECATION")
                 bluetoothGatt = device.connectGatt(
                     context,
                     false,
@@ -288,6 +289,7 @@ class TuyaBleAdapter(
                         try { gatt.close() } catch (_: Exception) {}
                     }
                     sdkManager.connectDevice(device.address, sdkListener)
+                    @Suppress("DEPRECATION")
                     bluetoothGatt = device.connectGatt(
                         context,
                         false,

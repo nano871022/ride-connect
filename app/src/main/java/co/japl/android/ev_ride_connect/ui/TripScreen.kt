@@ -358,6 +358,7 @@ private fun TripSummaryDialog(
     viewModel: TripViewModel
 ) {
     if (showSummaryDialog && tripSummary != null) {
+        val summary = tripSummary
         AlertDialog(
             onDismissRequest = { viewModel.dismissSummaryDialog() },
             title = {
