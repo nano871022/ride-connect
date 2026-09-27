@@ -169,7 +169,7 @@ fun AppNavigationContent(
             )
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(16.dp)) {
-                AboutContent(
+                co.com.japl.homeconnect.about.ui.About(
                     version = version,
                     appId = appId
                 )
@@ -180,26 +180,3 @@ fun AppNavigationContent(
     }
 }
 
-@Composable
-private fun AboutContent(version: String, appId: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Text(
-            text = "Version: $version",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Text(
-            text = "ID: $appId",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
