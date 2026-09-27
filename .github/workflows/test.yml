@@ -11,6 +11,8 @@ jobs:
       contents: read
       issues: write
     environment: PROD
+    outputs:
+      log_output: ${{ steps.error_log.outputs.log_content }}
 
     steps:
       - name: Checkout repository
