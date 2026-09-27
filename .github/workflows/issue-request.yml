@@ -1,0 +1,52 @@
+name: Issue Request
+
+on:
+  workflow_call:
+    inputs:
+      error_log_test:
+        description: "El log de error que viene del paso de tests"
+        type: string
+        required: false
+      error_log_lint:
+        description: "El log de error que viene del paso de lint"
+        type: string
+        required: false
+
+jobs:
+  issue-request:
+    name: Create Issue on failure
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Create GitHub Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINT_LOG: ${{ inputs.error_log_lint }}
+          TEST_LOG: ${{ inputs.error_log_test }}
+        run: |
+          ISSUE_TITLE="[CI Alert] Pipeline Execution Failed on Commit ${{ github.sha }}"
+
+          ISSUE_BODY=$(cat << 'BODY_EOF'
+          Automated issue created by GitHub Actions CI/CD Pipeline.
+
+          **Workflow:** ${{ github.workflow }}
+          **Run Number:** ${{ github.run_number }}
+          **Commit:** ${{ github.sha }}
+          **Branch/Ref:** ${{ github.ref }}
+
+          ### 🔍 Lint Errors
+          ```
+          ${LINT_LOG:-No lint errors reported.}
+          ```
+
+          ### 🧪 Test Errors
+          ```
+          ${TEST_LOG:-No test errors reported.}
+          ```
+          BODY_EOF
+          )
+
+          gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."

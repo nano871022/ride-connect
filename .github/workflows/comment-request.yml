@@ -1,0 +1,57 @@
+name: PR Comment Request
+
+on:
+  workflow_call:
+    inputs:
+      error_log_test:
+        description: "El log de error que viene del paso de tests"
+        type: string
+        required: false
+      error_log_lint:
+        description: "El log de error que viene del paso de lint"
+        type: string
+        required: false
+
+jobs:
+  comment-request:
+    name: Comment failure errors on PR
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Post Comment on PR
+        if: github.event_name == 'pull_request' || github.event.pull_request.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LINT_LOG: ${{ inputs.error_log_lint }}
+          TEST_LOG: ${{ inputs.error_log_test }}
+        run: |
+          COMMENT_BODY=$(cat << 'BODY_EOF'
+          ### ❌ CI/CD Pipeline Error Details
+
+          **Workflow:** ${{ github.workflow }}
+          **Run Number:** ${{ github.run_number }}
+          **Commit:** ${{ github.sha }}
+
+          <details>
+          <summary>🔍 <strong>Lint Errors</strong></summary>
+
+          ```
+          ${LINT_LOG:-No lint errors reported.}
+          ```
+          </details>
+
+          <details>
+          <summary>🧪 <strong>Test Errors</strong></summary>
+
+          ```
+          ${TEST_LOG:-No test errors reported.}
+          ```
+          </details>
+          BODY_EOF
+          )
+
+          gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY" || echo "Failed to add PR comment or not running on a pull request context."

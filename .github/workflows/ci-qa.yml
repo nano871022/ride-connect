@@ -5,6 +5,17 @@ on:
     branches: [ "main", "master", "develop" ]
   pull_request:
     branches: [ "main", "master", "develop" ]
+  workflow_dispatch:
+    inputs:
+      failure_action:
+        description: 'Action to take when CI fails'
+        required: true
+        type: choice
+        default: 'comments'
+        options:
+          - comments
+          - issues
+          - jules
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,11 +42,37 @@ jobs:
   jules-request:
     name: Check issues in test and lint to call jules
     needs: [unit-tests, statick-check]
-    if: failure() && github.ref == 'refs/heads/master'
+    if: failure() && (github.ref == 'refs/heads/master' || github.base_ref == 'master') && inputs.failure_action == 'jules'
     permissions:
       issues: write
       contents: read
     uses: ./.github/workflows/jules-request.yml
+    secrets: inherit
+    with:
+      error_log_test: ${{ needs.unit-tests.outputs.error_log }}
+      error_log_lint: ${{ needs.statick-check.outputs.error_log }}
+
+  comment-request:
+    name: Post comment on PR on test or lint failure
+    needs: [unit-tests, statick-check]
+    if: failure() && (inputs.failure_action == 'comments' || inputs.failure_action == '' || github.event_name != 'workflow_dispatch')
+    permissions:
+      pull-requests: write
+      contents: read
+    uses: ./.github/workflows/comment-request.yml
+    secrets: inherit
+    with:
+      error_log_test: ${{ needs.unit-tests.outputs.error_log }}
+      error_log_lint: ${{ needs.statick-check.outputs.error_log }}
+
+  issue-request:
+    name: Create issue on test or lint failure
+    needs: [unit-tests, statick-check]
+    if: failure() && inputs.failure_action == 'issues'
+    permissions:
+      issues: write
+      contents: read
+    uses: ./.github/workflows/issue-request.yml
     secrets: inherit
     with:
       error_log_test: ${{ needs.unit-tests.outputs.error_log }}
