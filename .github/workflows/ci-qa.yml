@@ -38,7 +38,8 @@ jobs:
     uses: ./.github/workflows/jules-request.yml
     secrets: inherit
     with:
-      error_log: ${{ needs.unit-tests.outputs.error_log }}
+      error_log_test: ${{ needs.unit-tests.outputs.error_log }}
+      error_log_lint: ${{ needs.statick-check.outputs.error_log }}
 
   build-release:
     name: Production Release Build
