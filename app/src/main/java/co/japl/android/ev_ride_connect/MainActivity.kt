@@ -4,17 +4,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import co.com.japl.homeconnect.about.ui.About
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
@@ -164,13 +169,37 @@ fun AppNavigationContent(
             )
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(16.dp)) {
-                About(
-                    versionDetail = version,
-                    applicationId = appId
+                AboutContent(
+                    version = version,
+                    appId = appId
                 )
             }
 
             else -> {}
         }
+    }
+}
+
+@Composable
+private fun AboutContent(version: String, appId: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            text = "Version: $version",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = "ID: $appId",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

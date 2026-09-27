@@ -41,39 +41,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import co.com.japl.ui.components.DualMetricCard
-import co.com.japl.ui.components.SegmentOption
-import co.com.japl.ui.components.SegmentedChipGroup
-import co.japl.android.ev_ride_connect.R
-import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.utils.DateUtils
-import java.util.Locale
-
-
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import co.com.japl.ui.components.HistoryRecordCard
-import co.com.japl.ui.components.HistoryRecordData
-import co.com.japl.ui.components.HistoryRecordType
-import co.com.japl.ui.components.MapHudCard
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.StatusCard
@@ -138,6 +110,7 @@ fun TripScreen(
     }
 
     val scrollState = rememberScrollState()
+    val currentLocale = LocalConfiguration.current.locales[0]
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -195,33 +168,13 @@ fun TripScreen(
             TelemetryMetricsCard(
                 elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
                 sampleCount = recordedGpsCount,
-                currentDistanceValue = String.format("%.2f", currentDistance),
-                currentSpeedValue = String.format("%.1f", currentSpeed),
-                avgSpeedValue = String.format("%.1f", currentAverageSpeed),
-                powerConsumptionValue = String.format("%.1f", estimatedConsumptionWh),
-                co2SavedValue = String.format("%.1f", co2SavedGrams),
+                currentDistanceValue = String.format(currentLocale, "%.2f", currentDistance),
+                currentSpeedValue = String.format(currentLocale, "%.1f", currentSpeed),
+                avgSpeedValue = String.format(currentLocale, "%.1f", currentAverageSpeed),
+                powerConsumptionValue = String.format(currentLocale, "%.1f", estimatedConsumptionWh),
+                co2SavedValue = String.format(currentLocale, "%.1f", co2SavedGrams),
                 modifier = Modifier.fillMaxWidth()
             )
-
-        item {
-            if (isTripActive) {
-                val currentLocale = LocalConfiguration.current.locales[0]
-                TelemetryMetricsCard(
-                    elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
-                    currentDistanceValue = String.format(
-                        currentLocale,
-                        "%.2f",
-                        currentDistance
-                    ),
-                    currentSpeedValue = String.format(
-                        currentLocale,
-                        "%.1f",
-                        if (isTripActive) currentAverageSpeed * 1.25 else 0.0
-                    ),
-                    avgSpeedValue = String.format(currentLocale, "%.1f", currentAverageSpeed),
-                    sampleCount = viewModel.recordedGpsPoints.size
-                )
-            }
         }
     }
 
@@ -406,7 +359,7 @@ private fun TripSummaryDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${String.format("%.1f", tripSummary.averageSpeedKmH)} ${stringResource(R.string.km_unit)}/h",
+                            text = "${String.format(currentLocale, "%.1f", tripSummary.averageSpeedKmH)} ${stringResource(R.string.km_unit)}/h",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
