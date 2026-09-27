@@ -24,4 +24,21 @@
     <string name="trip_co2_saved_label">CO₂ Saved</string>
     <string name="trip_co2_saved_unit">g</string>
     <string name="trip_sample_count_label">Samples: %1$d</string>
+
+    <!-- Dashboard Cards & Dialogs -->
+    <string name="card_battery_level_title">Battery Level</string>
+    <string name="card_last_charge_title">Last Charge</string>
+    <string name="card_consumption_title">Consumption</string>
+    <string name="card_odometer_title">Odometer</string>
+    <string name="last_updated_label">Last updated: %1$s</string>
+    <string name="estimated_voltage_label">Voltage</string>
+    <string name="cycles_used_label">Cycles used</string>
+    <string name="optimal_battery_label">Optimal health</string>
+    <string name="last_max_charge_date_label">Last max charge: %1$s</string>
+    <string name="last_trip_km_label">Last trip: %1$s km</string>
+    <string name="last_higher_charge_day_label">Higher charge day: %1$s</string>
+    <string name="edit_battery_title">Edit Battery Level</string>
+    <string name="edit_odometer_title">Edit Odometer</string>
+    <string name="wh_per_km_unit">Wh/km</string>
+
 </resources>
