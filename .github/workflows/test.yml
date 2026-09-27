@@ -2,6 +2,10 @@ name: Run Tests on Pull Request
 
 on:
   workflow_call:
+    outputs:
+      error_log:
+        description: "El log de errores"
+        value: ${{ jobs.test.outputs.log_output }}
 
 jobs:
   test:
