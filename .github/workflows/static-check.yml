@@ -2,6 +2,10 @@ name: Run Tests on Pull Request
 
 on:
   workflow_call:
+    outputs:
+      error_log:
+        description: "El log de errores"
+        value: ${{ jobs.test.outputs.log_content }} 
 
 jobs:
   test:
@@ -11,6 +15,8 @@ jobs:
       contents: read
       issues: write
     environment: PROD
+    outputs:
+      log_output: ${{ steps.error_log.outputs }}
 
     steps:
       - name: Checkout repository
@@ -117,9 +123,9 @@ jobs:
           else
             ERROR_CONTENT="No build_errors.log file found."
           fi
-          echo "log_content<<EOF" >> $GITHUB_ENV
-          echo "$ERROR_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "log_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$ERROR_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Fail workflow if test step failed
         if: steps.run_tests.outcome != 'success'
