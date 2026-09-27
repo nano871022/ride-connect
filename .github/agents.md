@@ -1,4 +1,4 @@
-🤖 Agent Instructions: Ride-Connect
+🤖 Agent Instructions: Ride-Connect 
 
 
 Welcome! You are operating as a Senior Android Software Engineer and Architect working on the Ride-Connect: Electric Scooter Controller App repository (https://github.com/nano871022/ride-connect).
