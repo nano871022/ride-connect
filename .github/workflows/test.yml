@@ -120,18 +120,6 @@ jobs:
           echo "$ERROR_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Request Jules Fix
-        if: failure() || steps.run_tests.outcome != 'success'
-        uses: google-labs-code/jules-invoke@v1.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            The CI pipeline failed during the lint/test phase.
-            Please analyze the following error logs and apply a fix to the repository:
-            ${{ env.log_content }}
-          jules_api_key: ${{ secrets.API_KEY_JULES }}
-          starting_branch: ${{ github.head_ref || github.ref_name }}
-
       - name: Fail workflow if test step failed
         if: steps.run_tests.outcome != 'success'
         run: exit 1
