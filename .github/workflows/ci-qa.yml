@@ -31,7 +31,7 @@ jobs:
   jules-request:
     name: Check issues in test and lint to call jules
     needs: [unit-tests, statick-check]
-    if: github.ref == 'refs/heads/master'
+    if: failure() && github.ref == 'refs/heads/master'
     permissions:
       issues: write
       contents: read
