@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -45,48 +46,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import co.com.japl.ui.components.DualMetricCard
-import co.com.japl.ui.components.SegmentOption
-import co.com.japl.ui.components.SegmentedChipGroup
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
-import java.util.Locale
 
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import co.com.japl.ui.components.HistoryRecordCard
-import co.com.japl.ui.components.HistoryRecordData
-import co.com.japl.ui.components.HistoryRecordType
-import co.com.japl.ui.components.MapHudCard
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.StatusCard
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.components.TripMapView
-import co.japl.android.ev_ride_connect.R
-import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.TripSummary
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.utils.DateUtils
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripScreen(
@@ -203,7 +179,6 @@ fun TripScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-        item {
             if (isTripActive) {
                 val currentLocale = LocalConfiguration.current.locales[0]
                 TelemetryMetricsCard(
@@ -223,34 +198,38 @@ fun TripScreen(
                 )
             }
         }
-    }
 
-    if (showStartBatteryDialog) {
-        TripBatteryDialog(
-            title = stringResource(R.string.start_trip_battery_title),
-            initialBattery = latestBatteryLevel,
-            batteryMode = batteryMode,
-            onDismiss = { viewModel.cancelStartTrip() },
-            onConfirm = { batteryVal -> viewModel.confirmStartTrip(batteryVal) }
+        if (showStartBatteryDialog) {
+            TripBatteryDialog(
+                title = stringResource(R.string.start_trip_battery_title),
+                initialBattery = latestBatteryLevel,
+                batteryMode = batteryMode,
+                onDismiss = { viewModel.cancelStartTrip() },
+                onConfirm = { batteryVal -> viewModel.confirmStartTrip(batteryVal) }
+            )
+        }
+
+        if (showEndBatteryDialog) {
+            TripBatteryDialog(
+                title = stringResource(R.string.end_trip_battery_title),
+                subtitle = "${stringResource(R.string.km_label)}: $calculatedNewKm ${
+                    stringResource(
+                        R.string.km_unit
+                    )
+                }",
+                initialBattery = latestBatteryLevel,
+                batteryMode = batteryMode,
+                onDismiss = { viewModel.cancelStopTrip() },
+                onConfirm = { batteryVal -> viewModel.confirmStopTrip(batteryVal) }
+            )
+        }
+
+        TripSummaryDialog(
+            showSummaryDialog = showSummaryDialog,
+            tripSummary = tripSummary,
+            viewModel = viewModel
         )
     }
-
-    if (showEndBatteryDialog) {
-        TripBatteryDialog(
-            title = stringResource(R.string.end_trip_battery_title),
-            subtitle = "${stringResource(R.string.km_label)}: $calculatedNewKm ${stringResource(R.string.km_unit)}",
-            initialBattery = latestBatteryLevel,
-            batteryMode = batteryMode,
-            onDismiss = { viewModel.cancelStopTrip() },
-            onConfirm = { batteryVal -> viewModel.confirmStopTrip(batteryVal) }
-        )
-    }
-
-    TripSummaryDialog(
-        showSummaryDialog = showSummaryDialog,
-        tripSummary = tripSummary,
-        viewModel = viewModel
-    )
 }
 
 @Composable
