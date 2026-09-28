@@ -132,7 +132,7 @@ fun MaintenanceHealthCard(
                     }
 
                     LinearProgressIndicator(
-                        progress = item.progress,
+                        progress = { item.progress },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp),

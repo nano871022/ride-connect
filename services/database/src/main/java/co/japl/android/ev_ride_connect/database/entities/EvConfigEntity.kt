@@ -41,5 +41,11 @@ data class EvConfigEntity(
     @ColumnInfo(name = "image_url", defaultValue = "")
     val imageUrl: String = "",
     @ColumnInfo(name = "is_loaded")
-    val isLoaded: Boolean = false
+    val isLoaded: Boolean = false,
+    @ColumnInfo(name = "battery_mode", defaultValue = "PERCENTAGE")
+    val batteryMode: String = "PERCENTAGE",
+    @ColumnInfo(name = "max_voltage", defaultValue = "54.6")
+    val maxVoltage: Double = 54.6,
+    @ColumnInfo(name = "min_voltage", defaultValue = "39.0")
+    val minVoltage: Double = 39.0
 )

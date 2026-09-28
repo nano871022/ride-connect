@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.controller
 
 import co.japl.android.ev_ride_connect.core.domain.ActiveSession
+import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
@@ -8,6 +9,15 @@ import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.core.domain.Trip
+import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.CalculateCo2SavedUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
+import co.japl.android.ev_ride_connect.core.usecase.CalculateOptimalBatteryPercentageUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
@@ -36,6 +46,18 @@ class DashboardViewModelTest {
     private lateinit var fakeSessionStatePort: FakeSessionStatePort
     private lateinit var viewModel: DashboardViewModel
 
+    private class FakeTripDatabasePort : TripDatabasePort {
+        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+        override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
+        override suspend fun getAllTrips(): List<Trip> = emptyList()
+        override suspend fun getTripById(tripId: Long): Trip? = null
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+        override suspend fun getTotalTripsCount(): Int = 0
+        override suspend fun getTotalDistanceKm(): Double = 0.0
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
+    }
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -44,12 +66,18 @@ class DashboardViewModelTest {
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeSessionStatePort = FakeSessionStatePort()
 
+        val fakeTripPort = FakeTripDatabasePort()
         viewModel = DashboardViewModel(
             GetLatestEvDataUseCase(fakeEvDataPort),
             SaveEvDataUseCase(fakeEvDataPort),
             GetEvConfigUseCase(fakeEvConfigPort),
             GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort)
+            ObserveActiveSessionUseCase(fakeSessionStatePort),
+            CalculateDynamicBatteryPercentageUseCase(),
+            CalculateOptimalBatteryPercentageUseCase(),
+            CalculateConsumptionUseCase(),
+            UpdateOdometerUseCase(fakeEvDataPort, GetLatestEvDataUseCase(fakeEvDataPort)),
+            GetAllTripsUseCase(fakeTripPort)
         )
     }
 
@@ -92,8 +120,10 @@ class DashboardViewModelTest {
     @Test
     fun shouldSaveEvDataWithFallbackEvCodeWhenNoConfig() = runTest {
         fakeEvConfigPort.savedConfig = null
+        viewModel.loadEvConfig()
+        testScheduler.runCurrent()
 
-        viewModel.saveEvData(100L, 85)
+        viewModel.saveEvData(100L, 85.0)
         testScheduler.runCurrent()
 
         val saved = fakeEvDataPort.savedEvData
@@ -101,6 +131,28 @@ class DashboardViewModelTest {
         assertThat(saved?.evCode).isEqualTo("EV01")
         assertThat(saved?.km).isEqualTo(100L)
         assertThat(saved?.batteryLevel).isEqualTo(85.toShort())
+    }
+
+    @Test
+    fun shouldSaveEvDataInVoltageMode() = runTest {
+        fakeEvConfigPort.savedConfig = EvConfig(
+            id = 5L,
+            request = "VSETT C7",
+            batteryMode = BatteryMode.VOLTAGE,
+            minVoltage = 39.0,
+            maxVoltage = 54.6
+        )
+
+        viewModel.loadEvConfig()
+        testScheduler.runCurrent()
+
+        viewModel.saveEvData(150L, 46.8)
+        testScheduler.runCurrent()
+
+        val saved = fakeEvDataPort.savedEvData
+        assertThat(saved).isNotNull
+        assertThat(saved?.km).isEqualTo(150L)
+        assertThat(saved?.batteryLevel).isEqualTo(50.toShort())
     }
 
     private class FakeEvDataPort : EvDataPort {

@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -124,8 +125,9 @@ fun SpeedometerGauge(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.padding(vertical = 4.dp)
                     ) {
+                        val currentLocale = LocalConfiguration.current.locales[0]
                         Text(
-                            text = if (speed % 1.0 == 0.0) speed.toInt().toString() else String.format("%.1f", speed),
+                            text = if (speed % 1.0 == 0.0) speed.toInt().toString() else String.format(currentLocale, "%.1f", speed),
                             fontSize = 44.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface

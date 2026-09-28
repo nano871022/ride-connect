@@ -6,7 +6,7 @@ object EvConstants {
         Identify specs for EV query: "%s".
         Respond with JSON containing keys:
         brand, version, motors (array of objects with name and watts), manufactoryYear,
-        manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, brakeQuantity,
-        brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics, imageUrl.
+        manufactoryCompany, batteryTechnology, batteryVolts, batteryAmpers, minVoltage, maxVoltage,
+        brakeQuantity, brakeTechnology, suspensionTechnology, chargePower, otherCharacteristics, imageUrl.
     """
 }

@@ -2,6 +2,10 @@ name: Run Tests on Pull Request
 
 on:
   workflow_call:
+    outputs:
+      error_log:
+        description: "El log de errores"
+        value: ${{ jobs.test.outputs.log_output }}
 
 jobs:
   test:
@@ -11,6 +15,8 @@ jobs:
       contents: read
       issues: write
     environment: PROD
+    outputs:
+      log_output: ${{ steps.error_log.outputs.log_content }}
 
     steps:
       - name: Checkout repository
@@ -54,21 +60,21 @@ jobs:
           ./gradlew test -x :about:test | tee build_errors.log
 
       - name: Package test and lint results as zip
-        if: always()
+        if: failure()
         run: |
           mkdir -p zipped_artifacts
           zip -r zipped_artifacts/test-results.zip **/build/reports/tests/ || true
 
       - name: Upload test results zip artifact
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: test-results-zip
           path: zipped_artifacts/test-results.zip
 
       - name: Generate Job Summary & Check Warnings/Errors
         id: analyze_results
-        if: always()
+        if:  failure()
         run: |
           echo "## 📊 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
 
@@ -87,10 +93,8 @@ jobs:
           echo "WARNINGS_FOUND=$WARNINGS_FOUND" >> $GITHUB_OUTPUT
           echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT
 
-      - name: Automatically Create Issue on Errors or Warnings
-        if: always() && (steps.analyze_results.outputs.ERRORS_FOUND == 'true' || steps.analyze_results.outputs.WARNINGS_FOUND == 'true')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read Error Log
+        if: failure()
         run: |
           ISSUE_TITLE="[CI Alert] Test Errors or Warnings in Commit ${{ github.sha }}"
           ISSUE_BODY="Automated issue created by GitHub Actions.
@@ -116,22 +120,6 @@ jobs:
           else
             ERROR_CONTENT="No build_errors.log file found."
           fi
-          echo "log_content<<EOF" >> $GITHUB_ENV
-          echo "$ERROR_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Request Jules Fix
-        if: failure() || steps.run_tests.outcome != 'success'
-        uses: google-labs-code/jules-invoke@v1.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            The CI pipeline failed during the lint/test phase.
-            Please analyze the following error logs and apply a fix to the repository:
-            ${{ env.log_content }}
-          jules_api_key: ${{ secrets.API_KEY_JULES }}
-          starting_branch: ${{ github.head_ref || github.ref_name }}
-
-      - name: Fail workflow if test step failed
-        if: steps.run_tests.outcome != 'success'
-        run: exit 1
+          echo "log_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$ERROR_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT

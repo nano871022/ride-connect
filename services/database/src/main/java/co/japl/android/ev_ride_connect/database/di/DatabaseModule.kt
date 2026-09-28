@@ -45,6 +45,14 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE ev_configs ADD COLUMN battery_mode TEXT NOT NULL DEFAULT 'PERCENTAGE'")
+            db.execSQL("ALTER TABLE ev_configs ADD COLUMN max_voltage REAL NOT NULL DEFAULT 54.6")
+            db.execSQL("ALTER TABLE ev_configs ADD COLUMN min_voltage REAL NOT NULL DEFAULT 39.0")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -53,7 +61,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "app_database.db"
         )
-        .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
+        .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
         .fallbackToDestructiveMigration(true)
         .build()
     }
