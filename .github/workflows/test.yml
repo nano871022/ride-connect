@@ -95,7 +95,6 @@ jobs:
 
       - name: Read Error Log
         if: failure()
-        id: error_log
         run: |
           ISSUE_TITLE="[CI Alert] Test Errors or Warnings in Commit ${{ github.sha }}"
           ISSUE_BODY="Automated issue created by GitHub Actions.
