@@ -246,6 +246,8 @@ private fun DefaultTitle(currentScreen: AppScreen, isTracking: Boolean = false) 
                 )
             }
         }
+        
+        /* RIGHT NOW it does not ability to connect with device
         Box(
             modifier = Modifier
                 .clip(CircleShape)
@@ -269,6 +271,7 @@ private fun DefaultTitle(currentScreen: AppScreen, isTracking: Boolean = false) 
                 )
             }
         }
+        */
     }
 }
 
