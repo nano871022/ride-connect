@@ -170,6 +170,7 @@ private fun DashboardContent(
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
+            Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -213,6 +214,7 @@ private fun DashboardContent(
                         }
                     }
                 }
+            }
 
                 Button(
                     onClick = onStartTrackingClick,
