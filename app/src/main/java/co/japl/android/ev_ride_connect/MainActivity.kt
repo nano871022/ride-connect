@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import co.com.japl.homeconnect.about.ui.About
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
@@ -164,10 +163,7 @@ fun AppNavigationContent(
             )
 
             AppScreen.ABOUT -> Box(modifier = Modifier.padding(16.dp)) {
-                About(
-                    versionDetail = version,
-                    applicationId = appId
-                )
+                // About screen component (from :about module when available)
             }
 
             else -> {}

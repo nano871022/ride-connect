@@ -56,36 +56,15 @@ import co.japl.android.ev_ride_connect.utils.DateUtils
 import java.util.Locale
 
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import co.com.japl.ui.components.HistoryRecordCard
-import co.com.japl.ui.components.HistoryRecordData
-import co.com.japl.ui.components.HistoryRecordType
-import co.com.japl.ui.components.MapHudCard
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.StatusCard
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.components.TripMapView
-import co.japl.android.ev_ride_connect.R
-import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.MotionState
 import co.japl.android.ev_ride_connect.core.domain.TripSummary
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,26 +182,6 @@ fun TripScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-        item {
-            if (isTripActive) {
-                val currentLocale = LocalConfiguration.current.locales[0]
-                TelemetryMetricsCard(
-                    elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
-                    currentDistanceValue = String.format(
-                        currentLocale,
-                        "%.2f",
-                        currentDistance
-                    ),
-                    currentSpeedValue = String.format(
-                        currentLocale,
-                        "%.1f",
-                        if (isTripActive) currentAverageSpeed * 1.25 else 0.0
-                    ),
-                    avgSpeedValue = String.format(currentLocale, "%.1f", currentAverageSpeed),
-                    sampleCount = viewModel.recordedGpsPoints.size
-                )
-            }
-        }
     }
 
     if (showStartBatteryDialog) {
@@ -251,6 +210,7 @@ fun TripScreen(
         tripSummary = tripSummary,
         viewModel = viewModel
     )
+}
 }
 
 @Composable
