@@ -48,7 +48,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
 
@@ -67,8 +66,6 @@ import co.japl.android.ev_ride_connect.core.domain.TripSummary
 @Composable
 fun TripScreen(
     viewModel: TripViewModel,
-    navigator: AppNavigator? = null,
-    onTripClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isTripActive by viewModel.isTripActive.collectAsState()

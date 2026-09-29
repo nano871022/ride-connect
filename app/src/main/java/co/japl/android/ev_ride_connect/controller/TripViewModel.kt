@@ -159,7 +159,6 @@ class TripViewModel @Inject constructor(
     private var locationListener: LocationListener? = null
 
     init {
-        loadTripHistory()
         loadEvConfig()
         viewModelScope.launch {
             observeActiveSessionUseCase.execute().collect { session ->
@@ -554,31 +553,9 @@ class TripViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
-            loadTripHistory()
         }
     }
 
-    fun filterTripsByDate(filter: HistoryFilter) {
-        _selectedFilter.value = filter
-        loadTripHistory(filter)
-    }
-
-    fun loadTripHistory(filter: HistoryFilter = _selectedFilter.value) {
-        viewModelScope.launch {
-            _tripHistory.value = try {
-                val now = System.currentTimeMillis()
-                when (filter) {
-                    HistoryFilter.ALL -> getAllTripsUseCase.execute()
-                    HistoryFilter.WEEK -> getTripsByDateUseCase.execute(DateUtils.getStartOfDaysAgo(7, now), now)
-                    HistoryFilter.MONTH -> getTripsByDateUseCase.execute(DateUtils.getStartOfDaysAgo(30, now), now)
-                    HistoryFilter.CHARGE -> getAllTripsUseCase.execute().filter { it.batteryConsumed > 0 }
-                }
-            } catch (e: Exception) {
-                Log.e(this@TripViewModel.javaClass.name, e.message, e)
-                emptyList()
-            }
-        }
-    }
 
     fun loadTripDetail(tripId: Long) {
         viewModelScope.launch {

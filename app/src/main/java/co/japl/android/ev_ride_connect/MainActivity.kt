@@ -155,7 +155,6 @@ fun AppNavigationContent(
 
             AppScreen.TRIP -> TripScreen(
                 viewModel = tripViewModel,
-                navigator = navigator
             )
 
             AppScreen.TRIP_DETAIL -> TripDetailScreen(
