@@ -3,6 +3,7 @@ package co.japl.android.ev_ride_connect.controller
 import co.japl.android.ev_ride_connect.core.domain.BackupConfig
 import co.japl.android.ev_ride_connect.core.domain.BackupStatus
 import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.core.usecase.BackupUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ConfigureAutoBackupUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetBackupConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.PerformManualBackupUseCase
@@ -28,11 +29,13 @@ class BackupViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeBackupPort = FakeGoogleDriveBackupPort()
-        viewModel = BackupViewModel(
+        val backupUseCase = BackupUseCase(
+            fakeBackupPort,
             GetBackupConfigUseCase(fakeBackupPort),
             PerformManualBackupUseCase(fakeBackupPort),
             ConfigureAutoBackupUseCase(fakeBackupPort)
         )
+        viewModel = BackupViewModel(backupUseCase)
     }
 
     @After

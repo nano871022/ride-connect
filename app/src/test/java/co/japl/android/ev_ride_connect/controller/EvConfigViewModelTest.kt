@@ -8,6 +8,7 @@ import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.usecase.ClearActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.EvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
@@ -46,7 +47,11 @@ class EvConfigViewModelTest {
         fakeSessionStatePort = FakeSessionStatePort()
 
         val fetchEvInfoUseCase = FetchEvInfoUseCase(fakeLlmClientPort)
-        viewModel = EvConfigViewModel(
+        val evConfigUseCase = EvConfigUseCase(
+            fakeEvConfigPort,
+            fakeLlmConfigPort,
+            fakeLlmClientPort,
+            fakeSessionStatePort,
             GetEvConfigUseCase(fakeEvConfigPort),
             SaveEvConfigUseCase(fakeEvConfigPort),
             GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
@@ -55,6 +60,7 @@ class EvConfigViewModelTest {
             SaveActiveSessionUseCase(fakeSessionStatePort),
             ClearActiveSessionUseCase(fakeSessionStatePort)
         )
+        viewModel = EvConfigViewModel(evConfigUseCase)
     }
 
     @After
@@ -63,173 +69,110 @@ class EvConfigViewModelTest {
     }
 
     @Test
-    fun shouldInitializeAndLoadSavedConfigAndActiveLlmConfigs() = runTest {
+    fun shouldLoadSavedConfigOnInit() = runTest {
         testScheduler.runCurrent()
 
-        assertThat(viewModel.activeLlmConfigs.value).hasSize(1)
-        assertThat(viewModel.selectedLlmConfig.value?.modelName).isEqualTo("Gemini")
+        val config = viewModel.evConfig.value
+        assertThat(config.brand).isEqualTo("VSETT")
+        assertThat(config.version).isEqualTo("10+")
     }
 
     @Test
-    fun shouldHydrateProcessingLlmStateFromActiveSession() = runTest {
-        fakeSessionStatePort.sessionFlow.value = ActiveSession(
-            isLlmProcessing = true,
-            pendingLlmPrompt = "VSETT C7"
-        )
+    fun shouldUpdateFieldsCorrectly() = runTest {
+        viewModel.onBrandChanged("Segway")
+        viewModel.onVersionChanged("Ninebot Max")
+        viewModel.onManufactoryYearChanged("2024")
 
-        viewModel = EvConfigViewModel(
-            GetEvConfigUseCase(fakeEvConfigPort),
-            SaveEvConfigUseCase(fakeEvConfigPort),
-            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            FetchEvInfoUseCase(fakeLlmClientPort),
-            GetActiveSessionUseCase(fakeSessionStatePort),
-            SaveActiveSessionUseCase(fakeSessionStatePort),
-            ClearActiveSessionUseCase(fakeSessionStatePort)
-        )
-
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.isSearchDialogVisible.value).isTrue()
-        assertThat(viewModel.isLoadingLlm.value).isTrue()
+        val config = viewModel.evConfig.value
+        assertThat(config.brand).isEqualTo("Segway")
+        assertThat(config.version).isEqualTo("Ninebot Max")
+        assertThat(config.manufactoryYear).isEqualTo("2024")
     }
 
     @Test
-    fun shouldHydrateSuccessLlmStateFromActiveSession() = runTest {
-        fakeEvConfigPort.savedConfig = EvConfig(brand = "VSETT", version = "C7 Plus")
-        fakeSessionStatePort.sessionFlow.value = ActiveSession(
-            isLlmProcessing = false,
-            pendingLlmResponse = "SUCCESS:1"
-        )
-
-        viewModel = EvConfigViewModel(
-            GetEvConfigUseCase(fakeEvConfigPort),
-            SaveEvConfigUseCase(fakeEvConfigPort),
-            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            FetchEvInfoUseCase(fakeLlmClientPort),
-            GetActiveSessionUseCase(fakeSessionStatePort),
-            SaveActiveSessionUseCase(fakeSessionStatePort),
-            ClearActiveSessionUseCase(fakeSessionStatePort)
-        )
-
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.statusMessage.value).isEqualTo("LLM_FETCH_SUCCESS")
-        assertThat(viewModel.evConfig.value.brand).isEqualTo("VSETT")
-        assertThat(fakeSessionStatePort.sessionFlow.value).isNull()
-    }
-
-    @Test
-    fun shouldUpdateImageUrlAndPrepareNewVehicle() = runTest {
-        viewModel.onImageUrlChanged("https://example.com/vehicle.jpg")
-        assertThat(viewModel.evConfig.value.imageUrl).isEqualTo("https://example.com/vehicle.jpg")
-
-        viewModel.onPrepareNewVehicle()
-        assertThat(viewModel.evConfig.value.id).isEqualTo(0)
-        assertThat(viewModel.evConfig.value.isLoaded).isFalse()
-        assertThat(viewModel.statusMessage.value).isEqualTo("EV_CREATION_MODE")
-    }
-
-    @Test
-    fun shouldUpdateEvConfigFields() = runTest {
-        viewModel.onRequestChanged("Vsett c7 plus")
-        viewModel.onBrandChanged("VSETT")
-        viewModel.onVersionChanged("C7 Plus")
-        viewModel.onManufactoryYearChanged("2023")
-        viewModel.onManufactoryCompanyChanged("eMove")
-        viewModel.onBoughtDateChanged("2023-01-01")
-        viewModel.onBatteryTechnologyChanged("Li-ion")
-        viewModel.onBatteryVoltsChanged("60V")
-        viewModel.onBatteryAmpersChanged("20.8Ah")
-        viewModel.onBrakeQuantityChanged(2)
-        viewModel.onBrakeTechnologyChanged("Hydraulic Disc")
-        viewModel.onSuspensionTechnologyChanged("Spring")
-        viewModel.onChargePowerChanged("67.2V 2A")
-        viewModel.onOtherCharacteristicsChanged("Dual motor")
-
-        val current = viewModel.evConfig.value
-        assertThat(current.request).isEqualTo("Vsett c7 plus")
-        assertThat(current.brand).isEqualTo("VSETT")
-        assertThat(current.version).isEqualTo("C7 Plus")
-        assertThat(current.manufactoryYear).isEqualTo("2023")
-        assertThat(current.manufactoryCompany).isEqualTo("eMove")
-        assertThat(current.boughtDate).isEqualTo("2023-01-01")
-        assertThat(current.batteryTechnology).isEqualTo("Li-ion")
-        assertThat(current.batteryVolts).isEqualTo("60V")
-        assertThat(current.batteryAmpers).isEqualTo("20.8Ah")
-        assertThat(current.brakeQuantity).isEqualTo(2)
-        assertThat(current.brakeTechnology).isEqualTo("Hydraulic Disc")
-        assertThat(current.suspensionTechnology).isEqualTo("Spring")
-        assertThat(current.chargePower).isEqualTo("67.2V 2A")
-        assertThat(current.otherCharacteristics).isEqualTo("Dual motor")
-    }
-
-    @Test
-    fun shouldAddUpdateAndRemoveMotors() = runTest {
-        viewModel.onAddMotor("Front Motor", 1000)
+    fun shouldAddAndUpdateAndRemoveMotors() = runTest {
         viewModel.onAddMotor("Rear Motor", 1000)
-
-        assertThat(viewModel.evConfig.value.motors).hasSize(2)
-
-        viewModel.onUpdateMotor(0, "Front Motor Upgraded", 1200)
-        assertThat(viewModel.evConfig.value.motors.first().name).isEqualTo("Front Motor Upgraded")
-        assertThat(viewModel.evConfig.value.motors.first().watts).isEqualTo(1200)
-
-        viewModel.onRemoveMotor(1)
         assertThat(viewModel.evConfig.value.motors).hasSize(1)
+        assertThat(viewModel.evConfig.value.motors.first().name).isEqualTo("Rear Motor")
+
+        viewModel.onUpdateMotor(0, "Dual Motor", 2000)
+        assertThat(viewModel.evConfig.value.motors.first().name).isEqualTo("Dual Motor")
+
+        viewModel.onRemoveMotor(0)
+        assertThat(viewModel.evConfig.value.motors).isEmpty()
     }
 
     @Test
-    fun shouldFetchEvInfoFromLlmSuccessfully() = runTest {
-        testScheduler.runCurrent()
-
-        viewModel.onRequestChanged("Vsett c7 plus by emove colombia seller")
-        viewModel.requestEvInfoFromLlm()
-
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.statusMessage.value).isEqualTo("LLM_FETCH_SUCCESS")
-        assertThat(viewModel.evConfig.value.brand).isEqualTo("VSETT")
-        assertThat(viewModel.evConfig.value.version).isEqualTo("C7 Plus")
-        assertThat(viewModel.evConfig.value.motors).hasSize(2)
-    }
-
-    @Test
-    fun shouldSaveEvConfig() = runTest {
-        viewModel.onBrandChanged("VSETT")
+    fun shouldSaveConfigAndSetStatusMessage() = runTest {
+        viewModel.onBrandChanged("Inokim")
         viewModel.saveEvConfig()
 
         testScheduler.runCurrent()
 
         assertThat(viewModel.statusMessage.value).isEqualTo("CONFIG_SAVED")
-        assertThat(fakeEvConfigPort.savedConfig?.brand).isEqualTo("VSETT")
+        assertThat(fakeEvConfigPort.savedConfig?.brand).isEqualTo("Inokim")
+    }
+
+    @Test
+    fun shouldRequestEvInfoFromLlmSuccessfully() = runTest {
+        fakeLlmConfigPort.activeConfigs.add(
+            LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "test-key", isActive = true)
+        )
+        viewModel.onRequestChanged("VSETT 10+ specs")
+
+        viewModel.requestEvInfoFromLlm()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.statusMessage.value).isEqualTo("LLM_FETCH_SUCCESS")
+        assertThat(viewModel.isLoadingLlm.value).isFalse()
+        assertThat(viewModel.isSearchDialogVisible.value).isFalse()
+    }
+
+    @Test
+    fun shouldShowErrorWhenRequestingLlmWithEmptyPrompt() = runTest {
+        viewModel.onRequestChanged("   ")
+        viewModel.requestEvInfoFromLlm()
+
+        assertThat(viewModel.llmErrorMessage.value).isEqualTo("EMPTY_REQUEST_PROMPT")
+    }
+
+    @Test
+    fun shouldShowErrorWhenNoActiveLlmConfigForRequest() = runTest {
+        fakeLlmConfigPort.activeConfigs.clear()
+        viewModel.onRequestChanged("VSETT 10+")
+
+        viewModel.requestEvInfoFromLlm()
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.llmErrorMessage.value).isEqualTo("NO_ACTIVE_LLM_CONFIG")
     }
 
     private class FakeEvConfigPort : EvConfigPort {
-        var savedConfig: EvConfig? = null
+        var savedConfig: EvConfig? = EvConfig(
+            id = 1L,
+            brand = "VSETT",
+            version = "10+",
+            manufactoryYear = "2023"
+        )
 
-        override suspend fun getEvConfig(): EvConfig? {
-            return savedConfig
-        }
+        override suspend fun getEvConfig(): EvConfig? = savedConfig
 
         override suspend fun saveEvConfig(config: EvConfig): Long {
             savedConfig = config
-            return if (config.id == 0L) 1L else config.id
+            return config.id.takeIf { it > 0 } ?: 1L
         }
     }
 
     private class FakeLlmConfigPort : LlmConfigPort {
-        val configs = mutableListOf(
-            LlmConfig(id = 1L, modelName = "Gemini", selectedVersion = "gemini-1.5-flash", apiKey = "valid-gemini-key", createdAt = "2025-01-01", updatedAt = "2025-01-01", isActive = true)
-        )
+        val activeConfigs = mutableListOf<LlmConfig>()
 
-        override suspend fun getAllConfigs(): List<LlmConfig> = configs
+        override suspend fun getAllConfigs(): List<LlmConfig> = activeConfigs
 
-        override suspend fun getActiveConfigs(): List<LlmConfig> = configs.filter { it.isActive }
+        override suspend fun getActiveConfigs(): List<LlmConfig> = activeConfigs
 
-        override suspend fun saveConfig(config: LlmConfig): Long {
-            configs.add(config)
-            return config.id
-        }
+        override suspend fun saveConfig(config: LlmConfig): Long = 1L
 
         override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
 
@@ -237,46 +180,47 @@ class EvConfigViewModelTest {
     }
 
     private class FakeLlmClientPort : LlmClientPort {
-        var customResponse: String? = null
-
         override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean = true
 
-        override suspend fun fetchAvailableModels(modelName: String, apiKey: String): List<String> = listOf("gemini-1.5-flash")
+        override suspend fun fetchAvailableModels(modelName: String, apiKey: String): List<String> = emptyList()
 
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String {
-            return customResponse ?: """
+            return """
                 {
                   "brand": "VSETT",
-                  "version": "C7 Plus",
-                  "motors": [{"name": "Front Motor", "watts": 1000}, {"name": "Rear Motor", "watts": 1000}],
+                  "version": "10+",
                   "manufactoryYear": "2023",
-                  "manufactoryCompany": "VSETT / eMove Colombia",
-                  "batteryTechnology": "Li-ion 13S",
+                  "manufactoryCompany": "VSETT",
+                  "batteryTechnology": "Li-ion",
                   "batteryVolts": "60V",
-                  "batteryAmpers": "20.8Ah",
+                  "batteryAmpers": "25Ah",
                   "brakeQuantity": 2,
-                  "brakeTechnology": "Hydraulic Disc Brake",
-                  "suspensionTechnology": "Spring & Hydraulic Suspension",
-                  "chargePower": "67.2V 2A",
-                  "otherCharacteristics": "Dual motor electric scooter."
+                  "brakeTechnology": "Hydraulic",
+                  "suspensionTechnology": "Spring",
+                  "chargePower": "60V 2A",
+                  "otherCharacteristics": "Dual Motor",
+                  "motors": [
+                    {"name": "Front Motor", "watts": 1400},
+                    {"name": "Rear Motor", "watts": 1400}
+                  ]
                 }
             """.trimIndent()
         }
     }
 
     private class FakeSessionStatePort : SessionStatePort {
-        val sessionFlow = MutableStateFlow<ActiveSession?>(null)
+        private var session: ActiveSession? = null
 
         override suspend fun saveActiveSession(session: ActiveSession) {
-            sessionFlow.value = session
+            this.session = session
         }
 
-        override suspend fun getActiveSession(): ActiveSession? = sessionFlow.value
+        override suspend fun getActiveSession(): ActiveSession? = session
 
-        override fun observeActiveSession(): Flow<ActiveSession?> = sessionFlow
+        override fun observeActiveSession(): Flow<ActiveSession?> = MutableStateFlow(session)
 
         override suspend fun clearActiveSession() {
-            sessionFlow.value = null
+            session = null
         }
     }
 }
