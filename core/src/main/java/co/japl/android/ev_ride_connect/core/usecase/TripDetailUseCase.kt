@@ -5,21 +5,27 @@ import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import javax.inject.Inject
 
-class TripDetailUseCase @Inject constructor(
+interface TripDetailUseCase {
+    suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>?
+    suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps>
+    suspend fun getTripById(tripId: Long): Trip?
+}
+
+class TripDetailUseCaseImpl @Inject constructor(
     private val tripDatabasePort: TripDatabasePort,
     private val getTripDetailsUseCase: GetTripDetailsUseCase,
     private val getGpsPointsByTripIdUseCase: GetGpsPointsByTripIdUseCase,
     private val getTripByIdUseCase: GetTripByIdUseCase
-) {
-    suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>? {
+) : TripDetailUseCase {
+    override suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>? {
         return getTripDetailsUseCase.execute(tripId)
     }
 
-    suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
+    override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
         return getGpsPointsByTripIdUseCase.execute(tripId)
     }
 
-    suspend fun getTripById(tripId: Long): Trip? {
+    override suspend fun getTripById(tripId: Long): Trip? {
         return getTripByIdUseCase.execute(tripId)
     }
 }

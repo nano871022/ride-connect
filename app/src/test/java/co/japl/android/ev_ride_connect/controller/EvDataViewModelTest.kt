@@ -4,7 +4,7 @@ import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.GetAllEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
@@ -35,7 +35,7 @@ class EvDataViewModelTest {
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 120L, batteryLevel = 70))
 
-        val evDataUseCase = EvDataUseCase(
+        val evDataUseCase = EvDataUseCaseImpl(
             fakeEvDataPort,
             fakeTripPort,
             GetAllEvDataUseCase(fakeEvDataPort),

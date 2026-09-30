@@ -16,7 +16,7 @@ class TripDetailUseCaseTest {
     @Before
     fun setUp() {
         fakeTripPort = FakeTripDatabasePort()
-        useCase = TripDetailUseCase(
+        useCase = TripDetailUseCaseImpl(
             fakeTripPort,
             GetTripDetailsUseCase(fakeTripPort),
             GetGpsPointsByTripIdUseCase(fakeTripPort),

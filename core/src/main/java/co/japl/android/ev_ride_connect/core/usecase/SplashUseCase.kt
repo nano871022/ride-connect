@@ -15,7 +15,11 @@ data class SplashPreloadData(
     val allLlmConfigs: List<LlmConfig>
 )
 
-class SplashUseCase @Inject constructor(
+interface SplashUseCase {
+    suspend fun preloadSplashData(): SplashPreloadData
+}
+
+class SplashUseCaseImpl @Inject constructor(
     private val evDataPort: EvDataPort,
     private val evConfigPort: EvConfigPort,
     private val llmConfigPort: LlmConfigPort,
@@ -23,8 +27,8 @@ class SplashUseCase @Inject constructor(
     private val getEvConfigUseCase: GetEvConfigUseCase,
     private val getActiveLlmConfigsUseCase: GetActiveLlmConfigsUseCase,
     private val getAllLlmConfigsUseCase: GetAllLlmConfigsUseCase
-) {
-    suspend fun preloadSplashData(): SplashPreloadData {
+) : SplashUseCase {
+    override suspend fun preloadSplashData(): SplashPreloadData {
         val latestEvData = getLatestEvDataUseCase.execute()
         val evConfig = getEvConfigUseCase.execute()
         val activeLlmConfigs = getActiveLlmConfigsUseCase.execute()

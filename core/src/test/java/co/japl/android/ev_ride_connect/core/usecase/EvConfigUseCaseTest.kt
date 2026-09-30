@@ -28,7 +28,7 @@ class EvConfigUseCaseTest {
         fakeSessionStatePort = FakeSessionStatePort()
 
         val fetchEvInfoUseCase = FetchEvInfoUseCase(fakeLlmClientPort)
-        useCase = EvConfigUseCase(
+        useCase = EvConfigUseCaseImpl(
             fakeEvConfigPort,
             fakeLlmConfigPort,
             fakeLlmClientPort,

@@ -18,7 +18,7 @@ import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateOptimalBatteryPercentageUseCase
-import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCase
+import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
@@ -83,7 +83,7 @@ class DashboardScreenScreenshotTest {
         }
 
         val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
-        val dashboardUseCase = DashboardUseCase(
+        val dashboardUseCase = DashboardUseCaseImpl(
             fakeEvDataPort,
             fakeEvConfigPort,
             fakeLlmConfigPort,

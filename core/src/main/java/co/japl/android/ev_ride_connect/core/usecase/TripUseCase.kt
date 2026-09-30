@@ -14,7 +14,37 @@ import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class TripUseCase @Inject constructor(
+interface TripUseCase {
+    suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long
+    suspend fun endTrip()
+    suspend fun pauseTrip()
+    suspend fun resumeTrip()
+    fun calculateTripSummary(
+        distanceKm: Double,
+        durationSeconds: Long,
+        gpsPointsCount: Int,
+        batteryConsumed: Int
+    ): TripSummary
+    fun calculateCo2Saved(distanceKm: Double): Double
+    fun calculateConsumption(
+        batteryConsumedPercentage: Int,
+        batteryVoltage: Double,
+        batteryAmperes: Double,
+        distanceKm: Double
+    ): Double
+    fun calculateDynamicBatteryPercentage(batteryInputValue: Double, config: EvConfig?): Short
+    suspend fun getActiveSession(): ActiveSession?
+    fun observeActiveSession(): Flow<ActiveSession?>
+    suspend fun saveActiveSession(session: ActiveSession)
+    suspend fun getEvConfig(): EvConfig?
+    suspend fun getLatestEvData(): EvData?
+    suspend fun saveEvData(evData: EvData): Long
+    suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>?
+    suspend fun getAllTrips(): List<Trip>
+    suspend fun getTripsByDate(startDateMs: Long, endDateMs: Long): List<Trip>
+}
+
+class TripUseCaseImpl @Inject constructor(
     private val tripDatabasePort: TripDatabasePort,
     private val sessionStatePort: SessionStatePort,
     private val evConfigPort: EvConfigPort,
@@ -36,24 +66,24 @@ class TripUseCase @Inject constructor(
     private val getActiveSessionUseCase: GetActiveSessionUseCase,
     private val observeActiveSessionUseCase: ObserveActiveSessionUseCase,
     private val saveActiveSessionUseCase: SaveActiveSessionUseCase
-) {
-    suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
+) : TripUseCase {
+    override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
         return saveTripUseCase.execute(trip, gpsPoints)
     }
 
-    suspend fun endTrip() {
+    override suspend fun endTrip() {
         endTripUseCase.execute()
     }
 
-    suspend fun pauseTrip() {
+    override suspend fun pauseTrip() {
         pauseTripUseCase.execute()
     }
 
-    suspend fun resumeTrip() {
+    override suspend fun resumeTrip() {
         resumeTripUseCase.execute()
     }
 
-    fun calculateTripSummary(
+    override fun calculateTripSummary(
         distanceKm: Double,
         durationSeconds: Long,
         gpsPointsCount: Int,
@@ -67,11 +97,11 @@ class TripUseCase @Inject constructor(
         )
     }
 
-    fun calculateCo2Saved(distanceKm: Double): Double {
+    override fun calculateCo2Saved(distanceKm: Double): Double {
         return calculateCo2SavedUseCase.execute(distanceKm)
     }
 
-    fun calculateConsumption(
+    override fun calculateConsumption(
         batteryConsumedPercentage: Int,
         batteryVoltage: Double,
         batteryAmperes: Double,
@@ -85,43 +115,43 @@ class TripUseCase @Inject constructor(
         )
     }
 
-    fun calculateDynamicBatteryPercentage(batteryInputValue: Double, config: EvConfig?): Short {
+    override fun calculateDynamicBatteryPercentage(batteryInputValue: Double, config: EvConfig?): Short {
         return calculateDynamicBatteryPercentageUseCase.execute(batteryInputValue, config)
     }
 
-    suspend fun getActiveSession(): ActiveSession? {
+    override suspend fun getActiveSession(): ActiveSession? {
         return getActiveSessionUseCase.execute()
     }
 
-    fun observeActiveSession(): Flow<ActiveSession?> {
+    override fun observeActiveSession(): Flow<ActiveSession?> {
         return observeActiveSessionUseCase.execute()
     }
 
-    suspend fun saveActiveSession(session: ActiveSession) {
+    override suspend fun saveActiveSession(session: ActiveSession) {
         saveActiveSessionUseCase.execute(session)
     }
 
-    suspend fun getEvConfig(): EvConfig? {
+    override suspend fun getEvConfig(): EvConfig? {
         return getEvConfigUseCase.execute()
     }
 
-    suspend fun getLatestEvData(): EvData? {
+    override suspend fun getLatestEvData(): EvData? {
         return getLatestEvDataUseCase.execute()
     }
 
-    suspend fun saveEvData(evData: EvData): Long {
+    override suspend fun saveEvData(evData: EvData): Long {
         return saveEvDataUseCase.execute(evData)
     }
 
-    suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>? {
+    override suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>? {
         return getTripDetailsUseCase.execute(tripId)
     }
 
-    suspend fun getAllTrips(): List<Trip> {
+    override suspend fun getAllTrips(): List<Trip> {
         return tripDatabasePort.getAllTrips()
     }
 
-    suspend fun getTripsByDate(startDateMs: Long, endDateMs: Long): List<Trip> {
+    override suspend fun getTripsByDate(startDateMs: Long, endDateMs: Long): List<Trip> {
         return getTripsByDateUseCase.execute(startDateMs, endDateMs)
     }
 }

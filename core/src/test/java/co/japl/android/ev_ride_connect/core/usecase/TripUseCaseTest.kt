@@ -38,7 +38,7 @@ class TripUseCaseTest {
         val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
         val getEvConfigUseCase = GetEvConfigUseCase(fakeEvConfigPort)
 
-        useCase = TripUseCase(
+        useCase = TripUseCaseImpl(
             fakeTripPort,
             fakeSessionPort,
             fakeEvConfigPort,

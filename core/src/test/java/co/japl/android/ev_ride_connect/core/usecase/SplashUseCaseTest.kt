@@ -24,7 +24,7 @@ class SplashUseCaseTest {
         fakeEvConfigPort = FakeEvConfigPort()
         fakeLlmConfigPort = FakeLlmConfigPort()
 
-        useCase = SplashUseCase(
+        useCase = SplashUseCaseImpl(
             fakeEvDataPort,
             fakeEvConfigPort,
             fakeLlmConfigPort,

@@ -15,7 +15,7 @@ class BackupUseCaseTest {
     @Before
     fun setUp() {
         fakeBackupPort = FakeGoogleDriveBackupPort()
-        useCase = BackupUseCase(
+        useCase = BackupUseCaseImpl(
             fakeBackupPort,
             GetBackupConfigUseCase(fakeBackupPort),
             PerformManualBackupUseCase(fakeBackupPort),

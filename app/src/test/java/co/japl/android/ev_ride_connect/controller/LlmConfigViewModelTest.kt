@@ -6,7 +6,7 @@ import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.usecase.DeleteLlmConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.FetchAvailableLlmModelsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.LlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.LlmConfigUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.SaveLlmConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ToggleLlmConfigStatusUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ValidateLlmApiKeyUseCase
@@ -34,7 +34,7 @@ class LlmConfigViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeLlmClientPort = FakeLlmClientPort()
-        val llmConfigUseCase = LlmConfigUseCase(
+        val llmConfigUseCase = LlmConfigUseCaseImpl(
             fakeLlmConfigPort,
             fakeLlmClientPort,
             GetAllLlmConfigsUseCase(fakeLlmConfigPort),

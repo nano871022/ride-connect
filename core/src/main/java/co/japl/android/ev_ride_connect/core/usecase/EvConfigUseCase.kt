@@ -9,7 +9,22 @@ import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import javax.inject.Inject
 
-class EvConfigUseCase @Inject constructor(
+interface EvConfigUseCase {
+    suspend fun getEvConfig(): EvConfig?
+    suspend fun saveEvConfig(config: EvConfig): Long
+    suspend fun getActiveLlmConfigs(): List<LlmConfig>
+    suspend fun fetchEvInfo(
+        prompt: String,
+        llmConfig: LlmConfig,
+        currentConfig: EvConfig,
+        promptTemplate: String? = null
+    ): EvConfig
+    suspend fun getActiveSession(): ActiveSession?
+    suspend fun saveActiveSession(session: ActiveSession)
+    suspend fun clearActiveSession()
+}
+
+class EvConfigUseCaseImpl @Inject constructor(
     private val evConfigPort: EvConfigPort,
     private val llmConfigPort: LlmConfigPort,
     private val llmClientPort: LlmClientPort,
@@ -21,37 +36,37 @@ class EvConfigUseCase @Inject constructor(
     private val getActiveSessionUseCase: GetActiveSessionUseCase,
     private val saveActiveSessionUseCase: SaveActiveSessionUseCase,
     private val clearActiveSessionUseCase: ClearActiveSessionUseCase
-) {
-    suspend fun getEvConfig(): EvConfig? {
+) : EvConfigUseCase {
+    override suspend fun getEvConfig(): EvConfig? {
         return getEvConfigUseCase.execute()
     }
 
-    suspend fun saveEvConfig(config: EvConfig): Long {
+    override suspend fun saveEvConfig(config: EvConfig): Long {
         return saveEvConfigUseCase.execute(config)
     }
 
-    suspend fun getActiveLlmConfigs(): List<LlmConfig> {
+    override suspend fun getActiveLlmConfigs(): List<LlmConfig> {
         return getActiveLlmConfigsUseCase.execute()
     }
 
-    suspend fun fetchEvInfo(
+    override suspend fun fetchEvInfo(
         prompt: String,
         llmConfig: LlmConfig,
         currentConfig: EvConfig,
-        promptTemplate: String? = null
+        promptTemplate: String?
     ): EvConfig {
         return fetchEvInfoUseCase.execute(prompt, llmConfig, currentConfig, promptTemplate)
     }
 
-    suspend fun getActiveSession(): ActiveSession? {
+    override suspend fun getActiveSession(): ActiveSession? {
         return getActiveSessionUseCase.execute()
     }
 
-    suspend fun saveActiveSession(session: ActiveSession) {
+    override suspend fun saveActiveSession(session: ActiveSession) {
         saveActiveSessionUseCase.execute(session)
     }
 
-    suspend fun clearActiveSession() {
+    override suspend fun clearActiveSession() {
         clearActiveSessionUseCase.execute()
     }
 }

@@ -19,7 +19,7 @@ class EvDataUseCaseTest {
     fun setUp() {
         fakeEvDataPort = FakeEvDataPort()
         fakeTripPort = FakeTripDatabasePort()
-        useCase = EvDataUseCase(
+        useCase = EvDataUseCaseImpl(
             fakeEvDataPort,
             fakeTripPort,
             GetAllEvDataUseCase(fakeEvDataPort),

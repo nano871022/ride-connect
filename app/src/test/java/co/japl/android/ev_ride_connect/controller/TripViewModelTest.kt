@@ -31,7 +31,7 @@ import co.japl.android.ev_ride_connect.core.usecase.ResumeTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
-import co.japl.android.ev_ride_connect.core.usecase.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.TripUseCaseImpl
 import co.japl.android.ev_ride_connect.ui.HistoryFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -79,7 +79,7 @@ class TripViewModelTest {
         val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
         val getEvConfigUseCase = GetEvConfigUseCase(fakeEvConfigPort)
 
-        val tripUseCase = TripUseCase(
+        val tripUseCase = TripUseCaseImpl(
             fakeTripPort,
             fakeSessionPort,
             fakeEvConfigPort,

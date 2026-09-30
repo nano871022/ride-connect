@@ -34,7 +34,7 @@ class DashboardUseCaseTest {
 
         val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
 
-        useCase = DashboardUseCase(
+        useCase = DashboardUseCaseImpl(
             fakeEvDataPort,
             fakeEvConfigPort,
             fakeLlmConfigPort,

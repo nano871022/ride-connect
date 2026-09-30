@@ -18,7 +18,7 @@ class LlmConfigUseCaseTest {
     fun setUp() {
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeLlmClientPort = FakeLlmClientPort()
-        useCase = LlmConfigUseCase(
+        useCase = LlmConfigUseCaseImpl(
             fakeLlmConfigPort,
             fakeLlmClientPort,
             GetAllLlmConfigsUseCase(fakeLlmConfigPort),

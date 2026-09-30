@@ -13,7 +13,25 @@ import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class DashboardUseCase @Inject constructor(
+interface DashboardUseCase {
+    suspend fun getLatestEvData(): EvData?
+    suspend fun saveEvData(evData: EvData): Long
+    suspend fun getEvConfig(): EvConfig?
+    suspend fun getActiveLlmConfigs(): List<LlmConfig>
+    fun observeActiveSession(): Flow<ActiveSession?>
+    fun calculateDynamicBatteryPercentage(batteryInputValue: Double, config: EvConfig?): Short
+    fun calculateOptimalBatteryPercentage(cyclesUsed: Int): Double
+    fun calculateConsumption(
+        batteryConsumedPercentage: Int,
+        batteryVoltage: Double,
+        batteryAmperes: Double,
+        distanceKm: Double
+    ): Double
+    suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryLevel: Short): Long
+    suspend fun getAllTrips(): List<Trip>
+}
+
+class DashboardUseCaseImpl @Inject constructor(
     private val evDataPort: EvDataPort,
     private val evConfigPort: EvConfigPort,
     private val llmConfigPort: LlmConfigPort,
@@ -29,36 +47,36 @@ class DashboardUseCase @Inject constructor(
     private val calculateConsumptionUseCase: CalculateConsumptionUseCase,
     private val updateOdometerUseCase: UpdateOdometerUseCase,
     private val getAllTripsUseCase: GetAllTripsUseCase
-) {
-    suspend fun getLatestEvData(): EvData? {
+) : DashboardUseCase {
+    override suspend fun getLatestEvData(): EvData? {
         return getLatestEvDataUseCase.execute()
     }
 
-    suspend fun saveEvData(evData: EvData): Long {
+    override suspend fun saveEvData(evData: EvData): Long {
         return saveEvDataUseCase.execute(evData)
     }
 
-    suspend fun getEvConfig(): EvConfig? {
+    override suspend fun getEvConfig(): EvConfig? {
         return getEvConfigUseCase.execute()
     }
 
-    suspend fun getActiveLlmConfigs(): List<LlmConfig> {
+    override suspend fun getActiveLlmConfigs(): List<LlmConfig> {
         return getActiveLlmConfigsUseCase.execute()
     }
 
-    fun observeActiveSession(): Flow<ActiveSession?> {
+    override fun observeActiveSession(): Flow<ActiveSession?> {
         return observeActiveSessionUseCase.execute()
     }
 
-    fun calculateDynamicBatteryPercentage(batteryInputValue: Double, config: EvConfig?): Short {
+    override fun calculateDynamicBatteryPercentage(batteryInputValue: Double, config: EvConfig?): Short {
         return calculateDynamicBatteryPercentageUseCase.execute(batteryInputValue, config)
     }
 
-    fun calculateOptimalBatteryPercentage(cyclesUsed: Int): Double {
+    override fun calculateOptimalBatteryPercentage(cyclesUsed: Int): Double {
         return calculateOptimalBatteryPercentageUseCase.execute(cyclesUsed)
     }
 
-    fun calculateConsumption(
+    override fun calculateConsumption(
         batteryConsumedPercentage: Int,
         batteryVoltage: Double,
         batteryAmperes: Double,
@@ -72,11 +90,11 @@ class DashboardUseCase @Inject constructor(
         )
     }
 
-    suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryLevel: Short): Long {
+    override suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryLevel: Short): Long {
         return updateOdometerUseCase.execute(evCode, newKm, currentBatteryLevel)
     }
 
-    suspend fun getAllTrips(): List<Trip> {
+    override suspend fun getAllTrips(): List<Trip> {
         return getAllTripsUseCase.execute()
     }
 }

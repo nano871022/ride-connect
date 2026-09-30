@@ -8,7 +8,7 @@ import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.usecase.ClearActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.EvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.EvConfigUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
@@ -47,7 +47,7 @@ class EvConfigViewModelTest {
         fakeSessionStatePort = FakeSessionStatePort()
 
         val fetchEvInfoUseCase = FetchEvInfoUseCase(fakeLlmClientPort)
-        val evConfigUseCase = EvConfigUseCase(
+        val evConfigUseCase = EvConfigUseCaseImpl(
             fakeEvConfigPort,
             fakeLlmConfigPort,
             fakeLlmClientPort,
