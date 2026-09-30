@@ -44,12 +44,12 @@ class ScooterTrackingTracker(
             val session = ActiveSession(
                 isRideActive = true,
                 isPaused = false,
-                startTimeMillis = segmentStartTimeMillis,
-                currentDurationMillis = 0L,
+                startTimeMs = segmentStartTimeMillis,
+               // currentDurationMillis = 0L,
                 currentDistanceKm = 0.0,
-                cachedTelemetryCount = 0,
-                lastUpdatedTmst = System.currentTimeMillis(),
-                motionState = MotionState.STOPPED
+                //cachedTelemetryCount = 0,
+                //lastUpdatedTmst = System.currentTimeMillis(),
+                //motionState = MotionState.STOPPED
             )
             sessionStatePort?.saveActiveSession(session)
         }

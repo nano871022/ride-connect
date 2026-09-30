@@ -16,11 +16,13 @@ class CalculateTripSummaryUseCase @Inject constructor(
         val locationCount = points.size
 
         return TripSummary(
-            totalDistanceKm = trip.distance,
-            averageSpeedKmH = trip.averageSpeed,
-            totalGpsLocationsCount = locationCount,
-            totalDurationSeconds = trip.timeTrip,
-            batteryConsumedPercentage = batteryConsumed
+            distanceKm = trip.distance,
+            durationSeconds = trip.timeTrip,
+            avgSpeedKmH = trip.avgSpeed,
+            maxSpeedKmH = trip.maxSpeed,
+            batteryConsumedPct = trip.batteryConsumed,
+            co2SavedGrams = trip.co2SavedGrams,
+            estimatedWhConsumed = trip.estimatedConsumptionWh
         )
     }
 
@@ -28,7 +30,10 @@ class CalculateTripSummaryUseCase @Inject constructor(
         distanceKm: Double,
         durationSeconds: Long,
         gpsPointsCount: Int,
-        batteryConsumed: Int = 0
+        batteryConsumed: Int = 0,
+        maxSpeed: Double = 0.0,
+        co2SavedGrams: Double = 0.0,
+        estimatedConsumptionWh: Double = 0.0
     ): TripSummary {
         val avgSpeed = if (durationSeconds > 0) {
             (distanceKm / (durationSeconds / 3600.0))
@@ -36,11 +41,14 @@ class CalculateTripSummaryUseCase @Inject constructor(
             0.0
         }
         return TripSummary(
-            totalDistanceKm = distanceKm,
-            averageSpeedKmH = avgSpeed,
-            totalGpsLocationsCount = gpsPointsCount,
-            totalDurationSeconds = durationSeconds,
-            batteryConsumedPercentage = batteryConsumed
+            distanceKm = distanceKm,
+            durationSeconds = durationSeconds,
+            avgSpeedKmH = avgSpeed,
+            maxSpeedKmH = maxSpeed,
+            batteryConsumedPct = batteryConsumed,
+            co2SavedGrams = co2SavedGrams,
+            estimatedWhConsumed = estimatedConsumptionWh
+
         )
     }
 }

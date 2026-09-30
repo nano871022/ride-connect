@@ -78,7 +78,7 @@ object EvConfigMapper {
                     suspensionTechnology = suspensionTechnology,
                     chargePower = chargePower,
                     otherCharacteristics = otherCharacteristics,
-                    imageUrl = imageUrl,
+                  //  imageUrl = imageUrl,
                     maxVoltage = maxVoltage,
                     minVoltage = minVoltage
                 )
@@ -142,7 +142,7 @@ object EvConfigMapper {
                 suspensionTechnology = suspensionTechnology,
                 chargePower = chargePower,
                 otherCharacteristics = otherCharacteristics,
-                imageUrl = imageUrl,
+               // imageUrl = imageUrl,
                 maxVoltage = maxVoltage,
                 minVoltage = minVoltage
             )

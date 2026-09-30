@@ -314,7 +314,7 @@ class ScooterTrackingService : Service() {
                 val finalSession = currentSession.copy(
                     pendingLlmResponse = "ERROR:${e.localizedMessage ?: "FAILED"}",
                     isLlmProcessing = false,
-                    lastUpdatedTmst = System.currentTimeMillis()
+                    startTimeMs = System.currentTimeMillis()
                 )
                 sessionStatePort.saveActiveSession(finalSession)
             } finally {

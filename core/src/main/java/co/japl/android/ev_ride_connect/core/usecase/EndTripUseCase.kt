@@ -12,13 +12,11 @@ class EndTripUseCase @Inject constructor(
             val updated = existing.copy(
                 isRideActive = false,
                 isPaused = false,
-                lastUpdatedTmst = System.currentTimeMillis()
+                startTimeMs = System.currentTimeMillis()
             )
-            if (updated.pendingLlmPrompt == null && !updated.isLlmProcessing) {
-                sessionStatePort.clearActiveSession()
-            } else {
-                sessionStatePort.saveActiveSession(updated)
-            }
+            sessionStatePort.saveActiveSession(updated)
+
+            sessionStatePort.clearActiveSession()
         }
     }
 }

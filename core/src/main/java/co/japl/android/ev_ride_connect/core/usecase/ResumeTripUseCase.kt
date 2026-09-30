@@ -12,7 +12,7 @@ class ResumeTripUseCase @Inject constructor(
         if (existing.isRideActive && existing.isPaused) {
             val updated = existing.copy(
                 isPaused = false,
-                lastUpdatedTmst = System.currentTimeMillis()
+                startTimeMs = System.currentTimeMillis()
             )
             sessionStatePort.saveActiveSession(updated)
         }
