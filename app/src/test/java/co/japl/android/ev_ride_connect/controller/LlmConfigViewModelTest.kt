@@ -6,6 +6,7 @@ import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.usecase.DeleteLlmConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.FetchAvailableLlmModelsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.LlmConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveLlmConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ToggleLlmConfigStatusUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ValidateLlmApiKeyUseCase
@@ -33,7 +34,9 @@ class LlmConfigViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeLlmClientPort = FakeLlmClientPort()
-        viewModel = LlmConfigViewModel(
+        val llmConfigUseCase = LlmConfigUseCase(
+            fakeLlmConfigPort,
+            fakeLlmClientPort,
             GetAllLlmConfigsUseCase(fakeLlmConfigPort),
             SaveLlmConfigUseCase(fakeLlmConfigPort),
             DeleteLlmConfigUseCase(fakeLlmConfigPort),
@@ -41,6 +44,7 @@ class LlmConfigViewModelTest {
             ValidateLlmApiKeyUseCase(fakeLlmClientPort),
             FetchAvailableLlmModelsUseCase(fakeLlmClientPort)
         )
+        viewModel = LlmConfigViewModel(llmConfigUseCase)
     }
 
     @After

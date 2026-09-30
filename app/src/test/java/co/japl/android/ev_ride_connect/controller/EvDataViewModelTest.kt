@@ -1,8 +1,13 @@
 package co.japl.android.ev_ride_connect.controller
 
 import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
+import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -19,17 +24,25 @@ class EvDataViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeEvDataPort: FakeEvDataPort
+    private lateinit var fakeTripPort: FakeTripDatabasePort
     private lateinit var viewModel: EvDataViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeEvDataPort = FakeEvDataPort()
+        fakeTripPort = FakeTripDatabasePort()
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
         fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 120L, batteryLevel = 70))
-        viewModel = EvDataViewModel(
-            GetAllEvDataUseCase(fakeEvDataPort)
+
+        val evDataUseCase = EvDataUseCase(
+            fakeEvDataPort,
+            fakeTripPort,
+            GetAllEvDataUseCase(fakeEvDataPort),
+            GetAllTripsUseCase(fakeTripPort),
+            GetTripsByDateUseCase(fakeTripPort)
         )
+        viewModel = EvDataViewModel(evDataUseCase)
     }
 
     @After
@@ -61,5 +74,19 @@ class EvDataViewModelTest {
             savedList.add(evData)
             return savedList.size.toLong()
         }
+    }
+
+    private class FakeTripDatabasePort : TripDatabasePort {
+        val trips = mutableListOf<Trip>()
+
+        override suspend fun getAllTrips(): List<Trip> = trips
+        override suspend fun saveTrip(trip: Trip, points: List<co.japl.android.ev_ride_connect.core.domain.TripGps>): Long = 1L
+        override suspend fun getTripById(tripId: Long): Trip? = null
+        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.core.domain.TripGps>()
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long) = trips
+        override suspend fun getTotalTripsCount() = 0
+        override suspend fun getTotalDistanceKm() = 0.0
+        override suspend fun getChargeDetectionsCount(threshold: Int) = 0
+        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
     }
 }

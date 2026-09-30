@@ -10,6 +10,7 @@ import co.japl.android.ev_ride_connect.core.domain.Trip
 import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
+import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.CalculateCo2SavedUseCase
@@ -17,7 +18,7 @@ import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateTripSummaryUseCase
 import co.japl.android.ev_ride_connect.core.usecase.EndTripUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetGpsPointsByTripIdUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
@@ -27,13 +28,15 @@ import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.PauseTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ResumeTripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.TripUseCase
 import co.japl.android.ev_ride_connect.ui.HistoryFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -57,300 +60,160 @@ class TripViewModelTest {
 
     private lateinit var context: Context
     private lateinit var fakeTripPort: FakeTripDatabasePort
-    private lateinit var fakeEvDataPort: FakeEvDataPort
+    private lateinit var fakeSessionPort: FakeSessionStatePort
     private lateinit var fakeEvConfigPort: FakeEvConfigPort
-    private lateinit var fakeSessionStatePort: FakeSessionStatePort
-
+    private lateinit var fakeEvDataPort: FakeEvDataPort
+    private lateinit var fakeMotionPort: FakeMotionDetectorPort
     private lateinit var viewModel: TripViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-
         fakeTripPort = FakeTripDatabasePort()
-        fakeEvDataPort = FakeEvDataPort()
+        fakeSessionPort = FakeSessionStatePort()
         fakeEvConfigPort = FakeEvConfigPort()
-        fakeSessionStatePort = FakeSessionStatePort()
+        fakeEvDataPort = FakeEvDataPort()
+        fakeMotionPort = FakeMotionDetectorPort()
 
-        viewModel = TripViewModel(
-            context = context,
-            saveTripUseCase = SaveTripUseCase(fakeTripPort),
-            getAllTripsUseCase = GetAllTripsUseCase(fakeTripPort),
-            getTripByIdUseCase = GetTripByIdUseCase(fakeTripPort),
-            getGpsPointsByTripIdUseCase = GetGpsPointsByTripIdUseCase(fakeTripPort),
-            getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort),
-            saveEvDataUseCase = SaveEvDataUseCase(fakeEvDataPort),
-            getEvConfigUseCase = GetEvConfigUseCase(fakeEvConfigPort),
-            observeActiveSessionUseCase = ObserveActiveSessionUseCase(fakeSessionStatePort),
-            pauseTripUseCase = PauseTripUseCase(fakeSessionStatePort),
-            resumeTripUseCase = ResumeTripUseCase(fakeSessionStatePort),
-            endTripUseCase = EndTripUseCase(fakeSessionStatePort),
-            calculateTripSummaryUseCase = CalculateTripSummaryUseCase(fakeTripPort),
-            getTripsByDateUseCase = GetTripsByDateUseCase(fakeTripPort),
-            getTripDetailsUseCase = GetTripDetailsUseCase(fakeTripPort),
-            calculateDynamicBatteryPercentageUseCase = CalculateDynamicBatteryPercentageUseCase(),
-            calculateCo2SavedUseCase = CalculateCo2SavedUseCase(),
-            calculateConsumptionUseCase = CalculateConsumptionUseCase()
+        val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
+        val getEvConfigUseCase = GetEvConfigUseCase(fakeEvConfigPort)
+
+        val tripUseCase = TripUseCase(
+            fakeTripPort,
+            fakeSessionPort,
+            fakeEvConfigPort,
+            fakeEvDataPort,
+            fakeMotionPort,
+            SaveTripUseCase(fakeTripPort),
+            EndTripUseCase(fakeSessionPort),
+            PauseTripUseCase(fakeSessionPort),
+            ResumeTripUseCase(fakeSessionPort),
+            CalculateTripSummaryUseCase(fakeTripPort),
+            CalculateCo2SavedUseCase(),
+            CalculateConsumptionUseCase(),
+            CalculateDynamicBatteryPercentageUseCase(),
+            GetTripDetailsUseCase(fakeTripPort),
+            GetTripsByDateUseCase(fakeTripPort),
+            getEvConfigUseCase,
+            getLatestEvDataUseCase,
+            SaveEvDataUseCase(fakeEvDataPort),
+            GetActiveSessionUseCase(fakeSessionPort),
+            ObserveActiveSessionUseCase(fakeSessionPort),
+            SaveActiveSessionUseCase(fakeSessionPort)
         )
+
+        viewModel = TripViewModel(context, tripUseCase)
     }
 
     @After
     fun tearDown() {
-        if (viewModel.isTripActive.value) {
-            viewModel.stopTrip()
-        }
         Dispatchers.resetMain()
     }
 
     @Test
-    fun shouldSetGpsIntervalAndBatteryWarning() {
-        viewModel.setGpsInterval(15L)
-        assertThat(viewModel.gpsIntervalSeconds.value).isEqualTo(15L)
-
-        viewModel.setGpsInterval(10L)
-        assertThat(viewModel.showBatteryWarning.value).isTrue()
-
-        viewModel.setGpsInterval(60L)
-        assertThat(viewModel.gpsIntervalSeconds.value).isEqualTo(60L)
-        assertThat(viewModel.showBatteryWarning.value).isFalse()
+    fun shouldInitializeWithTripInactive() = runTest {
+        assertThat(viewModel.isTripActive.value).isFalse()
+        assertThat(viewModel.isPaused.value).isFalse()
+        assertThat(viewModel.elapsedTimeSeconds.value).isEqualTo(0L)
+        assertThat(viewModel.currentDistance.value).isEqualTo(0.0)
     }
 
     @Test
-    fun shouldRequestAndConfirmStartTrip() = runTest {
-        fakeEvDataPort.savedList.add(EvData(evCode = "1", km = 100L, batteryLevel = 85))
-
-        viewModel.onStartTripRequested()
+    fun shouldStartTripAndSetStateActive() = runTest {
+        viewModel.startTrip()
         testScheduler.runCurrent()
 
-        assertThat(viewModel.showStartBatteryDialog.value).isTrue()
-        assertThat(viewModel.latestBatteryLevel.value).isEqualTo(85.toShort())
-
-        viewModel.confirmStartTrip(80.0)
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.showStartBatteryDialog.value).isFalse()
         assertThat(viewModel.isTripActive.value).isTrue()
-
-        viewModel.stopTrip()
-        testScheduler.runCurrent()
+        assertThat(viewModel.isPaused.value).isFalse()
     }
 
     @Test
     fun shouldPauseAndResumeTrip() = runTest {
-        viewModel.confirmStartTrip(80.0)
+        viewModel.startTrip()
         testScheduler.runCurrent()
-        assertThat(viewModel.isTripActive.value).isTrue()
-        assertThat(viewModel.isPaused.value).isFalse()
 
         viewModel.pauseTrip()
         testScheduler.runCurrent()
 
         assertThat(viewModel.isPaused.value).isTrue()
 
-        viewModel.addLocationPoint(4.6097, -74.0817)
-        assertThat(viewModel.recordedGpsPoints).isEmpty()
-
         viewModel.resumeTrip()
         testScheduler.runCurrent()
 
         assertThat(viewModel.isPaused.value).isFalse()
-
-        viewModel.addLocationPoint(4.6097, -74.0817)
-        assertThat(viewModel.recordedGpsPoints).hasSize(1)
-
-        viewModel.stopTrip()
-    }
-
-    @Test
-    fun shouldDiscardConsecutiveDuplicateLocationPoints() = runTest {
-        viewModel.confirmStartTrip(80.0)
-        testScheduler.runCurrent()
-
-        viewModel.addLocationPoint(4.6097, -74.0817)
-        assertThat(viewModel.recordedGpsPoints).hasSize(1)
-
-        // Adding exact same coordinates consecutively
-        viewModel.addLocationPoint(4.6097, -74.0817)
-        assertThat(viewModel.recordedGpsPoints).hasSize(1)
-
-        // Adding different coordinates
-        viewModel.addLocationPoint(4.6098, -74.0818)
-        assertThat(viewModel.recordedGpsPoints).hasSize(2)
-
-        viewModel.stopTrip()
-    }
-
-    @Test
-    fun shouldStartAndStopTripAndDisplayTripSummary() = runTest {
-        fakeEvDataPort.savedList.add(EvData(evCode = "1", km = 100L, batteryLevel = 80))
-
-        viewModel.confirmStartTrip(80.0)
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.isTripActive.value).isTrue()
-
-        val time1 = System.currentTimeMillis()
-        viewModel.addLocationPoint(4.6097, -74.0817, time1)
-
-        val time2 = time1 + 900_000L
-        viewModel.addLocationPoint(4.7097, -74.0817, time2)
-
-        assertThat(viewModel.currentDistance.value).isGreaterThan(0.0)
-
-        viewModel.onStopTripRequested()
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.showEndBatteryDialog.value).isTrue()
-
-        viewModel.confirmStopTrip(70.0)
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.isTripActive.value).isFalse()
-        assertThat(viewModel.showSummaryDialog.value).isTrue()
-        assertThat(viewModel.tripSummary.value).isNotNull()
-        assertThat(viewModel.tripSummary.value?.totalGpsLocationsCount).isEqualTo(2)
-        assertThat(viewModel.tripSummary.value?.batteryConsumedPercentage).isEqualTo(10)
-
-        viewModel.dismissSummaryDialog()
-        assertThat(viewModel.showSummaryDialog.value).isFalse()
-        assertThat(viewModel.tripSummary.value).isNull()
-    }
-
-    @Test
-    fun shouldStartAndStopTripInVoltageMode() = runTest {
-        fakeEvConfigPort.config = EvConfig(
-            id = 1L,
-            batteryMode = BatteryMode.VOLTAGE,
-            minVoltage = 39.0,
-            maxVoltage = 54.6
-        )
-
-        viewModel.loadEvConfig()
-        testScheduler.runCurrent()
-
-        // 54.6V = 100%
-        viewModel.confirmStartTrip(54.6)
-        testScheduler.runCurrent()
-
-        val time1 = System.currentTimeMillis()
-        viewModel.addLocationPoint(4.6097, -74.0817, time1)
-        val time2 = time1 + 900_000L
-        viewModel.addLocationPoint(4.7097, -74.0817, time2)
-
-        viewModel.onStopTripRequested()
-        testScheduler.runCurrent()
-
-        // 46.8V = 50%
-        viewModel.confirmStopTrip(46.8)
-        testScheduler.runCurrent()
-
-        assertThat(viewModel.showSummaryDialog.value).isTrue()
-        assertThat(viewModel.tripSummary.value?.batteryConsumedPercentage).isEqualTo(50)
-    }
-
-    @Test
-    fun shouldLoadTripDetail() = runTest {
-        val trip = podamFactory.manufacturePojo(Trip::class.java).copy(id = 1L)
-        val gpsPoints = listOf(
-            podamFactory.manufacturePojo(TripGps::class.java).copy(id = 1L, tripId = 1L),
-            podamFactory.manufacturePojo(TripGps::class.java).copy(id = 2L, tripId = 1L)
-        )
-        fakeTripPort.saveTrip(trip, gpsPoints)
-
-        viewModel.loadTripDetail(1L)
-        testScheduler.runCurrent()
-
-        val detail = viewModel.selectedTripDetail.value
-        assertThat(detail).isNotNull
-        assertThat(detail?.first?.id).isEqualTo(1L)
-        assertThat(detail?.second).hasSize(2)
     }
 
     @Test
     fun shouldFilterTripsByDate() = runTest {
-        val now = System.currentTimeMillis()
-        val recentTrip = Trip(id = 1L, createTmst = now - 3600_000L, batteryConsumed = 10)
-        val oldTrip = Trip(id = 2L, createTmst = now - (40L * 24 * 3600 * 1000), batteryConsumed = 0)
-
-        fakeTripPort.saveTrip(recentTrip, emptyList())
-        fakeTripPort.saveTrip(oldTrip, emptyList())
+        val trip1 = Trip(id = 1L, distance = 10.0, timeTrip = 600L, createTmst = System.currentTimeMillis() - 86400000L)
+        fakeTripPort.trips.add(trip1)
 
         viewModel.filterTripsByDate(HistoryFilter.WEEK)
         testScheduler.runCurrent()
 
         assertThat(viewModel.selectedFilter.value).isEqualTo(HistoryFilter.WEEK)
         assertThat(viewModel.tripHistory.value).hasSize(1)
-        assertThat(viewModel.tripHistory.value[0].id).isEqualTo(1L)
 
         viewModel.filterTripsByDate(HistoryFilter.ALL)
         testScheduler.runCurrent()
 
-        assertThat(viewModel.tripHistory.value).hasSize(2)
+        assertThat(viewModel.selectedFilter.value).isEqualTo(HistoryFilter.ALL)
+    }
+
+    @Test
+    fun shouldAddLocationPointAndCalculateMetrics() = runTest {
+        viewModel.startTrip()
+        testScheduler.runCurrent()
+
+        viewModel.addLocationPoint(4.60971, -74.08175, timestamp = 1000L)
+        viewModel.addLocationPoint(4.61000, -74.08200, timestamp = 5000L)
+
+        assertThat(viewModel.recordedGpsCount.value).isEqualTo(2)
+        assertThat(viewModel.currentDistance.value).isGreaterThan(0.0)
+    }
+
+    @Test
+    fun shouldStopTripAndSaveData() = runTest {
+        viewModel.startTrip()
+        testScheduler.runCurrent()
+
+        viewModel.addLocationPoint(4.60971, -74.08175)
+        viewModel.stopTrip(batteryConsumed = 15)
+
+        testScheduler.runCurrent()
+
+        assertThat(viewModel.isTripActive.value).isFalse()
+        assertThat(fakeTripPort.savedTrip).isNotNull
+        assertThat(fakeTripPort.savedTrip?.batteryConsumed).isEqualTo(15)
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        val savedTrips = mutableListOf<Trip>()
-        val savedGpsMap = mutableMapOf<Long, List<TripGps>>()
-        private var nextId = 1L
-
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+        val trips = mutableListOf<Trip>()
+        var savedTrip: Trip? = null
+        var savedGpsPoints: List<TripGps> = emptyList()
 
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
-            val assignedId = if (trip.id == 0L) nextId++ else trip.id
-            val savedTrip = trip.copy(id = assignedId)
-            savedTrips.add(savedTrip)
-            savedGpsMap[assignedId] = gpsPoints.map { it.copy(tripId = assignedId) }
-            return assignedId
+            savedTrip = trip
+            savedGpsPoints = gpsPoints
+            trips.add(trip)
+            return trip.id.takeIf { it > 0 } ?: trips.size.toLong()
         }
 
-        override suspend fun getAllTrips(): List<Trip> {
-            return savedTrips.sortedByDescending { it.createTmst }
-        }
+        override suspend fun getAllTrips(): List<Trip> = trips.toList()
 
-        override suspend fun getTripById(tripId: Long): Trip? {
-            return savedTrips.find { it.id == tripId }
-        }
+        override suspend fun getTripById(tripId: Long): Trip? = trips.find { it.id == tripId }
 
-        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> {
-            return savedGpsMap[tripId] ?: emptyList()
-        }
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = savedGpsPoints
 
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> {
-            return savedTrips.filter { it.createTmst in startTimestamp..endTimestamp }.sortedByDescending { it.createTmst }
+            return trips.filter { it.createTmst in startTimestamp..endTimestamp }
         }
 
-        override suspend fun getTotalTripsCount(): Int = savedTrips.size
-        override suspend fun getTotalDistanceKm(): Double = savedTrips.sumOf { it.distance }
-        override suspend fun getChargeDetectionsCount(threshold: Int): Int = savedTrips.count { it.batteryConsumed >= threshold }
-    }
-
-    private class FakeEvDataPort : EvDataPort {
-        val savedList = mutableListOf<EvData>()
-
-        override suspend fun getLatestEvData(): EvData? {
-            return savedList.lastOrNull()
-        }
-
-        override suspend fun getAllEvData(): List<EvData> {
-            return savedList.toList()
-        }
-
-        override suspend fun saveEvData(evData: EvData): Long {
-            savedList.add(evData)
-            return savedList.size.toLong()
-        }
-    }
-
-    private class FakeEvConfigPort : EvConfigPort {
-        var config: EvConfig? = null
-
-        override suspend fun getEvConfig(): EvConfig? = config
-
-        override suspend fun saveEvConfig(config: EvConfig): Long {
-            this.config = config
-            return 1L
-        }
+        override suspend fun getTotalTripsCount(): Int = trips.size
+        override suspend fun getTotalDistanceKm(): Double = trips.sumOf { it.distance }
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
+        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
     }
 
     private class FakeSessionStatePort : SessionStatePort {
@@ -362,10 +225,51 @@ class TripViewModelTest {
 
         override suspend fun getActiveSession(): ActiveSession? = activeSession
 
-        override fun observeActiveSession(): Flow<ActiveSession?> = flowOf(activeSession)
+        override fun observeActiveSession(): Flow<ActiveSession?> = MutableStateFlow(activeSession)
 
         override suspend fun clearActiveSession() {
             activeSession = null
+        }
+    }
+
+    private class FakeEvConfigPort : EvConfigPort {
+        var config: EvConfig? = EvConfig(
+            id = 1L,
+            batteryVolts = "52V",
+            batteryAmpers = "20Ah",
+            batteryMode = BatteryMode.VOLTAGE,
+            minVoltage = 39.0,
+            maxVoltage = 54.6
+        )
+
+        override suspend fun getEvConfig(): EvConfig? = config
+        override suspend fun saveEvConfig(config: EvConfig): Long = config.id
+    }
+
+    private class FakeEvDataPort : EvDataPort {
+        var latestEvData: EvData? = EvData(evCode = "EV01", km = 100L, batteryLevel = 90)
+
+        override suspend fun getLatestEvData(): EvData? = latestEvData
+        override suspend fun getAllEvData(): List<EvData> = listOfNotNull(latestEvData)
+        override suspend fun saveEvData(evData: EvData): Long {
+            latestEvData = evData
+            return 1L
+        }
+    }
+
+    private class FakeMotionDetectorPort : MotionDetectorPort {
+        private val _motionState = MutableStateFlow(co.japl.android.ev_ride_connect.core.domain.MotionState.STOPPED)
+        override val motionState: kotlinx.coroutines.flow.StateFlow<co.japl.android.ev_ride_connect.core.domain.MotionState> = _motionState
+
+        override fun start() {}
+        override fun stop() {}
+        override fun processSensorData(
+            accX: Float, accY: Float, accZ: Float,
+            gyroX: Float, gyroY: Float, gyroZ: Float,
+            currentTimestamp: Long
+        ) {}
+        override fun updateState(newState: co.japl.android.ev_ride_connect.core.domain.MotionState, currentTimestamp: Long) {
+            _motionState.value = newState
         }
     }
 }

@@ -6,13 +6,7 @@ import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
 import co.japl.android.ev_ride_connect.core.domain.MotorSpec
-import co.japl.android.ev_ride_connect.core.usecase.ClearActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.EvConfigUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,13 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EvConfigViewModel @Inject constructor(
-    private val getEvConfigUseCase: GetEvConfigUseCase,
-    private val saveEvConfigUseCase: SaveEvConfigUseCase,
-    private val getActiveLlmConfigsUseCase: GetActiveLlmConfigsUseCase,
-    private val fetchEvInfoUseCase: FetchEvInfoUseCase,
-    private val getActiveSessionUseCase: GetActiveSessionUseCase,
-    private val saveActiveSessionUseCase: SaveActiveSessionUseCase,
-    private val clearActiveSessionUseCase: ClearActiveSessionUseCase
+    private val evConfigUseCase: EvConfigUseCase
 ) : ViewModel() {
 
     private val _evConfig = MutableStateFlow(EvConfig())
@@ -61,7 +49,7 @@ class EvConfigViewModel @Inject constructor(
 
     private fun checkAndHydratePendingLlmState() {
         viewModelScope.launch {
-            val session = getActiveSessionUseCase.execute()
+            val session = evConfigUseCase.getActiveSession()
             if (session != null) {
                 val response = session.pendingLlmResponse
                 if (session.isLlmProcessing) {
@@ -79,9 +67,9 @@ class EvConfigViewModel @Inject constructor(
                     }
                     val cleared = session.copy(pendingLlmPrompt = null, pendingLlmResponse = null)
                     if (!cleared.isRideActive) {
-                        clearActiveSessionUseCase.execute()
+                        evConfigUseCase.clearActiveSession()
                     } else {
-                        saveActiveSessionUseCase.execute(cleared)
+                        evConfigUseCase.saveActiveSession(cleared)
                     }
                 }
             }
@@ -90,7 +78,7 @@ class EvConfigViewModel @Inject constructor(
 
     fun loadSavedConfig() {
         viewModelScope.launch {
-            val saved = getEvConfigUseCase.execute()
+            val saved = evConfigUseCase.getEvConfig()
             if (saved != null) {
                 _evConfig.value = saved
             }
@@ -99,7 +87,7 @@ class EvConfigViewModel @Inject constructor(
 
     fun loadActiveLlmConfigs() {
         viewModelScope.launch {
-            val configs = getActiveLlmConfigsUseCase.execute()
+            val configs = evConfigUseCase.getActiveLlmConfigs()
             _activeLlmConfigs.value = configs
             if (_selectedLlmConfig.value == null && configs.isNotEmpty()) {
                 _selectedLlmConfig.value = configs.first()
@@ -223,7 +211,7 @@ class EvConfigViewModel @Inject constructor(
             _isLoadingLlm.value = true
             _llmErrorMessage.value = null
 
-            val configs = getActiveLlmConfigsUseCase.execute()
+            val configs = evConfigUseCase.getActiveLlmConfigs()
             val config = configs.maxByOrNull { it.id } ?: configs.firstOrNull()
 
             if (config == null || config.apiKey.isBlank()) {
@@ -233,7 +221,7 @@ class EvConfigViewModel @Inject constructor(
             }
 
             try {
-                val updatedConfig = fetchEvInfoUseCase.execute(requestText, config, _evConfig.value, promptTemplate)
+                val updatedConfig = evConfigUseCase.fetchEvInfo(requestText, config, _evConfig.value, promptTemplate)
                 _evConfig.value = updatedConfig
                 _statusMessage.value = "LLM_FETCH_SUCCESS"
                 _isSearchDialogVisible.value = false
@@ -252,7 +240,7 @@ class EvConfigViewModel @Inject constructor(
 
     fun saveEvConfig() {
         viewModelScope.launch {
-            val id = saveEvConfigUseCase.execute(_evConfig.value)
+            val id = evConfigUseCase.saveEvConfig(_evConfig.value)
             _evConfig.update { it.copy(id = id) }
             _statusMessage.value = "CONFIG_SAVED"
         }
@@ -261,7 +249,7 @@ class EvConfigViewModel @Inject constructor(
     fun loadEv() {
         viewModelScope.launch {
             val updated = _evConfig.value.copy(isLoaded = true)
-            val id = saveEvConfigUseCase.execute(updated)
+            val id = evConfigUseCase.saveEvConfig(updated)
             _evConfig.value = updated.copy(id = id)
             _statusMessage.value = "EV_LOADED"
         }

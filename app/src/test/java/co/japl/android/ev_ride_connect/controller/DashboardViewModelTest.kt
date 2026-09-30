@@ -5,24 +5,24 @@ import co.japl.android.ev_ride_connect.core.domain.BatteryMode
 import co.japl.android.ev_ride_connect.core.domain.EvConfig
 import co.japl.android.ev_ride_connect.core.domain.EvData
 import co.japl.android.ev_ride_connect.core.domain.LlmConfig
+import co.japl.android.ev_ride_connect.core.domain.Trip
+import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.core.ports.EvDataPort
 import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
 import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.core.usecase.CalculateCo2SavedUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateOptimalBatteryPercentageUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
+import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -67,8 +67,14 @@ class DashboardViewModelTest {
         fakeSessionStatePort = FakeSessionStatePort()
 
         val fakeTripPort = FakeTripDatabasePort()
-        viewModel = DashboardViewModel(
-            GetLatestEvDataUseCase(fakeEvDataPort),
+        val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
+        val dashboardUseCase = DashboardUseCase(
+            fakeEvDataPort,
+            fakeEvConfigPort,
+            fakeLlmConfigPort,
+            fakeSessionStatePort,
+            fakeTripPort,
+            getLatestEvDataUseCase,
             SaveEvDataUseCase(fakeEvDataPort),
             GetEvConfigUseCase(fakeEvConfigPort),
             GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
@@ -76,9 +82,10 @@ class DashboardViewModelTest {
             CalculateDynamicBatteryPercentageUseCase(),
             CalculateOptimalBatteryPercentageUseCase(),
             CalculateConsumptionUseCase(),
-            UpdateOdometerUseCase(fakeEvDataPort, GetLatestEvDataUseCase(fakeEvDataPort)),
+            UpdateOdometerUseCase(fakeEvDataPort, getLatestEvDataUseCase),
             GetAllTripsUseCase(fakeTripPort)
         )
+        viewModel = DashboardViewModel(dashboardUseCase)
     }
 
     @After
