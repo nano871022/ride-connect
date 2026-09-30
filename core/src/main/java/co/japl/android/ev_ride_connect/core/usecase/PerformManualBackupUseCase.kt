@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
 import javax.inject.Inject
 
 class PerformManualBackupUseCase @Inject constructor(

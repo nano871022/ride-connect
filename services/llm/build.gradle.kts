@@ -27,14 +27,15 @@ android {
 }
 
 dependencies {
+    implementation(project(":interfaces"))
     implementation(project(":core"))
     implementation(project(":utils"))
 
     implementation(libs.androidx.core.ktx)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
+
     implementation(libs.org.json)
 
     testImplementation(libs.junit)

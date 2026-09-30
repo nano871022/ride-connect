@@ -3,7 +3,7 @@ package co.japl.android.ev_ride_connect.ble.di
 import android.content.Context
 import co.japl.android.ev_ride_connect.ble.TuyaBleAdapter
 import co.japl.android.ev_ride_connect.ble.TuyaBleSdkManager
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
+import co.japl.android.ev_ride_connect.interfaces.ports.BleScooterPort
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

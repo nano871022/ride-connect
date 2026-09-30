@@ -1,14 +1,14 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.EvData
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.EvDataPort
-import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
@@ -91,17 +91,17 @@ class DashboardUseCaseTest {
     }
 
     private class FakeSessionStatePort : SessionStatePort {
-        override suspend fun saveActiveSession(session: co.japl.android.ev_ride_connect.core.domain.ActiveSession) {}
+        override suspend fun saveActiveSession(session: co.japl.android.ev_ride_connect.interfaces.model.ActiveSession) {}
         override suspend fun getActiveSession() = null
         override fun observeActiveSession() = MutableStateFlow(null)
         override suspend fun clearActiveSession() {}
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.core.domain.TripGps>) = 1L
+        override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>) = 1L
         override suspend fun getAllTrips() = emptyList<Trip>()
         override suspend fun getTripById(tripId: Long) = null
-        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.core.domain.TripGps>()
+        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.interfaces.model.TripGps>()
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long) = emptyList<Trip>()
         override suspend fun getTotalTripsCount() = 0
         override suspend fun getTotalDistanceKm() = 0.0

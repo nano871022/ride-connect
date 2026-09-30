@@ -2,11 +2,11 @@ package co.japl.android.ev_ride_connect.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.EvData
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCase
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.usecase.DashboardUseCase
 import co.japl.android.ev_ride_connect.utils.BatteryCalculator
 import co.japl.android.ev_ride_connect.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel

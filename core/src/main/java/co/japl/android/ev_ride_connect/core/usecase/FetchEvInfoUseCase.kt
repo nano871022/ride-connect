@@ -1,10 +1,10 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.EvConstants
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvConstants
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
 import co.japl.android.ev_ride_connect.core.mappers.EvConfigMapper
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import javax.inject.Inject
 
 class FetchEvInfoUseCase @Inject constructor(

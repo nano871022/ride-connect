@@ -1,11 +1,11 @@
 package co.japl.android.ev_ride_connect.track
 
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

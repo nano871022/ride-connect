@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.database
 
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
 import co.japl.android.ev_ride_connect.database.dao.TripDao
 import co.japl.android.ev_ride_connect.database.entities.TripEntity
 import co.japl.android.ev_ride_connect.database.entities.TripGpsEntity

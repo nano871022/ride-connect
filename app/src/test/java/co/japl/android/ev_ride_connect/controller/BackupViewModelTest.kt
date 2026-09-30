@@ -1,9 +1,9 @@
 package co.japl.android.ev_ride_connect.controller
 
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.core.domain.BackupStatus
-import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
-import co.japl.android.ev_ride_connect.core.usecase.BackupUseCaseImpl
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
+import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.interfaces.usecase.BackupUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.ConfigureAutoBackupUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetBackupConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.PerformManualBackupUseCase

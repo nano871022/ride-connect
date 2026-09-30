@@ -1,10 +1,10 @@
 package co.japl.android.ev_ride_connect.controller
 
-import co.japl.android.ev_ride_connect.core.domain.EvData
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.ports.EvDataPort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCaseImpl
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.usecase.EvDataUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.GetAllEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
@@ -80,9 +80,9 @@ class EvDataViewModelTest {
         val trips = mutableListOf<Trip>()
 
         override suspend fun getAllTrips(): List<Trip> = trips
-        override suspend fun saveTrip(trip: Trip, points: List<co.japl.android.ev_ride_connect.core.domain.TripGps>): Long = 1L
+        override suspend fun saveTrip(trip: Trip, points: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
         override suspend fun getTripById(tripId: Long): Trip? = null
-        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.core.domain.TripGps>()
+        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.interfaces.model.TripGps>()
         override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long) = trips
         override suspend fun getTotalTripsCount() = 0
         override suspend fun getTotalDistanceKm() = 0.0

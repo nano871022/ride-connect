@@ -3,7 +3,9 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":interfaces"))
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.podam)
 }

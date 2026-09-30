@@ -1,11 +1,11 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
-import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
@@ -73,7 +73,7 @@ class EvConfigUseCaseTest {
     }
 
     private class FakeSessionStatePort : SessionStatePort {
-        override suspend fun saveActiveSession(session: co.japl.android.ev_ride_connect.core.domain.ActiveSession) {}
+        override suspend fun saveActiveSession(session: co.japl.android.ev_ride_connect.interfaces.model.ActiveSession) {}
         override suspend fun getActiveSession() = null
         override fun observeActiveSession() = MutableStateFlow(null)
         override suspend fun clearActiveSession() {}

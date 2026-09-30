@@ -1,6 +1,6 @@
-package co.japl.android.ev_ride_connect.core.ports
+package co.japl.android.ev_ride_connect.interfaces.ports
 
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
+import co.japl.android.ev_ride_connect.interfaces.model.ScooterState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf

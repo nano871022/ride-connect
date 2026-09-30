@@ -73,9 +73,9 @@ import co.com.japl.ui.components.SpecTile
 import co.com.japl.ui.components.VehicleImageCard
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.MotorSpec
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.MotorSpec
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 
 @OptIn(ExperimentalMaterial3Api::class)
