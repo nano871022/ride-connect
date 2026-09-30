@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.ble
 
-import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
+import co.japl.android.ev_ride_connect.interfaces.model.BleLogDirection
+import co.japl.android.ev_ride_connect.interfaces.model.ScooterState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest

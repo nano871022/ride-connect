@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.llm
 
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject

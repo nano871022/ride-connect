@@ -46,8 +46,8 @@ import co.com.japl.ui.components.MaintenanceBanner
 import co.com.japl.ui.components.OdometerCard
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
 

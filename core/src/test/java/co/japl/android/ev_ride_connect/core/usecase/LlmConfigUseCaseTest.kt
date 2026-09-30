@@ -1,8 +1,8 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
-import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -18,7 +18,7 @@ class LlmConfigUseCaseTest {
     fun setUp() {
         fakeLlmConfigPort = FakeLlmConfigPort()
         fakeLlmClientPort = FakeLlmClientPort()
-        useCase = LlmConfigUseCase(
+        useCase = LlmConfigUseCaseImpl(
             fakeLlmConfigPort,
             fakeLlmClientPort,
             GetAllLlmConfigsUseCase(fakeLlmConfigPort),

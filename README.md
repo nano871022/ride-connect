@@ -12,6 +12,7 @@ An Android Native application designed to connect to electric vehicles (specific
 
 The project adheres strictly to **Hexagonal Architecture (Ports and Adapters)** and a modular design principles:
 - **Clean Architecture & Decoupling:** UI and ViewModels in `:app` never directly access database implementations or low-level service adapters. They interact strictly with domain entities, Use Cases, and Output Ports provided by `:core`.
+- **Input Ports & Use Case Interfaces:** Every View-centric Use Case is defined as an Interface (Input Port) in `:core`, implemented by a concrete class (e.g. `TripUseCase` implemented by `TripUseCaseImpl`), and bound using Hilt Dependency Injection.
 - **UI & Controller Separation:** Jetpack Compose layout composables reside in `ui` packages, while ViewModels and state management logic reside in `controller` packages.
 - **SOLID & TDD:** Modules are designed around Single Responsibility, Open/Closed, and Dependency Inversion principles with comprehensive unit test coverage using AssertJ and PODAM test object generation.
 
@@ -25,6 +26,7 @@ The project adheres strictly to **Hexagonal Architecture (Ports and Adapters)** 
                   +-----------------------------------+
                   |        :core (Domain Core)        |
                   | ScooterState | BackupConfig       |
+                  | Input Ports: TripUseCase, etc.    |
                   |  Ports: BleScooterPort, etc.      |
                   +-----------------+-----------------+
                                     |
@@ -43,8 +45,8 @@ The project adheres strictly to **Hexagonal Architecture (Ports and Adapters)** 
 
 | Module | Description |
 |---|---|
-| `:app` | Application entry point, Jetpack Compose UI screens (`DashboardScreen`, `BackupScreen`), ViewModels (`DashboardViewModel`, `BackupViewModel`), and Hilt Dependency Injection setup. |
-| `:core` | Domain models (`ScooterState`, `BackupConfig`, `BackupStatus`) and Output Ports (`BleScooterPort`, `TripDatabasePort`, `GoogleDriveBackupPort`). Completely framework-agnostic business logic. |
+| `:app` | Application entry point, Jetpack Compose UI screens (`DashboardScreen`, `BackupScreen`), ViewModels (`DashboardViewModel`, `BackupViewModel`), and Hilt Dependency Injection setup (`UseCaseModule`). |
+| `:core` | Domain models (`ScooterState`, `BackupConfig`, `BackupStatus`), View-centric Use Case Interfaces & Implementations (`TripUseCase`, `TripUseCaseImpl`), and Output Ports (`BleScooterPort`, `TripDatabasePort`, `GoogleDriveBackupPort`). Framework-agnostic business logic. |
 | `:services:ble` | Tuya BLE protocol adapter mapping incoming Bluetooth Data Points (DPs) to domain `ScooterState`. |
 | `:services:database` | Room SQLite database persistence for trip history (`TripEntity`, `TripDao`) and Google Drive App Space backup helper (`GoogleDriveBackupHelper`). |
 | `:track` | Android Foreground Service (`ScooterTrackingService`) for background GPS route tracking and continuous BLE connection persistence. |
@@ -107,15 +109,20 @@ Standard DP3 battery indicators on Tuya scooters are often inaccurate. Ride-Conn
 - Gradle 8.8 (via Gradle Wrapper)
 
 ### Compilation & Tests
+All Gradle commands must append `-x :about:lint -x :about:test` to bypass external `:about` module checks during local analysis and automated testing:
+
 ```bash
 # Run unit tests across all modules
-./gradlew test
+./gradlew test -x :about:lint -x :about:test
+
+# Run lint checks across all modules
+./gradlew lint -x :about:lint -x :about:test
 
 # Build debug APK
-./gradlew assembleDebug
+./gradlew assembleDebug -x :about:lint -x :about:test
 
 # Generate release Android App Bundle (AAB)
-./gradlew bundleRelease
+./gradlew bundleRelease -x :about:lint -x :about:test
 ```
 
 ---
@@ -123,8 +130,9 @@ Standard DP3 battery indicators on Tuya scooters are often inaccurate. Ride-Conn
 ## ⚙️ CI/CD Workflows
 
 The repository includes automated GitHub Actions workflows under `.github/workflows/`:
-- **`test.yml`:** Runs `./gradlew test lint` on pull requests targeting `master` and uploads unit test results and lint code analysis reports as workflow artifacts.
-- **`compile.yml`:** Builds release AAB bundle and release APK (`./gradlew bundleRelease assembleRelease`) on direct pushes to `master` and uploads both as workflow artifacts.
+- **`test.yml`:** Runs `./gradlew test -x :about:lint -x :about:test` on pull requests targeting `master` and uploads unit test results as workflow artifacts.
+- **`static-check.yml`:** Runs `./gradlew lint -x :about:lint -x :about:test` for code analysis.
+- **`compile.yml`:** Builds release AAB bundle and release APK (`./gradlew bundleRelease assembleRelease -x :about:lint -x :about:test`) on direct pushes to `master` and uploads both as workflow artifacts.
 
 ---
 

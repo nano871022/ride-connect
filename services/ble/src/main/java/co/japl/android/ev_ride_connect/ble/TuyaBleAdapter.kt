@@ -15,10 +15,10 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
-import co.japl.android.ev_ride_connect.core.domain.BleLogEntry
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
+import co.japl.android.ev_ride_connect.interfaces.model.BleLogDirection
+import co.japl.android.ev_ride_connect.interfaces.model.BleLogEntry
+import co.japl.android.ev_ride_connect.interfaces.model.ScooterState
+import co.japl.android.ev_ride_connect.interfaces.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.utils.BatteryCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

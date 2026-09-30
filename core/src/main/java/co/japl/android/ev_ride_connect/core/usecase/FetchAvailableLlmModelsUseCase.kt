@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import javax.inject.Inject
 
 class FetchAvailableLlmModelsUseCase @Inject constructor(

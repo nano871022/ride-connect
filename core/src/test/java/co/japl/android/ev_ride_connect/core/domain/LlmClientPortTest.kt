@@ -1,6 +1,6 @@
-package co.japl.android.ev_ride_connect.core.domain
+package co.japl.android.ev_ride_connect.interfaces.model
 
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

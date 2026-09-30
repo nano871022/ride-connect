@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.core.mappers
 
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.MotorSpec
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.MotorSpec
 import org.json.JSONArray
 import org.json.JSONObject
 

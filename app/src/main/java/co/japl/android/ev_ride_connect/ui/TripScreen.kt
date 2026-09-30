@@ -57,9 +57,9 @@ import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.StatusCard
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.components.TripMapView
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.TripSummary
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.TripSummary
 
 @SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)

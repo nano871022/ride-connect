@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.track
 
-import co.japl.android.ev_ride_connect.core.domain.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test

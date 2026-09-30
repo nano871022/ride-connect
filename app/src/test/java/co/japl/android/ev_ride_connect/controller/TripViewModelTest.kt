@@ -2,17 +2,17 @@ package co.japl.android.ev_ride_connect.controller
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.EvData
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.EvDataPort
-import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
+import co.japl.android.ev_ride_connect.interfaces.ports.MotionDetectorPort
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.CalculateCo2SavedUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
@@ -31,7 +31,7 @@ import co.japl.android.ev_ride_connect.core.usecase.ResumeTripUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveTripUseCase
-import co.japl.android.ev_ride_connect.core.usecase.TripUseCase
+import co.japl.android.ev_ride_connect.interfaces.usecase.TripUseCaseImpl
 import co.japl.android.ev_ride_connect.ui.HistoryFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -79,7 +79,7 @@ class TripViewModelTest {
         val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
         val getEvConfigUseCase = GetEvConfigUseCase(fakeEvConfigPort)
 
-        val tripUseCase = TripUseCase(
+        val tripUseCase = TripUseCaseImpl(
             fakeTripPort,
             fakeSessionPort,
             fakeEvConfigPort,
@@ -258,8 +258,8 @@ class TripViewModelTest {
     }
 
     private class FakeMotionDetectorPort : MotionDetectorPort {
-        private val _motionState = MutableStateFlow(co.japl.android.ev_ride_connect.core.domain.MotionState.STOPPED)
-        override val motionState: kotlinx.coroutines.flow.StateFlow<co.japl.android.ev_ride_connect.core.domain.MotionState> = _motionState
+        private val _motionState = MutableStateFlow(co.japl.android.ev_ride_connect.interfaces.model.MotionState.STOPPED)
+        override val motionState: kotlinx.coroutines.flow.StateFlow<co.japl.android.ev_ride_connect.interfaces.model.MotionState> = _motionState
 
         override fun start() {}
         override fun stop() {}
@@ -268,7 +268,7 @@ class TripViewModelTest {
             gyroX: Float, gyroY: Float, gyroZ: Float,
             currentTimestamp: Long
         ) {}
-        override fun updateState(newState: co.japl.android.ev_ride_connect.core.domain.MotionState, currentTimestamp: Long) {
+        override fun updateState(newState: co.japl.android.ev_ride_connect.interfaces.model.MotionState, currentTimestamp: Long) {
             _motionState.value = newState
         }
     }

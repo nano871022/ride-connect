@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -15,7 +15,7 @@ class BackupUseCaseTest {
     @Before
     fun setUp() {
         fakeBackupPort = FakeGoogleDriveBackupPort()
-        useCase = BackupUseCase(
+        useCase = BackupUseCaseImpl(
             fakeBackupPort,
             GetBackupConfigUseCase(fakeBackupPort),
             PerformManualBackupUseCase(fakeBackupPort),

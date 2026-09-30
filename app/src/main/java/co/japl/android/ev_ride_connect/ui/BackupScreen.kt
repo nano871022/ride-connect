@@ -44,8 +44,8 @@ import co.com.japl.ui.components.StatusCard
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.core.domain.BackupStatus
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
