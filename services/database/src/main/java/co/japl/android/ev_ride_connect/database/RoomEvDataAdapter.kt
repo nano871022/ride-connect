@@ -35,7 +35,7 @@ class RoomEvDataAdapter(
 
     private fun EvDataEntity.toDomain(): EvData {
         return EvData(
-            id = id,
+            id = 0L,
             evCode = evCode,
             km = km,
             batteryLevel = batteryLevel,
@@ -45,7 +45,6 @@ class RoomEvDataAdapter(
 
     private fun EvData.toEntity(): EvDataEntity {
         return EvDataEntity(
-            id = id,
             evCode = evCode,
             km = km,
             batteryLevel = batteryLevel,

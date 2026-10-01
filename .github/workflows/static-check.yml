@@ -54,12 +54,12 @@ jobs:
 
       - name: Run lint code analysis
         id: run_tests
-        continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew lint -x :about:lint | tee build_errors.log
+          ./gradlew lint -x :about:lint -x :about:test | tee build_errors.log
 
       - name: Package lint results as zip
+        if: always()
         run: |
           mkdir -p zipped_artifacts
           zip -r zipped_artifacts/lint-results.zip **/build/reports/lint-results* || true
@@ -78,7 +78,7 @@ jobs:
           echo "## 📊 Test & Lint Execution Summary" >> $GITHUB_STEP_SUMMARY
 
           WARNINGS_FOUND=false
-          ERRORS_FOUND=false
+          ERRORS_FOUND=true
 
           LINT_REPORTS=$(find . -name "lint-results*.xml" -o -name "lint-results*.html")
           if [ -n "$LINT_REPORTS" ]; then

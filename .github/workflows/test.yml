@@ -54,10 +54,9 @@ jobs:
 
       - name: Run unit tests
         id: run_tests
-        continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew test -x :about:test | tee build_errors.log
+          ./gradlew test -x :about:test -x :about:lint | tee build_errors.log
 
       - name: Package test and lint results as zip
         if: failure()
@@ -74,7 +73,7 @@ jobs:
 
       - name: Generate Job Summary & Check Warnings/Errors
         id: analyze_results
-        if:  failure()
+        if: failure()
         run: |
           echo "## 📊 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
 
@@ -82,13 +81,10 @@ jobs:
           echo "**Build Status:** $TEST_STATUS" >> $GITHUB_STEP_SUMMARY
 
           WARNINGS_FOUND=false
-          ERRORS_FOUND=false
+          ERRORS_FOUND=true
 
-          if [ "$TEST_STATUS" != "success" ]; then
-            ERRORS_FOUND=true
-            echo "### ❌ Failures Detected" >> $GITHUB_STEP_SUMMARY
-            echo "Unit tests or lint analysis failed during execution." >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "### ❌ Failures Detected" >> $GITHUB_STEP_SUMMARY
+          echo "Unit tests or lint analysis failed during execution." >> $GITHUB_STEP_SUMMARY
 
           echo "WARNINGS_FOUND=$WARNINGS_FOUND" >> $GITHUB_OUTPUT
           echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT

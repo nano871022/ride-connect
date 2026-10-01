@@ -78,7 +78,7 @@ class TripViewModelTest {
             endTripUseCase = EndTripUseCase(sessionStatePort),
             pauseTripUseCase = PauseTripUseCase(sessionStatePort),
             resumeTripUseCase = ResumeTripUseCase(sessionStatePort),
-            calculateTripSummaryUseCase = CalculateTripSummaryUseCase(),
+            calculateTripSummaryUseCase = CalculateTripSummaryUseCase(tripDatabasePort),
             calculateCo2SavedUseCase = CalculateCo2SavedUseCase(),
             calculateConsumptionUseCase = CalculateConsumptionUseCase(),
             calculateDynamicBatteryPercentageUseCase = CalculateDynamicBatteryPercentageUseCase(),

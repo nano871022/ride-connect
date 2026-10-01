@@ -37,21 +37,21 @@ class DashboardScreenScreenshotTest {
         val tripDatabasePort = FakeTripDatabasePort()
 
         val dashboardUseCase = DashboardUseCaseImpl(
-            evDataPort = evDataPort,
-            evConfigPort = evConfigPort,
-            llmConfigPort = llmConfigPort,
-            sessionStatePort = sessionStatePort,
-            tripDatabasePort = tripDatabasePort,
-            getLatestEvDataUseCase = GetLatestEvDataUseCase(evDataPort),
-            getEvConfigUseCase = GetEvConfigUseCase(evConfigPort),
-            getActiveLlmConfigsUseCase = GetActiveLlmConfigsUseCase(llmConfigPort),
-            observeActiveSessionUseCase = ObserveActiveSessionUseCase(sessionStatePort),
-            getAllTripsUseCase = GetAllTripsUseCase(tripDatabasePort),
-            calculateConsumptionUseCase = CalculateConsumptionUseCase(),
-            calculateOptimalBatteryPercentageUseCase = CalculateOptimalBatteryPercentageUseCase(),
-            calculateDynamicBatteryPercentageUseCase = CalculateDynamicBatteryPercentageUseCase(),
-            saveEvDataUseCase = SaveEvDataUseCase(evDataPort),
-            updateOdometerUseCase = UpdateOdometerUseCase(evDataPort, evConfigPort)
+            evDataPort,
+            evConfigPort,
+            llmConfigPort,
+            sessionStatePort,
+            tripDatabasePort,
+            GetLatestEvDataUseCase(evDataPort),
+            SaveEvDataUseCase(evDataPort),
+            GetEvConfigUseCase(evConfigPort),
+            GetActiveLlmConfigsUseCase(llmConfigPort),
+            ObserveActiveSessionUseCase(sessionStatePort),
+            CalculateDynamicBatteryPercentageUseCase(),
+            CalculateOptimalBatteryPercentageUseCase(),
+            CalculateConsumptionUseCase(),
+            UpdateOdometerUseCase(evDataPort, evConfigPort),
+            GetAllTripsUseCase(tripDatabasePort)
         )
 
         val viewModel = DashboardViewModel(dashboardUseCase)

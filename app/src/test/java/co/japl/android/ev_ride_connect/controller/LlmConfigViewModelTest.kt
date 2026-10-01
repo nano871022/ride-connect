@@ -43,20 +43,20 @@ class LlmConfigViewModelTest {
         val llmClientPort = FakeLlmClientPort()
 
         val llmConfigUseCase = LlmConfigUseCaseImpl(
-            llmConfigPort = llmConfigPort,
-            llmClientPort = llmClientPort,
             getAllLlmConfigsUseCase = GetAllLlmConfigsUseCase(llmConfigPort),
             saveLlmConfigUseCase = SaveLlmConfigUseCase(llmConfigPort),
             deleteLlmConfigUseCase = DeleteLlmConfigUseCase(llmConfigPort),
             toggleLlmConfigStatusUseCase = ToggleLlmConfigStatusUseCase(llmConfigPort),
             validateLlmApiKeyUseCase = ValidateLlmApiKeyUseCase(llmClientPort),
-            fetchAvailableLlmModelsUseCase = FetchAvailableLlmModelsUseCase(llmClientPort)
+            fetchAvailableLlmModelsUseCase = FetchAvailableLlmModelsUseCase(llmClientPort),
+            llmConfigPort = llmConfigPort,
+            llmClientPort = llmClientPort
         )
 
         val viewModel = LlmConfigViewModel(llmConfigUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertThat(viewModel.llmConfigList.value).hasSize(1)
+        assertThat(viewModel.configs.value).hasSize(1)
     }
 
     private class FakeLlmConfigPort : LlmConfigPort {
