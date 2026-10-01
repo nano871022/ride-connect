@@ -90,25 +90,7 @@ jobs:
           echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT
 
       - name: Read Error Log
-        if: failure()
-        run: |
-          ISSUE_TITLE="[CI Alert] Test Errors or Warnings in Commit ${{ github.sha }}"
-          ISSUE_BODY="Automated issue created by GitHub Actions.
-
-          **Workflow:** ${{ github.workflow }}
-          **Run Number:** ${{ github.run_number }}
-          **Commit:** ${{ github.sha }}
-          **Branch/Ref:** ${{ github.ref }}
-
-          ### Status
-          - **Test Execution Status:** ${{ steps.run_tests.outcome }}
-
-          Please check the workflow artifacts (\`test-results-zip\`, \`lint-results-zip\`) and job summary for detailed test and lint outputs."
-
-          gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."
-
-      - name: Read Error Log
-        if: failure() || steps.run_tests.outcome != 'success'
+        if: always()
         id: error_log
         run: |
           if [ -f build_errors.log ]; then
