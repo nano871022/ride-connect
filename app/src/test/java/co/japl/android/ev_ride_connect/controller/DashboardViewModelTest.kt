@@ -57,13 +57,15 @@ class DashboardViewModelTest {
         val sessionStatePort = FakeSessionStatePort()
         val tripDatabasePort = FakeTripDatabasePort()
 
+        val getLatestEvDataUseCase = GetLatestEvDataUseCase(evDataPort)
+
         val dashboardUseCase = DashboardUseCaseImpl(
             evDataPort,
             evConfigPort,
             llmConfigPort,
             sessionStatePort,
             tripDatabasePort,
-            GetLatestEvDataUseCase(evDataPort),
+            getLatestEvDataUseCase,
             SaveEvDataUseCase(evDataPort),
             GetEvConfigUseCase(evConfigPort),
             GetActiveLlmConfigsUseCase(llmConfigPort),
@@ -71,7 +73,7 @@ class DashboardViewModelTest {
             CalculateDynamicBatteryPercentageUseCase(),
             CalculateOptimalBatteryPercentageUseCase(),
             CalculateConsumptionUseCase(),
-            UpdateOdometerUseCase(evDataPort, evConfigPort),
+            UpdateOdometerUseCase(evDataPort, getLatestEvDataUseCase),
             GetAllTripsUseCase(tripDatabasePort)
         )
 
