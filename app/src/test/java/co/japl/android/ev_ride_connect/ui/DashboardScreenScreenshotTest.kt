@@ -22,14 +22,35 @@ import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DashboardScreenScreenshotTest {
 
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     @Test
-    fun testDashboardScreenSetup() {
+    fun testDashboardScreenSetup() = runTest {
         val evDataPort = FakeEvDataPort()
         val evConfigPort = FakeEvConfigPort()
         val llmConfigPort = FakeLlmConfigPort()
