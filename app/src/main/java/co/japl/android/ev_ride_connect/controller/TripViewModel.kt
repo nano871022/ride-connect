@@ -101,8 +101,6 @@ class TripViewModel @Inject constructor(
     private val _showSummaryDialog = MutableStateFlow(false)
     val showSummaryDialog: StateFlow<Boolean> = _showSummaryDialog.asStateFlow()
 
-    private val _selectedTripDetail = MutableStateFlow<Pair<Trip, List<TripGps>>?>(null)
-    val selectedTripDetail: StateFlow<Pair<Trip, List<TripGps>>?> = _selectedTripDetail.asStateFlow()
 
     private val _activeSession = MutableStateFlow<ActiveSession?>(null)
     val activeSession: StateFlow<ActiveSession?> = _activeSession.asStateFlow()
@@ -540,16 +538,6 @@ class TripViewModel @Inject constructor(
         }
     }
 
-    fun loadTripDetail(tripId: Long) {
-        viewModelScope.launch {
-            try {
-                _selectedTripDetail.value = tripUseCase.getTripDetails(tripId)
-            } catch (e: Exception) {
-                Log.e(this@TripViewModel.javaClass.name, e.message, e)
-                _selectedTripDetail.value = null
-            }
-        }
-    }
 
     override fun onCleared() {
         super.onCleared()

@@ -20,6 +20,7 @@ import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
 import co.japl.android.ev_ride_connect.controller.EvDataViewModel
 import co.japl.android.ev_ride_connect.controller.LlmConfigViewModel
 import co.japl.android.ev_ride_connect.controller.SplashViewModel
+import co.japl.android.ev_ride_connect.controller.TripDetailViewModel
 import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.navigation.AppScreen
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
     private val evDataViewModel: EvDataViewModel by viewModels()
     private val llmConfigViewModel: LlmConfigViewModel by viewModels()
     private val tripViewModel: TripViewModel by viewModels()
+    private val tripDetailViewModel: TripDetailViewModel by viewModels()
     private val backupViewModel: BackupViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +58,7 @@ class MainActivity : ComponentActivity() {
                     evDataViewModel = evDataViewModel,
                     llmConfigViewModel = llmConfigViewModel,
                     tripViewModel = tripViewModel,
+                    tripDetailViewModel = tripDetailViewModel,
                     backupViewModel = backupViewModel
                 )
             }
@@ -71,6 +74,7 @@ fun MainAppContent(
     evDataViewModel: EvDataViewModel,
     llmConfigViewModel: LlmConfigViewModel,
     tripViewModel: TripViewModel,
+    tripDetailViewModel: TripDetailViewModel,
     backupViewModel: BackupViewModel
 ) {
     val navigator = remember { AppNavigator(AppScreen.SPLASH) }
@@ -94,6 +98,7 @@ fun MainAppContent(
                     evDataViewModel = evDataViewModel,
                     llmConfigViewModel = llmConfigViewModel,
                     tripViewModel = tripViewModel,
+                    tripDetailViewModel = tripDetailViewModel,
                     backupViewModel = backupViewModel,
                     innerPadding = innerPadding
                 )
@@ -111,6 +116,7 @@ fun AppNavigationContent(
     evDataViewModel: EvDataViewModel,
     llmConfigViewModel: LlmConfigViewModel,
     tripViewModel: TripViewModel,
+    tripDetailViewModel: TripDetailViewModel,
     backupViewModel: BackupViewModel,
     innerPadding: PaddingValues
 ) {
@@ -146,7 +152,7 @@ fun AppNavigationContent(
             )
 
             AppScreen.TRIP_DETAIL -> TripDetailScreen(
-                viewModel = tripViewModel,
+                viewModel = tripDetailViewModel,
                 navigator = navigator
             )
 

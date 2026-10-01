@@ -29,17 +29,16 @@ import co.com.japl.ui.components.DualMetricCard
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.TripMapView
 import co.japl.android.ev_ride_connect.R
-import co.japl.android.ev_ride_connect.controller.TripViewModel
+import co.japl.android.ev_ride_connect.controller.TripDetailViewModel
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.model.TripGps
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripDetailScreen(
-    viewModel: TripViewModel,
+    viewModel: TripDetailViewModel,
     navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
