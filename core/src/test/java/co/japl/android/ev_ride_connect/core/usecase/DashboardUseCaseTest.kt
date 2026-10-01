@@ -1,5 +1,6 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
 import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
 import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
@@ -9,7 +10,9 @@ import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import kotlinx.coroutines.flow.MutableStateFlow
+import co.japl.android.ev_ride_connect.interfaces.usecase.DashboardUseCase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -17,44 +20,37 @@ import org.junit.Test
 
 class DashboardUseCaseTest {
 
-    private lateinit var fakeEvDataPort: FakeEvDataPort
-    private lateinit var fakeEvConfigPort: FakeEvConfigPort
-    private lateinit var fakeLlmConfigPort: FakeLlmConfigPort
-    private lateinit var fakeSessionStatePort: FakeSessionStatePort
-    private lateinit var fakeTripPort: FakeTripDatabasePort
     private lateinit var useCase: DashboardUseCase
 
     @Before
     fun setUp() {
-        fakeEvDataPort = FakeEvDataPort()
-        fakeEvConfigPort = FakeEvConfigPort()
-        fakeLlmConfigPort = FakeLlmConfigPort()
-        fakeSessionStatePort = FakeSessionStatePort()
-        fakeTripPort = FakeTripDatabasePort()
-
-        val getLatestEvDataUseCase = GetLatestEvDataUseCase(fakeEvDataPort)
+        val evDataPort = FakeEvDataPort()
+        val evConfigPort = FakeEvConfigPort()
+        val llmConfigPort = FakeLlmConfigPort()
+        val sessionStatePort = FakeSessionStatePort()
+        val tripDatabasePort = FakeTripDatabasePort()
 
         useCase = DashboardUseCaseImpl(
-            fakeEvDataPort,
-            fakeEvConfigPort,
-            fakeLlmConfigPort,
-            fakeSessionStatePort,
-            fakeTripPort,
-            getLatestEvDataUseCase,
-            SaveEvDataUseCase(fakeEvDataPort),
-            GetEvConfigUseCase(fakeEvConfigPort),
-            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort),
-            CalculateDynamicBatteryPercentageUseCase(),
-            CalculateOptimalBatteryPercentageUseCase(),
-            CalculateConsumptionUseCase(),
-            UpdateOdometerUseCase(fakeEvDataPort, getLatestEvDataUseCase),
-            GetAllTripsUseCase(fakeTripPort)
+            evDataPort = evDataPort,
+            evConfigPort = evConfigPort,
+            llmConfigPort = llmConfigPort,
+            sessionStatePort = sessionStatePort,
+            tripDatabasePort = tripDatabasePort,
+            getLatestEvDataUseCase = GetLatestEvDataUseCase(evDataPort),
+            getEvConfigUseCase = GetEvConfigUseCase(evConfigPort),
+            getActiveLlmConfigsUseCase = GetActiveLlmConfigsUseCase(llmConfigPort),
+            observeActiveSessionUseCase = ObserveActiveSessionUseCase(sessionStatePort),
+            getAllTripsUseCase = GetAllTripsUseCase(tripDatabasePort),
+            calculateConsumptionUseCase = CalculateConsumptionUseCase(),
+            calculateOptimalBatteryPercentageUseCase = CalculateOptimalBatteryPercentageUseCase(),
+            calculateDynamicBatteryPercentageUseCase = CalculateDynamicBatteryPercentageUseCase(),
+            saveEvDataUseCase = SaveEvDataUseCase(evDataPort),
+            updateOdometerUseCase = UpdateOdometerUseCase(evDataPort, GetLatestEvDataUseCase(evDataPort))
         )
     }
 
     @Test
-    fun shouldGetLatestEvDataAndEvConfig() = runTest {
+    fun shouldReturnLatestDataAndConfig() = runTest {
         val evData = useCase.getLatestEvData()
         val evConfig = useCase.getEvConfig()
 
@@ -64,48 +60,49 @@ class DashboardUseCaseTest {
 
     @Test
     fun shouldCalculateMetricsCorrectly() {
-        val optimalPct = useCase.calculateOptimalBatteryPercentage(10)
-        assertThat(optimalPct).isGreaterThan(0.0)
+        val optimalBattery = useCase.calculateOptimalBatteryPercentage(10)
+        assertThat(optimalBattery).isGreaterThan(0.0)
 
-        val consumption = useCase.calculateConsumption(10, 52.0, 20.0, 10.0)
+        val consumption = useCase.calculateConsumption(10, 52.0, 20.0, 15.0)
         assertThat(consumption).isGreaterThan(0.0)
     }
 
     private class FakeEvDataPort : EvDataPort {
-        override suspend fun getLatestEvData() = EvData(evCode = "EV01", km = 100L, batteryLevel = 80)
-        override suspend fun getAllEvData() = listOf(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
-        override suspend fun saveEvData(evData: EvData) = 1L
+        override suspend fun getLatestEvData(): EvData = EvData(evCode = "EV01", km = 100, batteryLevel = 90)
+        override suspend fun saveEvData(evData: EvData): Long = 1L
+        override suspend fun getAllEvData(): List<EvData> = emptyList()
+        override suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryPercentage: Short): Long = 1L
     }
 
     private class FakeEvConfigPort : EvConfigPort {
-        override suspend fun getEvConfig() = EvConfig(id = 1L, brand = "VSETT")
-        override suspend fun saveEvConfig(config: EvConfig) = 1L
+        override suspend fun getEvConfig(): EvConfig = EvConfig(brand = "VSETT", version = "C7 Plus")
+        override suspend fun saveEvConfig(config: EvConfig): Long = 1L
     }
 
     private class FakeLlmConfigPort : LlmConfigPort {
-        override suspend fun getAllConfigs() = emptyList<LlmConfig>()
-        override suspend fun getActiveConfigs() = emptyList<LlmConfig>()
-        override suspend fun saveConfig(config: LlmConfig) = 1L
-        override suspend fun toggleActiveStatus(id: Long, isActive: Boolean) = true
-        override suspend fun deleteConfig(id: Long) = true
+        override suspend fun getActiveConfigs(): List<LlmConfig> = emptyList()
+        override suspend fun getAllConfigs(): List<LlmConfig> = emptyList()
+        override suspend fun saveConfig(config: LlmConfig): Long = 1L
+        override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
+        override suspend fun deleteConfig(id: Long): Boolean = true
     }
 
     private class FakeSessionStatePort : SessionStatePort {
-        override suspend fun saveActiveSession(session: co.japl.android.ev_ride_connect.interfaces.model.ActiveSession) {}
-        override suspend fun getActiveSession() = null
-        override fun observeActiveSession() = MutableStateFlow(null)
+        override suspend fun saveActiveSession(session: ActiveSession) {}
+        override suspend fun getActiveSession(): ActiveSession? = null
+        override fun observeActiveSession(): Flow<ActiveSession?> = flowOf(null)
         override suspend fun clearActiveSession() {}
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>) = 1L
-        override suspend fun getAllTrips() = emptyList<Trip>()
-        override suspend fun getTripById(tripId: Long) = null
-        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.interfaces.model.TripGps>()
-        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long) = emptyList<Trip>()
-        override suspend fun getTotalTripsCount() = 0
-        override suspend fun getTotalDistanceKm() = 0.0
-        override suspend fun getChargeDetectionsCount(threshold: Int) = 0
         override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+        override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
+        override suspend fun getAllTrips(): List<Trip> = emptyList()
+        override suspend fun getTripById(tripId: Long): Trip? = null
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<co.japl.android.ev_ride_connect.interfaces.model.TripGps> = emptyList()
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+        override suspend fun getTotalTripsCount(): Int = 0
+        override suspend fun getTotalDistanceKm(): Double = 0.0
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 }

@@ -27,10 +27,10 @@ class TuyaBleAdapterTest {
             ScooterState(
                 isLocked = false,
                 speedMode = 0,
-                currentSpeed = 0,
-                realtimeVoltage = 0,
+                currentSpeedKmH = 0.0,
+                realtimeVoltageVolts = 0.0,
                 batteryPercentage = 0,
-                totalOdometer = 0,
+                totalOdometerKm = 0L,
                 isLightOn = false
             )
         )
@@ -83,13 +83,12 @@ class TuyaBleAdapterTest {
 
     @Test
     fun shouldUpdateVoltageAndCalculateBatteryPercentageWhenDp7Received() = runTest {
-        // Voltage = 546 (54.6V) -> 100%
         adapter.onDataPointReceived(dpId = 7, value = 546)
 
         val state = adapter.observeScooterState().first()
 
         assertThat(state.realtimeVoltage).isEqualTo(546)
-        assertThat(state.batteryPercentage).isEqualTo(100)
+        assertThat(state.batteryPercentage.toInt()).isEqualTo(100)
     }
 
     @Test
@@ -113,7 +112,7 @@ class TuyaBleAdapterTest {
         assertThat(state.currentSpeed).isEqualTo(30)
         assertThat(state.totalOdometer).isEqualTo(2500)
         assertThat(state.realtimeVoltage).isEqualTo(468)
-        assertThat(state.batteryPercentage).isEqualTo(50)
+        assertThat(state.batteryPercentage.toInt()).isEqualTo(50)
     }
 
     @Test
@@ -146,7 +145,6 @@ class TuyaBleAdapterTest {
 
     @Test
     fun shouldLogConnectionFailureWhenBluetoothAdapterIsNull() = runTest {
-        // TuyaBleAdapter created with null context has null bluetoothAdapter
         adapter.connect("AA:BB:CC:DD:EE:FF")
 
         val logs = adapter.observeRawLogs().first()
@@ -175,7 +173,6 @@ class TuyaBleAdapterTest {
         assertThat(logs).hasSize(1)
         assertThat(logs[0].errorMessage).contains("Bluetooth adapter is null")
 
-        // Subsequent connect() without argument uses saved MAC address
         adapter.connect(null)
         val secondLogs = adapter.observeRawLogs().first()
         assertThat(secondLogs).hasSize(2)
@@ -239,12 +236,10 @@ class TuyaBleAdapterTest {
 
     @Test
     fun shouldIgnoreDuplicateConnectCallsWhenAlreadyConnecting() = runTest {
-        // First connection attempt (bluetoothAdapter is null in mockless adapter, resets isConnecting on return)
         adapter.connect("DC:23:52:3D:A2:E4")
         val initialLogs = adapter.observeRawLogs().first()
         assertThat(initialLogs).hasSize(1)
 
-        // Second connect call with same MAC
         adapter.connect("DC:23:52:3D:A2:E4")
         val secondLogs = adapter.observeRawLogs().first()
         assertThat(secondLogs).hasSize(2)

@@ -6,6 +6,7 @@ data class Trip(
     val timeTrip: Long = 0,
     val maxSpeed: Double = 0.0,
     val avgSpeed: Double = 0.0,
+    val averageSpeed: Double = avgSpeed,
     val initialBattery: Short = 0,
     val endBattery: Short = 0,
     val batteryConsumed: Int = 0,

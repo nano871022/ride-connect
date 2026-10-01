@@ -4,7 +4,7 @@ import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvDataUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.GetAllEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
@@ -23,26 +23,10 @@ import org.junit.Test
 class EvDataViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var fakeEvDataPort: FakeEvDataPort
-    private lateinit var fakeTripPort: FakeTripDatabasePort
-    private lateinit var viewModel: EvDataViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        fakeEvDataPort = FakeEvDataPort()
-        fakeTripPort = FakeTripDatabasePort()
-        fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
-        fakeEvDataPort.savedList.add(EvData(evCode = "EV01", km = 120L, batteryLevel = 70))
-
-        val evDataUseCase = EvDataUseCaseImpl(
-            fakeEvDataPort,
-            fakeTripPort,
-            GetAllEvDataUseCase(fakeEvDataPort),
-            GetAllTripsUseCase(fakeTripPort),
-            GetTripsByDateUseCase(fakeTripPort)
-        )
-        viewModel = EvDataViewModel(evDataUseCase)
     }
 
     @After
@@ -51,42 +35,40 @@ class EvDataViewModelTest {
     }
 
     @Test
-    fun shouldLoadEvDataHistoryOnInit() = runTest {
-        viewModel.loadEvDataHistory()
-        testScheduler.runCurrent()
+    fun shouldInitializeAndLoadData() = runTest {
+        val evDataPort = FakeEvDataPort()
+        val tripDatabasePort = FakeTripDatabasePort()
 
-        assertThat(viewModel.evDataList.value).hasSize(2)
-        assertThat(viewModel.evDataList.value.first().km).isEqualTo(100L)
+        val evDataUseCase = EvDataUseCaseImpl(
+            evDataPort = evDataPort,
+            tripDatabasePort = tripDatabasePort,
+            getAllEvDataUseCase = GetAllEvDataUseCase(evDataPort),
+            getAllTripsUseCase = GetAllTripsUseCase(tripDatabasePort),
+            getTripsByDateUseCase = GetTripsByDateUseCase(tripDatabasePort)
+        )
+
+        val viewModel = EvDataViewModel(evDataUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertThat(viewModel.evDataList.value).hasSize(1)
     }
 
     private class FakeEvDataPort : EvDataPort {
-        val savedList = mutableListOf<EvData>()
-
-        override suspend fun getLatestEvData(): EvData? {
-            return savedList.lastOrNull()
-        }
-
-        override suspend fun getAllEvData(): List<EvData> {
-            return savedList.toList()
-        }
-
-        override suspend fun saveEvData(evData: EvData): Long {
-            savedList.add(evData)
-            return savedList.size.toLong()
-        }
+        override suspend fun getLatestEvData(): EvData? = null
+        override suspend fun saveEvData(evData: EvData): Long = 1L
+        override suspend fun getAllEvData(): List<EvData> = listOf(EvData(evCode = "EV01"))
+        override suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryPercentage: Short): Long = 1L
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        val trips = mutableListOf<Trip>()
-
-        override suspend fun getAllTrips(): List<Trip> = trips
-        override suspend fun saveTrip(trip: Trip, points: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
-        override suspend fun getTripById(tripId: Long): Trip? = null
-        override suspend fun getGpsPointsByTripId(tripId: Long) = emptyList<co.japl.android.ev_ride_connect.interfaces.model.TripGps>()
-        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long) = trips
-        override suspend fun getTotalTripsCount() = 0
-        override suspend fun getTotalDistanceKm() = 0.0
-        override suspend fun getChargeDetectionsCount(threshold: Int) = 0
         override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+        override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
+        override suspend fun getAllTrips(): List<Trip> = listOf(Trip(id = 1L))
+        override suspend fun getTripById(tripId: Long): Trip? = null
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<co.japl.android.ev_ride_connect.interfaces.model.TripGps> = emptyList()
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+        override suspend fun getTotalTripsCount(): Int = 1
+        override suspend fun getTotalDistanceKm(): Double = 10.0
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 }

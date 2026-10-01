@@ -10,6 +10,14 @@ class LlmClientPortTest {
     @Test
     fun shouldValidateApiKeyAndGenerateResponseWithFakePort() = runTest {
         val fakePort = object : LlmClientPort {
+            override suspend fun queryLlm(prompt: String, config: LlmConfig, promptTemplate: String?): String {
+                return "Response for $prompt"
+            }
+
+            override suspend fun fetchAvailableModels(apiKey: String): List<String> {
+                return listOf("v1", "v2")
+            }
+
             override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean {
                 return apiKey.startsWith("valid-")
             }

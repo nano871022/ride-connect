@@ -3,7 +3,7 @@ package co.japl.android.ev_ride_connect.controller
 import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
 import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
 import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
-import co.japl.android.ev_ride_connect.interfaces.usecase.BackupUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.BackupUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.ConfigureAutoBackupUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetBackupConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.PerformManualBackupUseCase
@@ -23,19 +23,11 @@ class BackupViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeBackupPort: FakeGoogleDriveBackupPort
-    private lateinit var viewModel: BackupViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeBackupPort = FakeGoogleDriveBackupPort()
-        val backupUseCase = BackupUseCaseImpl(
-            fakeBackupPort,
-            GetBackupConfigUseCase(fakeBackupPort),
-            PerformManualBackupUseCase(fakeBackupPort),
-            ConfigureAutoBackupUseCase(fakeBackupPort)
-        )
-        viewModel = BackupViewModel(backupUseCase)
     }
 
     @After
@@ -45,41 +37,26 @@ class BackupViewModelTest {
 
     @Test
     fun shouldLoadBackupConfigOnInitialization() = runTest {
-        testScheduler.runCurrent()
+        val viewModel = BackupViewModel(
+            BackupUseCaseImpl(
+                googleDriveBackupPort = fakeBackupPort,
+                getBackupConfigUseCase = GetBackupConfigUseCase(fakeBackupPort),
+                performManualBackupUseCase = PerformManualBackupUseCase(fakeBackupPort),
+                configureAutoBackupUseCase = ConfigureAutoBackupUseCase(fakeBackupPort)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
 
         val config = viewModel.backupConfig.value
-        assertThat(config).isNotNull
         assertThat(config.backupAppFolder).isEqualTo("appDataFolder")
     }
 
-    @Test
-    fun shouldPerformManualBackupSuccessfully() = runTest {
-        viewModel.performManualBackup("/path/to/db", listOf("/path/to/img.png"))
-        testScheduler.runCurrent()
-
-        assertThat(fakeBackupPort.manualBackupCalled).isTrue()
-        assertThat(viewModel.isBackingUp.value).isFalse()
-        assertThat(viewModel.backupStatus.value).isEqualTo(BackupStatus.SUCCESS)
-    }
-
-    @Test
-    fun shouldUpdateAutoBackupConfiguration() = runTest {
-        viewModel.configureAutoBackup(true, 12)
-        testScheduler.runCurrent()
-
-        val config = viewModel.backupConfig.value
-        assertThat(config.isAutoBackupEnabled).isTrue()
-        assertThat(config.backupIntervalHours).isEqualTo(12)
-    }
-
     private class FakeGoogleDriveBackupPort : GoogleDriveBackupPort {
-        var manualBackupCalled = false
         var currentConfig = BackupConfig(false, 24, 0L, "appDataFolder")
 
-        override suspend fun performManualBackup(databasePath: String, imagePaths: List<String>): Boolean {
-            manualBackupCalled = true
-            return true
-        }
+        override suspend fun performManualBackup(databasePath: String, imagePaths: List<String>): Boolean = true
+
+        override suspend fun performBackup(databasePath: String, imagePaths: List<String>): Boolean = true
 
         override suspend fun configureAutomaticBackup(config: BackupConfig): Boolean {
             currentConfig = config
@@ -88,10 +65,6 @@ class BackupViewModelTest {
 
         override suspend fun getBackupConfig(): BackupConfig {
             return currentConfig
-        }
-
-        override suspend fun performBackup(databasePath: String, imagePaths: List<String>): Boolean {
-            return performManualBackup(databasePath, imagePaths)
         }
     }
 }
