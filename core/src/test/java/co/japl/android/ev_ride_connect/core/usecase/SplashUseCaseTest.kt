@@ -6,6 +6,7 @@ import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
 import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.interfaces.usecase.SplashUseCase
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -13,52 +14,50 @@ import org.junit.Test
 
 class SplashUseCaseTest {
 
-    private lateinit var fakeEvDataPort: FakeEvDataPort
-    private lateinit var fakeEvConfigPort: FakeEvConfigPort
-    private lateinit var fakeLlmConfigPort: FakeLlmConfigPort
     private lateinit var useCase: SplashUseCase
 
     @Before
     fun setUp() {
-        fakeEvDataPort = FakeEvDataPort()
-        fakeEvConfigPort = FakeEvConfigPort()
-        fakeLlmConfigPort = FakeLlmConfigPort()
+        val evDataPort = FakeEvDataPort()
+        val evConfigPort = FakeEvConfigPort()
+        val llmConfigPort = FakeLlmConfigPort()
 
         useCase = SplashUseCaseImpl(
-            fakeEvDataPort,
-            fakeEvConfigPort,
-            fakeLlmConfigPort,
-            GetLatestEvDataUseCase(fakeEvDataPort),
-            GetEvConfigUseCase(fakeEvConfigPort),
-            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            GetAllLlmConfigsUseCase(fakeLlmConfigPort)
+            evDataPort = evDataPort,
+            evConfigPort = evConfigPort,
+            llmConfigPort = llmConfigPort,
+            getLatestEvDataUseCase = GetLatestEvDataUseCase(evDataPort),
+            getEvConfigUseCase = GetEvConfigUseCase(evConfigPort),
+            getActiveLlmConfigsUseCase = GetActiveLlmConfigsUseCase(llmConfigPort),
+            getAllLlmConfigsUseCase = GetAllLlmConfigsUseCase(llmConfigPort)
         )
     }
 
     @Test
     fun shouldPreloadSplashData() = runTest {
-        val result = useCase.preloadSplashData()
+        val splashData = useCase.preloadSplashData()
 
-        assertThat(result.latestEvData?.evCode).isEqualTo("EV01")
-        assertThat(result.evConfig?.brand).isEqualTo("VSETT")
-    }
-
-    private class FakeEvDataPort : EvDataPort {
-        override suspend fun getLatestEvData() = EvData(evCode = "EV01", km = 100L, batteryLevel = 80)
-        override suspend fun getAllEvData() = listOf(EvData(evCode = "EV01", km = 100L, batteryLevel = 80))
-        override suspend fun saveEvData(evData: EvData) = 1L
+        assertThat(splashData.evConfig?.brand).isEqualTo("VSETT")
+        assertThat(splashData.latestEvData?.evCode).isEqualTo("EV01")
     }
 
     private class FakeEvConfigPort : EvConfigPort {
-        override suspend fun getEvConfig() = EvConfig(id = 1L, brand = "VSETT")
-        override suspend fun saveEvConfig(config: EvConfig) = 1L
+        override suspend fun getEvConfig(): EvConfig = EvConfig(brand = "VSETT")
+        override suspend fun saveEvConfig(config: EvConfig): Long = 1L
+    }
+
+    private class FakeEvDataPort : EvDataPort {
+        override suspend fun getLatestEvData(): EvData = EvData(evCode = "EV01")
+        override suspend fun saveEvData(evData: EvData): Long = 1L
+        override suspend fun getAllEvData(): List<EvData> = emptyList()
+        override suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryPercentage: Short): Long = 1L
     }
 
     private class FakeLlmConfigPort : LlmConfigPort {
-        override suspend fun getAllConfigs() = emptyList<LlmConfig>()
-        override suspend fun getActiveConfigs() = emptyList<LlmConfig>()
-        override suspend fun saveConfig(config: LlmConfig) = 1L
-        override suspend fun toggleActiveStatus(id: Long, isActive: Boolean) = true
-        override suspend fun deleteConfig(id: Long) = true
+        override suspend fun getActiveConfigs(): List<LlmConfig> = emptyList()
+        override suspend fun getAllConfigs(): List<LlmConfig> = emptyList()
+        override suspend fun saveConfig(config: LlmConfig): Long = 1L
+        override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
+        override suspend fun deleteConfig(id: Long): Boolean = true
     }
 }

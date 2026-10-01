@@ -16,43 +16,42 @@ class MotionDetectorTest {
 
     @Test
     fun shouldDetectStoppedWhenNotMoving() {
-        motionDetector.processSensorData(0f, 0f, 9.81f, 0f, 0f, 0f)
+        motionDetector.processSensorData(0f, 0f, 9.81f, 0f, 0f, 0f, System.currentTimeMillis())
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.STOPPED)
     }
 
     @Test
     fun shouldDetectAcceleratingWhenDeltaAccExceedsThreshold() {
-        motionDetector.processSensorData(0f, 0f, 11.81f, 0f, 0f, 0f)
+        motionDetector.processSensorData(0f, 0f, 11.81f, 0f, 0f, 0f, System.currentTimeMillis())
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.ACCELERATING)
     }
 
     @Test
     fun shouldDetectBrakingWhenDeltaAccBelowThreshold() {
-        motionDetector.processSensorData(0f, 0f, 7.81f, 0f, 0f, 0f)
+        motionDetector.processSensorData(0f, 0f, 7.81f, 0f, 0f, 0f, System.currentTimeMillis())
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.BRAKING)
     }
 
     @Test
     fun shouldDetectMovingWhenDeltaAccModerate() {
-        motionDetector.processSensorData(0f, 0f, 10.81f, 0f, 0f, 0f)
+        motionDetector.processSensorData(0f, 0f, 10.81f, 0f, 0f, 0f, System.currentTimeMillis())
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.MOVING)
     }
 
     @Test
     fun shouldIgnoreGyroDataForStateTransitions() {
-        // Even with high gyro rates, motion state is derived purely from accelerometer
-        motionDetector.processSensorData(0f, 0f, 9.81f, 5.0f, 5.0f, 5.0f)
+        motionDetector.processSensorData(0f, 0f, 9.81f, 5.0f, 5.0f, 5.0f, System.currentTimeMillis())
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.STOPPED)
     }
 
     @Test
     fun shouldUpdateStateDirectly() {
-        motionDetector.updateState(MotionState.MOVING)
+        motionDetector.updateState(MotionState.MOVING, System.currentTimeMillis())
 
         assertThat(motionDetector.motionState.value).isEqualTo(MotionState.MOVING)
     }

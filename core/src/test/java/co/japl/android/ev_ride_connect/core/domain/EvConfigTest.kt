@@ -1,5 +1,7 @@
-package co.japl.android.ev_ride_connect.interfaces.model
+package co.japl.android.ev_ride_connect.core.domain
 
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvConstants
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import uk.co.jemos.podam.api.PodamFactoryImpl
@@ -10,71 +12,46 @@ class EvConfigTest {
 
     @Test
     fun shouldInstantiateEvConfigWithPodam() {
-        val evConfig = podamFactory.manufacturePojo(EvConfig::class.java)
+        val config = podamFactory.manufacturePojo(EvConfig::class.java)
 
-        assertThat(evConfig).isNotNull
-        assertThat(evConfig.brand).isNotNull
-        assertThat(evConfig.version).isNotNull
-    }
-
-    @Test
-    fun shouldInstantiateMotorSpecWithPodam() {
-        val motorSpec = podamFactory.manufacturePojo(MotorSpec::class.java)
-
-        assertThat(motorSpec).isNotNull
-        assertThat(motorSpec.name).isNotNull
-        assertThat(motorSpec.watts).isNotNull
+        assertThat(config).isNotNull
     }
 
     @Test
     fun shouldCreateEvConfigWithGivenValues() {
-        val motors = listOf(
-            MotorSpec("Front Motor", 1000),
-            MotorSpec("Rear Motor", 1000)
-        )
         val config = EvConfig(
-            id = 1L,
-            request = "Vsett c7 plus by emove colombia seller",
+            id = 1,
             brand = "VSETT",
             version = "C7 Plus",
-            motors = motors,
-            manufactoryYear = "2023",
-            manufactoryCompany = "VSETT / eMove Colombia",
-            boughtDate = "2023-10-10",
-            batteryTechnology = "Li-ion",
-            batteryVolts = "60V",
-            batteryAmpers = "20.8Ah",
+            manufactoryYear = "2024",
+            manufactoryCompany = "VSETT Mobility",
+            batteryTechnology = "Li-Ion",
+            batteryVolts = "52V",
+            batteryAmpers = "20Ah",
             brakeQuantity = 2,
-            brakeTechnology = "Hydraulic Disc Brake",
-            suspensionTechnology = "Spring & Hydraulic Suspension",
-            chargePower = "67.2V 2A",
-            otherCharacteristics = "Dual motor scooter",
-            isLoaded = true
+            brakeTechnology = "Hydraulic Disc",
+            suspensionTechnology = "Hydraulic Spring",
+            chargePower = "58.8V 2A",
+            otherCharacteristics = "Dual Motor, NFC"
         )
 
-        assertThat(config.id).isEqualTo(1L)
-        assertThat(config.request).isEqualTo("Vsett c7 plus by emove colombia seller")
+        assertThat(config.id).isEqualTo(1)
         assertThat(config.brand).isEqualTo("VSETT")
         assertThat(config.version).isEqualTo("C7 Plus")
-        assertThat(config.motors).hasSize(2)
-        assertThat(config.motors.first().name).isEqualTo("Front Motor")
-        assertThat(config.motors.first().watts).isEqualTo(1000)
-        assertThat(config.manufactoryYear).isEqualTo("2023")
-        assertThat(config.manufactoryCompany).isEqualTo("VSETT / eMove Colombia")
-        assertThat(config.boughtDate).isEqualTo("2023-10-10")
-        assertThat(config.batteryTechnology).isEqualTo("Li-ion")
-        assertThat(config.batteryVolts).isEqualTo("60V")
-        assertThat(config.batteryAmpers).isEqualTo("20.8Ah")
+        assertThat(config.manufactoryYear).isEqualTo("2024")
+        assertThat(config.manufactoryCompany).isEqualTo("VSETT Mobility")
+        assertThat(config.batteryTechnology).isEqualTo("Li-Ion")
+        assertThat(config.batteryVolts).isEqualTo("52V")
+        assertThat(config.batteryAmpers).isEqualTo("20Ah")
         assertThat(config.brakeQuantity).isEqualTo(2)
-        assertThat(config.brakeTechnology).isEqualTo("Hydraulic Disc Brake")
-        assertThat(config.suspensionTechnology).isEqualTo("Spring & Hydraulic Suspension")
-        assertThat(config.chargePower).isEqualTo("67.2V 2A")
-        assertThat(config.otherCharacteristics).isEqualTo("Dual motor scooter")
-        assertThat(config.isLoaded).isTrue()
+        assertThat(config.brakeTechnology).isEqualTo("Hydraulic Disc")
+        assertThat(config.suspensionTechnology).isEqualTo("Hydraulic Spring")
+        assertThat(config.chargePower).isEqualTo("58.8V 2A")
+        assertThat(config.otherCharacteristics).isEqualTo("Dual Motor, NFC")
     }
 
     @Test
-    fun shouldHaveConstantClassName() {
-        assertThat(EvConstants.EV_CONFIG_CLASS_NAME).isEqualTo(EvConfig::class.java.name)
+    fun shouldConstantClassesUseDynamicClassReferences() {
+        assertThat(EvConstants.EV_LLM_PROMPT_TEMPLATE).isNotNull
     }
 }

@@ -2,10 +2,12 @@ package co.japl.android.ev_ride_connect.interfaces.model
 
 data class EvConfig(
     val id: Long = 0,
+    val request: String = "",
     val brand: String = "",
     val version: String = "",
     val manufactoryYear: String = "",
     val manufactoryCompany: String = "",
+    val boughtDate: String = "",
     val batteryTechnology: String = "",
     val batteryVolts: String = "",
     val batteryAmpers: String = "",
@@ -15,7 +17,8 @@ data class EvConfig(
     val chargePower: String = "",
     val otherCharacteristics: String = "",
     val motors: List<MotorSpec> = emptyList(),
-    val request: String = "",
+    val imageUrl: String = "",
+    val isLoaded: Boolean = false,
     val batteryMode: BatteryMode = BatteryMode.PERCENTAGE,
     val maxVoltage: Double = 54.6,
     val minVoltage: Double = 39.0
