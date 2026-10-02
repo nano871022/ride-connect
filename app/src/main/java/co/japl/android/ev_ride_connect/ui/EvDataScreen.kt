@@ -25,21 +25,20 @@ import androidx.compose.material.icons.filled.SportsScore
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-
+import co.com.japl.homeconnect.about.ui.theme.MaterialThemeComposeUI
 import co.com.japl.ui.components.AnalyticsStatCard
 import co.com.japl.ui.components.FilterPillGroup
 import co.com.japl.ui.components.FilterPillItem
@@ -49,30 +48,23 @@ import co.com.japl.ui.components.HistoryRecordType
 import co.com.japl.ui.components.MaintenanceHealthCard
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvDataViewModel
-import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import java.util.Locale
-import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.usecase.EvDataUseCase
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
-enum class HistoryFilter {
-    ALL, WEEK, MONTH, CHARGE
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvDataScreen(
     viewModel: EvDataViewModel,
-    tripViewModel: TripViewModel? = null,
     navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
     val evDataList by viewModel.evDataList.collectAsState()
     val records by viewModel.records.collectAsState()
     val maintenanceIndicators by viewModel.maintenanceIndicators.collectAsState()
-    val tripHistory by (tripViewModel?.tripHistory ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyList<Trip>()) }).collectAsState()
-    val selectedFilter by (tripViewModel?.selectedFilter ?: remember { kotlinx.coroutines.flow.MutableStateFlow(HistoryFilter.ALL) }).collectAsState()
+    val tripHistory by viewModel.tripHistory.collectAsState()
+    val selectedFilter by viewModel.selectedFilter.collectAsState()
     val currentLocale = LocalConfiguration.current.locales[0]
 
     val filterItems = listOf(
@@ -103,7 +95,7 @@ fun EvDataScreen(
                 items = filterItems,
                 selectedItemId = selectedFilter,
                 onItemSelected = { filter ->
-                    tripViewModel?.filterTripsByDate(filter)
+                    viewModel.filterTripsByDate(filter)
                 }
             )
         }
@@ -131,7 +123,6 @@ fun EvDataScreen(
                     ),
                     viewTelemetryText = stringResource(R.string.history_view_telemetry),
                     onViewTelemetryClick = {
-                        tripViewModel?.loadTripDetail(trip.id)
                         navigator?.navigateToTripDetail(trip.id)
                     }
                 )
@@ -144,7 +135,6 @@ fun EvDataScreen(
                     onViewTelemetryClick = {
                         val tId = record.id.toLongOrNull()
                         if (tId != null) {
-                            tripViewModel?.loadTripDetail(tId)
                             navigator?.navigateToTripDetail(tId)
                         }
                     }
@@ -304,5 +294,28 @@ private fun FloatButtons(){
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Preview()
+@Composable
+internal fun EvDataScreenPreview1(){
+    MaterialThemeComposeUI {
+        EvDataScreen(
+            viewModel = EvDataViewModel(
+                evDataUseCase = object : EvDataUseCase {
+                    override suspend fun getAllEvData(): List<EvData> = listOf()
+
+                    override suspend fun getAllTrips(): List<Trip> = listOf()
+
+                    override suspend fun getTripsByDate(
+                        startDateMs: Long,
+                        endDateMs: Long
+                    ): List<Trip> = listOf()
+                }
+            ),
+            navigator = null,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

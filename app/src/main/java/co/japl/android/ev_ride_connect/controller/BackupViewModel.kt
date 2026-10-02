@@ -2,11 +2,9 @@ package co.japl.android.ev_ride_connect.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.core.domain.BackupStatus
-import co.japl.android.ev_ride_connect.core.usecase.ConfigureAutoBackupUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetBackupConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.PerformManualBackupUseCase
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
+import co.japl.android.ev_ride_connect.interfaces.usecase.BackupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,9 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
-    private val getBackupConfigUseCase: GetBackupConfigUseCase,
-    private val performManualBackupUseCase: PerformManualBackupUseCase,
-    private val configureAutoBackupUseCase: ConfigureAutoBackupUseCase
+    private val backupUseCase: BackupUseCase
 ) : ViewModel() {
 
     private val _backupConfig = MutableStateFlow(BackupConfig())
@@ -36,7 +32,7 @@ class BackupViewModel @Inject constructor(
 
     fun loadBackupConfig() {
         viewModelScope.launch {
-            val config = getBackupConfigUseCase.execute()
+            val config = backupUseCase.getBackupConfig()
             _backupConfig.value = config
         }
     }
@@ -45,7 +41,7 @@ class BackupViewModel @Inject constructor(
         viewModelScope.launch {
             _isBackingUp.value = true
             _backupStatus.value = BackupStatus.IN_PROGRESS
-            val success = performManualBackupUseCase.execute(databasePath, imagePaths)
+            val success = backupUseCase.performManualBackup(databasePath, imagePaths)
             _isBackingUp.value = false
             _backupStatus.value = if (success) BackupStatus.SUCCESS else BackupStatus.FAILURE
             if (success) {
@@ -60,7 +56,7 @@ class BackupViewModel @Inject constructor(
                 isAutoBackupEnabled = enabled,
                 backupIntervalHours = intervalHours
             )
-            val success = configureAutoBackupUseCase.execute(updatedConfig)
+            val success = backupUseCase.configureAutoBackup(updatedConfig)
             if (success) {
                 _backupConfig.value = updatedConfig
             }

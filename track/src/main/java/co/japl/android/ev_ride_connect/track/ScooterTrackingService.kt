@@ -16,16 +16,16 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
-import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.ports.BleScooterPort
+import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.MotionDetectorPort
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -314,7 +314,7 @@ class ScooterTrackingService : Service() {
                 val finalSession = currentSession.copy(
                     pendingLlmResponse = "ERROR:${e.localizedMessage ?: "FAILED"}",
                     isLlmProcessing = false,
-                    lastUpdatedTmst = System.currentTimeMillis()
+                    startTimeMs = System.currentTimeMillis()
                 )
                 sessionStatePort.saveActiveSession(finalSession)
             } finally {

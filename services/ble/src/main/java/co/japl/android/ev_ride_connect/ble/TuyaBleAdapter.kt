@@ -15,13 +15,14 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import co.japl.android.ev_ride_connect.core.domain.BleLogDirection
-import co.japl.android.ev_ride_connect.core.domain.BleLogEntry
-import co.japl.android.ev_ride_connect.core.domain.ScooterState
-import co.japl.android.ev_ride_connect.core.ports.BleScooterPort
+import co.japl.android.ev_ride_connect.interfaces.model.BleLogDirection
+import co.japl.android.ev_ride_connect.interfaces.model.BleLogEntry
+import co.japl.android.ev_ride_connect.interfaces.model.ScooterState
+import co.japl.android.ev_ride_connect.interfaces.ports.BleScooterPort
 import co.japl.android.ev_ride_connect.utils.BatteryCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
@@ -40,13 +41,14 @@ class TuyaBleAdapter(
         ScooterState(
             isLocked = false,
             speedMode = 0,
-            currentSpeed = 0,
-            realtimeVoltage = 0,
+            currentSpeedKmH = 0.0,
+            realtimeVoltageVolts = 0.0,
             batteryPercentage = 0,
-            totalOdometer = 0,
+            totalOdometerKm = 0L,
             isLightOn = false
         )
     )
+    override val scooterState: StateFlow<ScooterState> = _scooterState.asStateFlow()
 
     private val _isConnected = MutableStateFlow(false)
     private val _rawLogs = MutableStateFlow<List<BleLogEntry>>(emptyList())
@@ -122,6 +124,26 @@ class TuyaBleAdapter(
         connectInternal(macAddress, isInternalAttempt = false)
     }
 
+    override suspend fun connect(deviceAddress: String): Boolean {
+        connect(deviceAddress as String?)
+        return true
+    }
+
+    override suspend fun toggleLock(lock: Boolean): Boolean {
+        sendCommand(1, lock)
+        return true
+    }
+
+    override suspend fun setSpeedMode(mode: Int): Boolean {
+        sendCommand(2, mode)
+        return true
+    }
+
+    override suspend fun toggleLight(lightOn: Boolean): Boolean {
+        sendCommand(4, lightOn)
+        return true
+    }
+
     @SuppressLint("MissingPermission")
     private fun connectInternal(macAddress: String?, isInternalAttempt: Boolean) {
         if (isConnecting && !isInternalAttempt) {
@@ -171,7 +193,6 @@ class TuyaBleAdapter(
             lastMacAddress = macAddress
         }
 
-        // Cleanly disconnect and close previous GATT instance if present to avoid status 133 resource leaks
         bluetoothGatt?.let { gatt ->
             try {
                 gatt.disconnect()
@@ -218,7 +239,7 @@ class TuyaBleAdapter(
     }
 
     @SuppressLint("MissingPermission")
-    override fun disconnect() {
+    override suspend fun disconnect() {
         logMessage("Disconnect requested")
         addLogEntry(
             direction = BleLogDirection.SENT,
@@ -302,7 +323,6 @@ class TuyaBleAdapter(
                     val handler = android.os.Handler(android.os.Looper.getMainLooper())
                     handler.postDelayed(connectAction, 300)
                 } catch (_: Throwable) {
-                    // Fallback for JVM unit test environment where Looper/Handler may not be mocked
                     connectAction.run()
                 }
             }
@@ -441,7 +461,6 @@ class TuyaBleAdapter(
                 )
                 return
             }
-
 
             val discoveredServices = gatt.services ?: emptyList()
             logMessage("Discovered ${discoveredServices.size} services: ${discoveredServices.map { it.uuid }}")
@@ -615,13 +634,26 @@ class TuyaBleAdapter(
             1 -> currentState.copy(isLocked = value as? Boolean ?: currentState.isLocked)
             2 -> currentState.copy(speedMode = (value as? Number)?.toInt() ?: currentState.speedMode)
             4 -> currentState.copy(isLightOn = value as? Boolean ?: currentState.isLightOn)
-            5 -> currentState.copy(currentSpeed = (value as? Number)?.toInt() ?: currentState.currentSpeed)
-            6 -> currentState.copy(totalOdometer = (value as? Number)?.toInt() ?: currentState.totalOdometer)
-            7 -> {
-                val voltage = (value as? Number)?.toInt() ?: currentState.realtimeVoltage
-                val batteryPercentage = BatteryCalculator.calculate13SPercentage(voltage)
+            5 -> {
+                val speedDouble = (value as? Number)?.toDouble() ?: currentState.currentSpeedKmH
                 currentState.copy(
-                    realtimeVoltage = voltage,
+                    currentSpeedKmH = speedDouble,
+                    currentSpeed = speedDouble.toInt()
+                )
+            }
+            6 -> {
+                val odoLong = (value as? Number)?.toLong() ?: currentState.totalOdometerKm
+                currentState.copy(
+                    totalOdometerKm = odoLong,
+                    totalOdometer = odoLong.toInt()
+                )
+            }
+            7 -> {
+                val voltageInt = (value as? Number)?.toInt() ?: currentState.realtimeVoltage
+                val batteryPercentage = BatteryCalculator.calculate13SPercentage(voltageInt).toShort()
+                currentState.copy(
+                    realtimeVoltageVolts = voltageInt.toDouble(),
+                    realtimeVoltage = voltageInt,
                     batteryPercentage = batteryPercentage
                 )
             }

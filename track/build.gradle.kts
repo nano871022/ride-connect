@@ -27,18 +27,17 @@ android {
 }
 
 dependencies {
+    implementation(project(":interfaces"))
     implementation(project(":core"))
     implementation(project(":utils"))
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.podam)
     testImplementation(libs.kotlinx.coroutines.test)
 }

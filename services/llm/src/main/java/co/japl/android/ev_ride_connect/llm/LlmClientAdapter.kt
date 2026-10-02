@@ -1,6 +1,7 @@
 package co.japl.android.ev_ride_connect.llm
 
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -26,6 +27,19 @@ class LlmClientAdapter @Inject constructor() : LlmClientPort {
 
     private val readTimeout: Int
         get() = properties.getProperty("read.timeout")?.toIntOrNull() ?: 15000
+
+    override suspend fun queryLlm(prompt: String, config: LlmConfig, promptTemplate: String?): String {
+        val effectivePrompt = if (!promptTemplate.isNullOrBlank()) {
+            promptTemplate.replace("{prompt}", prompt)
+        } else {
+            prompt
+        }
+        return generateResponse(config.modelName, config.apiKey, effectivePrompt)
+    }
+
+    override suspend fun fetchAvailableModels(apiKey: String): List<String> {
+        return fetchAvailableModels("Gemini", apiKey)
+    }
 
     override suspend fun validateApiKey(modelName: String, apiKey: String): Boolean {
         if (apiKey.isBlank()) return false

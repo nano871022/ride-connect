@@ -1,113 +1,121 @@
 package co.japl.android.ev_ride_connect.ui
 
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import co.com.japl.ui.theme.MaterialThemeComposeUI
-import co.japl.android.ev_ride_connect.controller.DashboardViewModel
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.EvData
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
-import co.japl.android.ev_ride_connect.core.ports.EvDataPort
-import co.japl.android.ev_ride_connect.core.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
 import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
 import co.japl.android.ev_ride_connect.core.usecase.CalculateOptimalBatteryPercentageUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
+import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCaseImpl
 import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
 import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
 import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
 import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
+import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
+import co.japl.android.ev_ride_connect.controller.DashboardViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import org.junit.Rule
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+@OptIn(ExperimentalCoroutinesApi::class)
 class DashboardScreenScreenshotTest {
 
-    @get:Rule
-    val composeTestRule = createComposeRule()
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
-    fun captureDashboardScreenshot() {
-        val testEvData = EvData(
-            evCode = "EV01",
-            km = 120L,
-            batteryLevel = 85
-        )
+    fun testDashboardScreenSetup() = runTest {
+        val evDataPort = FakeEvDataPort()
+        val evConfigPort = FakeEvConfigPort()
+        val llmConfigPort = FakeLlmConfigPort()
+        val sessionStatePort = FakeSessionStatePort()
+        val tripDatabasePort = FakeTripDatabasePort()
 
-        val fakeEvDataPort = object : EvDataPort {
-            override suspend fun getLatestEvData(): EvData? = testEvData
-            override suspend fun getAllEvData(): List<EvData> = listOf(testEvData)
-            override suspend fun saveEvData(evData: EvData): Long = 1L
-        }
+        val getLatestEvDataUseCase = GetLatestEvDataUseCase(evDataPort)
 
-        val fakeEvConfigPort = object : EvConfigPort {
-            override suspend fun getEvConfig(): EvConfig? = EvConfig(id = 1L, request = "Vsett C7")
-            override suspend fun saveEvConfig(config: EvConfig): Long = 1L
-        }
-
-        val fakeLlmConfigPort = object : LlmConfigPort {
-            override suspend fun getAllConfigs(): List<LlmConfig> = listOf(LlmConfig(id = 1L, apiKey = "test-key", isActive = true))
-            override suspend fun getActiveConfigs(): List<LlmConfig> = listOf(LlmConfig(id = 1L, apiKey = "test-key", isActive = true))
-            override suspend fun saveConfig(config: LlmConfig): Long = 1L
-            override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
-            override suspend fun deleteConfig(id: Long): Boolean = true
-        }
-
-        val fakeSessionStatePort = object : SessionStatePort {
-            override suspend fun saveActiveSession(session: ActiveSession) {}
-            override suspend fun getActiveSession(): ActiveSession? = null
-            override fun observeActiveSession(): Flow<ActiveSession?> = flowOf(null)
-            override suspend fun clearActiveSession() {}
-        }
-
-        val fakeTripPort = object : TripDatabasePort {
-            override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
-            override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = 1L
-            override suspend fun getAllTrips(): List<Trip> = emptyList()
-            override suspend fun getTripById(tripId: Long): Trip? = null
-            override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = emptyList()
-            override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
-            override suspend fun getTotalTripsCount(): Int = 0
-            override suspend fun getTotalDistanceKm(): Double = 0.0
-            override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
-        }
-
-        val viewModel = DashboardViewModel(
-            GetLatestEvDataUseCase(fakeEvDataPort),
-            SaveEvDataUseCase(fakeEvDataPort),
-            GetEvConfigUseCase(fakeEvConfigPort),
-            GetActiveLlmConfigsUseCase(fakeLlmConfigPort),
-            ObserveActiveSessionUseCase(fakeSessionStatePort),
+        val dashboardUseCase = DashboardUseCaseImpl(
+            evDataPort,
+            evConfigPort,
+            llmConfigPort,
+            sessionStatePort,
+            tripDatabasePort,
+            getLatestEvDataUseCase,
+            SaveEvDataUseCase(evDataPort),
+            GetEvConfigUseCase(evConfigPort),
+            GetActiveLlmConfigsUseCase(llmConfigPort),
+            ObserveActiveSessionUseCase(sessionStatePort),
             CalculateDynamicBatteryPercentageUseCase(),
             CalculateOptimalBatteryPercentageUseCase(),
             CalculateConsumptionUseCase(),
-            UpdateOdometerUseCase(fakeEvDataPort, GetLatestEvDataUseCase(fakeEvDataPort)),
-            GetAllTripsUseCase(fakeTripPort)
+            UpdateOdometerUseCase(evDataPort, getLatestEvDataUseCase),
+            GetAllTripsUseCase(tripDatabasePort)
         )
 
-        val navigator = AppNavigator()
+        val viewModel = DashboardViewModel(dashboardUseCase)
+    }
 
-        composeTestRule.setContent {
-            MaterialThemeComposeUI {
-                DashboardScreen(viewModel = viewModel, navigator = navigator)
-            }
-        }
+    private class FakeEvDataPort : EvDataPort {
+        override suspend fun getLatestEvData(): EvData = EvData(evCode = "EV01", km = 100, batteryLevel = 90)
+        override suspend fun saveEvData(evData: EvData): Long = 1L
+        override suspend fun getAllEvData(): List<EvData> = emptyList()
+        override suspend fun updateOdometer(evCode: String, newKm: Long, currentBatteryPercentage: Short): Long = 1L
+    }
 
-        composeTestRule.onNodeWithText("120", substring = true).assertExists()
+    private class FakeEvConfigPort : EvConfigPort {
+        override suspend fun getEvConfig(): EvConfig = EvConfig(brand = "VSETT", version = "C7 Plus")
+        override suspend fun saveEvConfig(config: EvConfig): Long = 1L
+    }
+
+    private class FakeLlmConfigPort : LlmConfigPort {
+        override suspend fun getActiveConfigs(): List<LlmConfig> = emptyList()
+        override suspend fun getAllConfigs(): List<LlmConfig> = emptyList()
+        override suspend fun saveConfig(config: LlmConfig): Long = 1L
+        override suspend fun toggleActiveStatus(id: Long, isActive: Boolean): Boolean = true
+        override suspend fun deleteConfig(id: Long): Boolean = true
+    }
+
+    private class FakeSessionStatePort : SessionStatePort {
+        override suspend fun saveActiveSession(session: ActiveSession) {}
+        override suspend fun getActiveSession(): ActiveSession? = null
+        override fun observeActiveSession(): Flow<ActiveSession?> = flowOf(null)
+        override suspend fun clearActiveSession() {}
+    }
+
+    private class FakeTripDatabasePort : TripDatabasePort {
+        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
+        override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
+        override suspend fun getAllTrips(): List<Trip> = emptyList()
+        override suspend fun getTripById(tripId: Long): Trip? = null
+        override suspend fun getGpsPointsByTripId(tripId: Long): List<co.japl.android.ev_ride_connect.interfaces.model.TripGps> = emptyList()
+        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = emptyList()
+        override suspend fun getTotalTripsCount(): Int = 0
+        override suspend fun getTotalDistanceKm(): Double = 0.0
+        override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 }

@@ -13,14 +13,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import co.com.japl.homeconnect.about.ui.About
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
 import co.japl.android.ev_ride_connect.controller.EvDataViewModel
 import co.japl.android.ev_ride_connect.controller.LlmConfigViewModel
+import co.japl.android.ev_ride_connect.controller.SplashViewModel
+import co.japl.android.ev_ride_connect.controller.TripDetailViewModel
 import co.japl.android.ev_ride_connect.controller.TripViewModel
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.navigation.AppScreen
@@ -38,11 +38,13 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    private val splashViewModel: SplashViewModel by viewModels()
     private val dashboardViewModel: DashboardViewModel by viewModels()
     private val evConfigViewModel: EvConfigViewModel by viewModels()
     private val evDataViewModel: EvDataViewModel by viewModels()
     private val llmConfigViewModel: LlmConfigViewModel by viewModels()
     private val tripViewModel: TripViewModel by viewModels()
+    private val tripDetailViewModel: TripDetailViewModel by viewModels()
     private val backupViewModel: BackupViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,11 +52,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialThemeComposeUI {
                 MainAppContent(
+                    splashViewModel = splashViewModel,
                     dashboardViewModel = dashboardViewModel,
                     evConfigViewModel = evConfigViewModel,
                     evDataViewModel = evDataViewModel,
                     llmConfigViewModel = llmConfigViewModel,
                     tripViewModel = tripViewModel,
+                    tripDetailViewModel = tripDetailViewModel,
                     backupViewModel = backupViewModel
                 )
             }
@@ -64,11 +68,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainAppContent(
+    splashViewModel: SplashViewModel,
     dashboardViewModel: DashboardViewModel,
     evConfigViewModel: EvConfigViewModel,
     evDataViewModel: EvDataViewModel,
     llmConfigViewModel: LlmConfigViewModel,
     tripViewModel: TripViewModel,
+    tripDetailViewModel: TripDetailViewModel,
     backupViewModel: BackupViewModel
 ) {
     val navigator = remember { AppNavigator(AppScreen.SPLASH) }
@@ -77,9 +83,7 @@ fun MainAppContent(
     if (currentScreen == AppScreen.SPLASH) {
         SplashScreen(
             navigator = navigator,
-            dashboardViewModel = dashboardViewModel,
-            evConfigViewModel = evConfigViewModel,
-            llmConfigViewModel = llmConfigViewModel
+            splashViewModel = splashViewModel
         )
     } else {
         MainScaffold(
@@ -94,6 +98,7 @@ fun MainAppContent(
                     evDataViewModel = evDataViewModel,
                     llmConfigViewModel = llmConfigViewModel,
                     tripViewModel = tripViewModel,
+                    tripDetailViewModel = tripDetailViewModel,
                     backupViewModel = backupViewModel,
                     innerPadding = innerPadding
                 )
@@ -111,6 +116,7 @@ fun AppNavigationContent(
     evDataViewModel: EvDataViewModel,
     llmConfigViewModel: LlmConfigViewModel,
     tripViewModel: TripViewModel,
+    tripDetailViewModel: TripDetailViewModel,
     backupViewModel: BackupViewModel,
     innerPadding: PaddingValues
 ) {
@@ -139,7 +145,6 @@ fun AppNavigationContent(
 
             AppScreen.EV_DATA -> EvDataScreen(
                 viewModel = evDataViewModel,
-                tripViewModel = tripViewModel,
                 navigator = navigator
             )
 
@@ -155,20 +160,17 @@ fun AppNavigationContent(
 
             AppScreen.TRIP -> TripScreen(
                 viewModel = tripViewModel,
-                navigator = navigator
             )
 
             AppScreen.TRIP_DETAIL -> TripDetailScreen(
-                viewModel = tripViewModel,
+                viewModel = tripDetailViewModel,
                 navigator = navigator
             )
 
-            AppScreen.ABOUT -> Box(modifier = Modifier.padding(16.dp)) {
-                About(
-                    versionDetail = version,
-                    applicationId = appId
-                )
-            }
+            AppScreen.ABOUT -> co.com.japl.homeconnect.about.ui.About(
+                versionDetail = version,
+                applicationId = appId,
+            )
 
             else -> {}
         }

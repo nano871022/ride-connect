@@ -2,13 +2,8 @@ package co.japl.android.ev_ride_connect.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.japl.android.ev_ride_connect.core.domain.LlmConfig
-import co.japl.android.ev_ride_connect.core.usecase.DeleteLlmConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.FetchAvailableLlmModelsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveLlmConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.ToggleLlmConfigStatusUseCase
-import co.japl.android.ev_ride_connect.core.usecase.ValidateLlmApiKeyUseCase
+import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
+import co.japl.android.ev_ride_connect.interfaces.usecase.LlmConfigUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,12 +15,7 @@ val AVAILABLE_LLM_MODELS = listOf("Gemini", "DeepSeek", "ChatGPT", "Groq", "Clau
 
 @HiltViewModel
 class LlmConfigViewModel @Inject constructor(
-    private val getAllLlmConfigsUseCase: GetAllLlmConfigsUseCase,
-    private val saveLlmConfigUseCase: SaveLlmConfigUseCase,
-    private val deleteLlmConfigUseCase: DeleteLlmConfigUseCase,
-    private val toggleLlmConfigStatusUseCase: ToggleLlmConfigStatusUseCase,
-    private val validateLlmApiKeyUseCase: ValidateLlmApiKeyUseCase,
-    private val fetchAvailableLlmModelsUseCase: FetchAvailableLlmModelsUseCase
+    private val llmConfigUseCase: LlmConfigUseCase
 ) : ViewModel() {
 
     private val _configs = MutableStateFlow<List<LlmConfig>>(emptyList())
@@ -67,7 +57,7 @@ class LlmConfigViewModel @Inject constructor(
 
     fun loadConfigs() {
         viewModelScope.launch {
-            val all = getAllLlmConfigsUseCase.execute()
+            val all = llmConfigUseCase.getAllLlmConfigs()
             _configs.value = all
             _activeConfigs.value = all.filter { it.isActive }
         }
@@ -122,7 +112,7 @@ class LlmConfigViewModel @Inject constructor(
 
     fun deleteConfig(configId: Long) {
         viewModelScope.launch {
-            deleteLlmConfigUseCase.execute(configId)
+            llmConfigUseCase.deleteLlmConfig(configId)
             if (_editingConfigId.value == configId) {
                 onCancelEdit()
             }
@@ -139,7 +129,7 @@ class LlmConfigViewModel @Inject constructor(
             _isValidating.value = true
             _errorMessage.value = null
             _validationSuccessMessage.value = null
-            val isValid = validateLlmApiKeyUseCase.execute(modelName, apiKey)
+            val isValid = llmConfigUseCase.validateLlmApiKey(modelName, apiKey)
             _isValidating.value = false
             if (isValid) {
                 _validationSuccessMessage.value = "VALIDATION_SUCCESS"
@@ -157,7 +147,7 @@ class LlmConfigViewModel @Inject constructor(
         viewModelScope.launch {
             _isFetchingVersions.value = true
             try {
-                val versions = fetchAvailableLlmModelsUseCase.execute(modelName, apiKey)
+                val versions = llmConfigUseCase.fetchAvailableLlmModels(modelName, apiKey)
                 _availableVersions.value = versions
                 if (versions.isNotEmpty() && (_selectedVersion.value.isBlank() || !versions.contains(_selectedVersion.value))) {
                     _selectedVersion.value = versions.first()
@@ -179,7 +169,7 @@ class LlmConfigViewModel @Inject constructor(
         viewModelScope.launch {
             _isValidating.value = true
             _errorMessage.value = null
-            val isValid = validateLlmApiKeyUseCase.execute(modelName, apiKey)
+            val isValid = llmConfigUseCase.validateLlmApiKey(modelName, apiKey)
             _isValidating.value = false
 
             if (!isValid) {
@@ -194,7 +184,7 @@ class LlmConfigViewModel @Inject constructor(
                 apiKey = apiKey,
                 isActive = true
             )
-            saveLlmConfigUseCase.execute(configToSave)
+            llmConfigUseCase.saveLlmConfig(configToSave)
             _editingConfigId.value = 0L
             _apiKeyInput.value = ""
             _availableVersions.value = emptyList()
@@ -206,7 +196,7 @@ class LlmConfigViewModel @Inject constructor(
 
     fun toggleActiveStatus(configId: Long, isActive: Boolean) {
         viewModelScope.launch {
-            toggleLlmConfigStatusUseCase.execute(configId, isActive)
+            llmConfigUseCase.toggleActiveStatus(configId, isActive)
             loadConfigs()
         }
     }

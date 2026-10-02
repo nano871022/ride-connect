@@ -24,22 +24,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import co.com.japl.homeconnect.about.ui.theme.MaterialThemeComposeUI
 import co.com.japl.ui.components.DualMetricCard
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.TripMapView
 import co.japl.android.ev_ride_connect.R
-import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.controller.TripDetailViewModel
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.usecase.TripDetailUseCase
+import co.japl.android.ev_ride_connect.interfaces.usecase.TripUseCase
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripDetailScreen(
-    viewModel: TripViewModel,
+    viewModel: TripDetailViewModel,
     navigator: AppNavigator? = null,
     modifier: Modifier = Modifier
 ) {
@@ -199,5 +202,24 @@ private fun GpsSampleItem(sample: TripGps) {
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+internal fun TripDetailScreenPreview1(){
+    MaterialThemeComposeUI {
+        TripDetailScreen(
+            viewModel = TripDetailViewModel(
+                tripDetailUseCase = object: TripDetailUseCase{
+                    override suspend fun getTripDetails(tripId: Long): Pair<Trip, List<TripGps>>? = null
+
+                    override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = listOf()
+
+                    override suspend fun getTripById(tripId: Long): Trip? = null
+
+                }
+            )
+        )
     }
 }

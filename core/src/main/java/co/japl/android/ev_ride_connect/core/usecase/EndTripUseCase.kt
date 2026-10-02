@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import javax.inject.Inject
 
 class EndTripUseCase @Inject constructor(
@@ -12,13 +12,11 @@ class EndTripUseCase @Inject constructor(
             val updated = existing.copy(
                 isRideActive = false,
                 isPaused = false,
-                lastUpdatedTmst = System.currentTimeMillis()
+                startTimeMs = System.currentTimeMillis()
             )
-            if (updated.pendingLlmPrompt == null && !updated.isLlmProcessing) {
-                sessionStatePort.clearActiveSession()
-            } else {
-                sessionStatePort.saveActiveSession(updated)
-            }
+            sessionStatePort.saveActiveSession(updated)
+
+            sessionStatePort.clearActiveSession()
         }
     }
 }

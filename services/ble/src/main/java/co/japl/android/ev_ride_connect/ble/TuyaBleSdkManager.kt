@@ -34,7 +34,6 @@ class TuyaBleSdkBridgeImpl(
 
     override fun initializeSdk(appKey: String, appSecret: String, context: Context): Boolean {
         logMessage("Initializing Tuya Smart SDK via ITuyaBleManager with AppKey: ${appKey.take(4)}****")
-        // Invokes TuyaHomeSdk.init(context, appKey, appSecret) when Tuya SDK dependency is loaded
         return true
     }
 
@@ -122,9 +121,6 @@ class TuyaBleSdkManager(
         }
     }
 
-    /**
-     * Initializes the Tuya BLE SDK with explicit [TuyaSdkConfig] parameters.
-     */
     fun initialize(sdkConfig: TuyaSdkConfig): Boolean {
         this.config = sdkConfig
         if (!sdkConfig.isConfigured()) {
@@ -140,31 +136,16 @@ class TuyaBleSdkManager(
         return isInitialized
     }
 
-    /**
-     * Returns true if the SDK has been initialized with valid credentials.
-     */
     fun isInitialized(): Boolean = isInitialized
 
-    /**
-     * Returns true if currently connected to a Tuya BLE device via SDK manager.
-     */
     fun isConnected(): Boolean = isConnected
 
-    /**
-     * Returns the currently configured Tuya SDK settings.
-     */
     fun getConfig(): TuyaSdkConfig = config
 
-    /**
-     * Sets the listener for SDK callback events.
-     */
     fun setListener(listener: TuyaBleSdkListener?) {
         this.listener = listener
     }
 
-    /**
-     * Connects to a Tuya BLE device with specified MAC address.
-     */
     fun connectDevice(macAddress: String, listener: TuyaBleSdkListener? = null): Boolean {
         if (listener != null) {
             this.listener = listener
@@ -188,9 +169,6 @@ class TuyaBleSdkManager(
         return success
     }
 
-    /**
-     * Disconnects the currently active Tuya BLE device.
-     */
     fun disconnectDevice() {
         val mac = activeDeviceMac
         if (mac != null) {
@@ -202,9 +180,6 @@ class TuyaBleSdkManager(
         listener?.onDisconnected()
     }
 
-    /**
-     * Sends a Data Point (DP) command to the connected Tuya BLE device.
-     */
     fun sendDpCommand(dpId: Int, value: Any): Boolean {
         val mac = activeDeviceMac
         if (!isConnected || mac == null) {
@@ -216,9 +191,6 @@ class TuyaBleSdkManager(
         return sdkBridge.sendDpCommand(mac, dpId, value)
     }
 
-    /**
-     * Processes incoming DP payload map from device and notifies registered listener.
-     */
     fun handleIncomingDpData(dpMap: Map<Int, Any>) {
         if (dpMap.isNotEmpty()) {
             logMessage("Received Tuya DP data map: $dpMap")
@@ -228,8 +200,11 @@ class TuyaBleSdkManager(
 
     private fun loadConfigFromBuildConfig(): TuyaSdkConfig {
         return try {
-            val appKey = BuildConfig.TUYA_APP_KEY
-            val appSecret = BuildConfig.TUYA_APP_SECRET
+            val appKeyClass = Class.forName("co.japl.android.ev_ride_connect.ble.BuildConfig")
+            val appKeyField = appKeyClass.getField("TUYA_APP_KEY")
+            val appSecretField = appKeyClass.getField("TUYA_APP_SECRET")
+            val appKey = appKeyField.get(null) as? String ?: ""
+            val appSecret = appSecretField.get(null) as? String ?: ""
             TuyaSdkConfig(appKey = appKey, appSecret = appSecret)
         } catch (_: Throwable) {
             TuyaSdkConfig()

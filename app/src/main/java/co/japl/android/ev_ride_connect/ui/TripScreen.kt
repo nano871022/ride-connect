@@ -42,33 +42,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import co.japl.android.ev_ride_connect.R
-import co.japl.android.ev_ride_connect.controller.TripViewModel
-import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.utils.DateUtils
-
-
-import androidx.compose.ui.platform.LocalConfiguration
 import co.com.japl.ui.components.MapPoint
 import co.com.japl.ui.components.SpeedometerGauge
 import co.com.japl.ui.components.StatusCard
 import co.com.japl.ui.components.TelemetryMetricsCard
 import co.com.japl.ui.components.TripMapView
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.TripSummary
+import co.com.japl.ui.theme.MaterialThemeComposeUI
+import co.japl.android.ev_ride_connect.R
+import co.japl.android.ev_ride_connect.controller.TripViewModel
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.TripSummary
+import co.japl.android.ev_ride_connect.utils.DateUtils
 
 @SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripScreen(
     viewModel: TripViewModel,
-    navigator: AppNavigator? = null,
-    onTripClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isTripActive by viewModel.isTripActive.collectAsState()
@@ -563,5 +560,34 @@ private fun GpsIntervalSelector(
                 }
             }
         }
+    }
+}
+
+@Preview(name = "Trip - Start Trip Battery Dialog")
+@Composable
+private fun TripStartBatteryDialogPreview() {
+    MaterialThemeComposeUI {
+        TripBatteryDialog(
+            title = stringResource(R.string.start_trip_battery_title),
+            initialBattery = 90,
+            batteryMode = BatteryMode.PERCENTAGE,
+            onDismiss = {},
+            onConfirm = {}
+        )
+    }
+}
+
+@Preview(name = "Trip - End Trip Battery Dialog")
+@Composable
+private fun TripEndBatteryDialogPreview() {
+    MaterialThemeComposeUI {
+        TripBatteryDialog(
+            title = stringResource(R.string.end_trip_battery_title),
+            subtitle = "KM: 1250 km",
+            initialBattery = 75,
+            batteryMode = BatteryMode.PERCENTAGE,
+            onDismiss = {},
+            onConfirm = {}
+        )
     }
 }

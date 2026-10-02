@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
 import co.japl.android.ev_ride_connect.utils.BatteryCalculator
 import javax.inject.Inject
 
