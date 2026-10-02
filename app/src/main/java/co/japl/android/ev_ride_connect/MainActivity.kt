@@ -12,7 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
@@ -120,6 +120,17 @@ fun AppNavigationContent(
     backupViewModel: BackupViewModel,
     innerPadding: PaddingValues
 ) {
+    val context = LocalContext.current
+    val pInfo = remember(context) {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    val version = pInfo?.versionName ?: "1.0.0"
+    val appId = context.packageName ?: "co.japl.android.ev_ride_connect"
+
     Box(modifier = Modifier.padding(innerPadding)) {
         when (currentScreen) {
             AppScreen.DASHBOARD -> DashboardScreen(
@@ -154,6 +165,11 @@ fun AppNavigationContent(
             AppScreen.TRIP_DETAIL -> TripDetailScreen(
                 viewModel = tripDetailViewModel,
                 navigator = navigator
+            )
+
+            AppScreen.ABOUT -> co.com.japl.homeconnect.about.ui.About(
+                versionDetail = version,
+                applicationId = appId,
             )
 
             else -> {}

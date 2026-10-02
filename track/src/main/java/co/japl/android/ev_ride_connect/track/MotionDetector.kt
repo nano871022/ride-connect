@@ -105,9 +105,9 @@ class MotionDetector(private val context: Context? = null) : MotionDetectorPort,
                 accX = event.values[0],
                 accY = event.values[1],
                 accZ = event.values[2],
-                gyroX = event.values[3],
-                gyroY = event.values[4],
-                gyroZ = event.values[5],
+                gyroX = 0f,
+                gyroY = 0f,
+                gyroZ = 0f,
                 currentTimestamp = System.currentTimeMillis()
             )
         }
