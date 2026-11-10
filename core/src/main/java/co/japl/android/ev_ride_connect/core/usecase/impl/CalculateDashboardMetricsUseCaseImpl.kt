@@ -51,14 +51,20 @@ class CalculateDashboardMetricsUseCaseImpl @Inject constructor() : CalculateDash
         val optimalBatteryPercentage = calculateOptimalBatteryPercentageUseCase.execute(cyclesUsed)
 
         // Voltaje estimado basado en nivel de batería actual y configuración
-        val estimatedVoltage = if (latestEvData != null && evConfig != null) {
-            val batteryPct = latestEvData.batteryLevel.toDouble()
-            val minV = evConfig.minVoltage
-            val maxV = evConfig.maxVoltage
-            val currentVoltage = BatteryCalculator.calculateVoltage(batteryPct.toInt().toShort(), minV, maxV)
-            "${String.format("%.1f", currentVoltage)}V"
-        } else {
-            "N/D"
+        val estimatedVoltage = when {
+            latestEvData != null && evConfig != null -> {
+                val batteryPct = latestEvData.batteryLevel.toDouble()
+                val minV = evConfig.minVoltage
+                val maxV = evConfig.maxVoltage
+                val currentVoltage = BatteryCalculator.calculateVoltage(batteryPct.toInt().toShort(), minV, maxV)
+                "${String.format("%.1f", currentVoltage)}V"
+            }
+            latestEvData == null && evConfig != null -> {
+                // Sin datos de bateria recientes pero con config de EV: voltaje nominal configurado
+                evConfig.batteryVolts.takeIf { it.isNotBlank() }
+                    ?: if (evConfig.maxVoltage > 0) "${String.format("%.1f", evConfig.maxVoltage)}V" else "N/D"
+            }
+            else -> "N/D"
         }
 
         // Fecha de última carga basada en timestamp del último dato de batería

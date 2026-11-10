@@ -134,7 +134,7 @@ fun TelemetryBentoCard(
                 if (progress != null) {
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
-                        progress = { progress.coerceIn(0f, 1f) },
+                        progress = { if (progress.isFinite()) progress.coerceIn(0f, 1f) else 0f },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)

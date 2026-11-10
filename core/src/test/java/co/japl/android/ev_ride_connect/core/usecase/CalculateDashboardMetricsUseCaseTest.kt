@@ -67,6 +67,24 @@ class CalculateDashboardMetricsUseCaseTest {
     }
 
     @Test
+    fun shouldShowConfiguredVoltageWhenNoRecentBatteryData() = runTest {
+        val trips = emptyList<Trip>()
+        val latestEvData: EvData? = null
+        val evConfig = EvConfig(
+            id = 1,
+            batteryVolts = "60V",
+            batteryAmpers = "25.6Ah",
+            maxVoltage = 67.2,
+            minVoltage = 48.0
+        )
+
+        val metrics = useCase.execute(trips = trips, latestEvData = latestEvData, evConfig = evConfig)
+
+        // Sin datos de bateria recientes pero con config de EV: se muestra el voltaje nominal configurado
+        assertThat(metrics.estimatedVoltage).isEqualTo("60V")
+    }
+
+    @Test
     fun shouldCalculateConsumptionFromLastTrip() = runTest {
         val trips = listOf(
             Trip(id = 1, distance = 10.0, batteryConsumed = 20, createTmst = 1000L)
