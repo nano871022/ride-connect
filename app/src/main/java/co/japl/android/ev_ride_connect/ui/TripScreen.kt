@@ -175,25 +175,6 @@ fun TripScreen(
                 co2SavedValue = String.format("%.1f", co2SavedGrams),
                 modifier = Modifier.fillMaxWidth()
             )
-
-            if (isTripActive) {
-                val currentLocale = LocalConfiguration.current.locales[0]
-                TelemetryMetricsCard(
-                    elapsedTimeFormatted = DateUtils.formatDurationSeconds(elapsedTimeSeconds),
-                    currentDistanceValue = String.format(
-                        currentLocale,
-                        "%.2f",
-                        currentDistance
-                    ),
-                    currentSpeedValue = String.format(
-                        currentLocale,
-                        "%.1f",
-                        if (isTripActive) currentAverageSpeed * 1.25 else 0.0
-                    ),
-                    avgSpeedValue = String.format(currentLocale, "%.1f", currentAverageSpeed),
-                    sampleCount = viewModel.recordedGpsPoints.size
-                )
-            }
         }
 
         if (showStartBatteryDialog) {
