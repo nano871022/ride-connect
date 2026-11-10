@@ -1,10 +1,10 @@
 package co.japl.android.ev_ride_connect.core.usecase
 
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -12,6 +12,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import uk.co.jemos.podam.api.PodamFactoryImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
+import co.japl.android.ev_ride_connect.core.usecase.api.*
 
 class TripUseCasesTest {
 
@@ -45,8 +47,6 @@ class TripUseCasesTest {
     private class FakeTripDatabasePort : TripDatabasePort {
         val trips = mutableMapOf<Long, Trip>()
         val gpsPoints = mutableMapOf<Long, List<TripGps>>()
-
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
 
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
             val id = (trips.size + 1).toLong()

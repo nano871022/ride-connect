@@ -1,0 +1,14 @@
+package co.japl.android.ev_ride_connect.core.usecase.impl
+
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
+import javax.inject.Inject
+
+class SaveTripUseCase @Inject constructor(
+    private val tripDatabasePort: TripDatabasePort
+) : TripWriterUseCase {
+    override suspend fun execute(trip: Trip, gpsPoints: List<TripGps>): Long =
+        tripDatabasePort.saveTrip(trip, gpsPoints)
+}
+

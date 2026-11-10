@@ -97,7 +97,7 @@ fun MainScaffold(
                     title = title,
                     navigationIcon = {
                         if (currentScreen == AppScreen.TRIP_DETAIL) {
-                            IconButton(onClick = { navigator.navigateToTrip() }) {
+                            IconButton(onClick = { navigator.navigateToEvData() }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = stringResource(R.string.trip_back_button)

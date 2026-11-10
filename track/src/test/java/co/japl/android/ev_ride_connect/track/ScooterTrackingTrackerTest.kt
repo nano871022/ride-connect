@@ -1,11 +1,12 @@
 package co.japl.android.ev_ride_connect.track
 
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateMaxSpeedUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.TripWriterUseCase
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -19,32 +20,34 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScooterTrackingTrackerTest {
 
-    private lateinit var fakeTripDatabasePort: FakeTripDatabasePort
+    private lateinit var fakeMaxSpeedUseCase: FakeMaxSpeedUseCase
+    private lateinit var fakeSaveTripUseCase: FakeSaveTripUseCase
     private lateinit var fakeSessionStatePort: FakeSessionStatePort
     private lateinit var tracker: ScooterTrackingTracker
     private val testDispatcher = UnconfinedTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
-    private class FakeTripDatabasePort : TripDatabasePort {
+    private class FakeMaxSpeedUseCase : CalculateMaxSpeedUseCase {
+        var maxSpeed: Double = 0.0
+        var executeCalled = false
+
+        override suspend fun execute(gpsPoints: List<TripGps>): Double {
+            executeCalled = true
+            return maxSpeed
+        }
+    }
+
+    private class FakeSaveTripUseCase : TripWriterUseCase {
+        var saveTripCallCount = 0
         var savedTrips = mutableListOf<Trip>()
         var savedGpsPoints = mutableListOf<TripGps>()
 
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
-
-        override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
+        override suspend fun execute(trip: Trip, gpsPoints: List<TripGps>): Long {
+            saveTripCallCount++
             savedTrips.add(trip)
             savedGpsPoints.addAll(gpsPoints)
             return 1L
         }
-
-        override suspend fun getAllTrips(): List<Trip> = savedTrips
-        override suspend fun getTripById(tripId: Long): Trip? = savedTrips.firstOrNull()
-        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = savedGpsPoints
-        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = savedTrips
-
-        override suspend fun getTotalTripsCount(): Int = savedTrips.size
-        override suspend fun getTotalDistanceKm(): Double = savedTrips.sumOf { it.distance }
-        override suspend fun getChargeDetectionsCount(threshold: Int): Int = savedTrips.count { it.batteryConsumed >= threshold }
     }
 
     private class FakeSessionStatePort : SessionStatePort {
@@ -65,10 +68,10 @@ class ScooterTrackingTrackerTest {
 
     @Before
     fun setUp() {
-        fakeTripDatabasePort = FakeTripDatabasePort()
+        fakeMaxSpeedUseCase = FakeMaxSpeedUseCase()
+        fakeSaveTripUseCase = FakeSaveTripUseCase()
         fakeSessionStatePort = FakeSessionStatePort()
         tracker = ScooterTrackingTracker(
-            tripDatabasePort = fakeTripDatabasePort,
             sessionStatePort = fakeSessionStatePort,
             coroutineScope = testScope
         )
@@ -153,8 +156,8 @@ class ScooterTrackingTrackerTest {
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
         tracker.stopTracking()
 
-        fakeTripDatabasePort.savedTrips.clear()
-        fakeTripDatabasePort.savedGpsPoints.clear()
+        fakeSaveTripUseCase.savedTrips.clear()
+        fakeSaveTripUseCase.savedGpsPoints.clear()
 
         tracker.startTracking()
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 0.5, motionState = MotionState.MOVING)
@@ -163,15 +166,90 @@ class ScooterTrackingTrackerTest {
     }
 
     @Test
-    fun shouldStopTrackingSaveTripAndClearSession() = runTest(testDispatcher) {
+    fun shouldStopTrackingClearSessionButNotSaveTrip() = runTest(testDispatcher) {
         tracker.startTracking()
         tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 1.0, motionState = MotionState.ACCELERATING)
         tracker.stopTracking()
 
         assertThat(tracker.isTracking.value).isFalse
-        assertThat(fakeTripDatabasePort.savedTrips).hasSize(1)
-        assertThat(fakeTripDatabasePort.savedGpsPoints).hasSize(1)
-        assertThat(fakeTripDatabasePort.savedGpsPoints[0].motionState).isEqualTo(MotionState.ACCELERATING)
+        // El tracker ya no persiste viajes (solo el ViewModel/FinalizeTripUseCase lo hace)
+        assertThat(fakeSaveTripUseCase.saveTripCallCount).isEqualTo(0)
+        assertThat(fakeSaveTripUseCase.savedTrips).isEmpty()
+        assertThat(fakeSaveTripUseCase.savedGpsPoints).isEmpty()
         assertThat(fakeSessionStatePort.activeSession).isNull()
     }
+
+    @Test
+    fun shouldNotCalculateMaxSpeedNorSaveWhenStoppingTracking() = runTest(testDispatcher) {
+        fakeMaxSpeedUseCase.maxSpeed = 25.0
+
+        tracker.startTracking()
+        tracker.recordTelemetry(x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 1.0, motionState = MotionState.ACCELERATING)
+        tracker.stopTracking()
+
+        // El tracker no calcula maxSpeed ni guarda viajes; eso lo hace FinalizeTripUseCase desde el ViewModel
+        assertThat(fakeMaxSpeedUseCase.executeCalled).isFalse()
+        assertThat(fakeSaveTripUseCase.saveTripCallCount).isEqualTo(0)
+    }
+
+    // --- RF-01: Un único punto de escritura (el ViewModel escribe, el tracker no) ---
+    @Test
+    fun shouldNotWriteTripThroughTracker() = runTest(testDispatcher) {
+        val fakeUseCase = FakeSaveTripUseCase()
+        val trackerWithUseCase = ScooterTrackingTracker(
+            sessionStatePort = fakeSessionStatePort,
+            coroutineScope = testScope
+        )
+
+        trackerWithUseCase.startTracking()
+        trackerWithUseCase.recordTelemetry(
+            x = 10.0, y = 20.0, speed = 25.0, distanceDelta = 1.0, motionState = MotionState.MOVING
+        )
+        trackerWithUseCase.stopTracking()
+
+        // El tracker no debe llamar al caso de uso de escritura (cero veces)
+        assertThat(fakeUseCase.saveTripCallCount).isEqualTo(0)
+    }
+
+    // --- RF-03: Filtrado de muestreo GPS solo con movimiento real ---
+    @Test
+    fun shouldNotRecordTelemetryWhenStoppedAndZeroSpeed() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(
+            x = 10.0, y = 20.0, speed = 0.0, distanceDelta = 0.0, motionState = MotionState.STOPPED
+        )
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(0)
+    }
+
+    @Test
+    fun shouldNotRecordTelemetryWhenStoppedEvenWithDistanceDelta() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(
+            x = 10.0, y = 20.0, speed = 0.0, distanceDelta = 0.01, motionState = MotionState.STOPPED
+        )
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(0)
+    }
+
+    @Test
+    fun shouldRecordTelemetryWhenMoving() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(
+            x = 10.0, y = 20.0, speed = 15.0, distanceDelta = 0.5, motionState = MotionState.MOVING
+        )
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
+    }
+
+    @Test
+    fun shouldRecordTelemetryWhenAccelerating() = runTest(testDispatcher) {
+        tracker.startTracking()
+        tracker.recordTelemetry(
+            x = 10.0, y = 20.0, speed = 10.0, distanceDelta = 0.3, motionState = MotionState.ACCELERATING
+        )
+
+        assertThat(tracker.getCachedTelemetryCount()).isEqualTo(1)
+    }
 }
+

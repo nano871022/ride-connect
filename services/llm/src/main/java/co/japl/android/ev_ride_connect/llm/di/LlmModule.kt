@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.llm.di
 
-import co.japl.android.ev_ride_connect.core.ports.LlmClientPort
+import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.llm.LlmClientAdapter
 import dagger.Module
 import dagger.Provides

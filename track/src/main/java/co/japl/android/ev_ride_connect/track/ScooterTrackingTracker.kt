@@ -1,11 +1,9 @@
 package co.japl.android.ev_ride_connect.track
 
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ScooterTrackingTracker(
-    private val tripDatabasePort: TripDatabasePort,
     private val sessionStatePort: SessionStatePort? = null,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
@@ -44,12 +41,12 @@ class ScooterTrackingTracker(
             val session = ActiveSession(
                 isRideActive = true,
                 isPaused = false,
-                startTimeMillis = segmentStartTimeMillis,
-                currentDurationMillis = 0L,
+                startTimeMs = segmentStartTimeMillis,
+               // currentDurationMillis = 0L,
                 currentDistanceKm = 0.0,
-                cachedTelemetryCount = 0,
-                lastUpdatedTmst = System.currentTimeMillis(),
-                motionState = MotionState.STOPPED
+                //cachedTelemetryCount = 0,
+                //lastUpdatedTmst = System.currentTimeMillis(),
+                //motionState = MotionState.STOPPED
             )
             sessionStatePort?.saveActiveSession(session)
         }
@@ -104,6 +101,8 @@ class ScooterTrackingTracker(
         if (!_isTracking.value || _isPaused.value) return
         if (x == 0.0 && y == 0.0) return
         if (lastSavedLocation?.first == x && lastSavedLocation?.second == y) return
+        // RF-03: No registrar puntos cuando no hay movimiento real (patineta detenida)
+        if (motionState == MotionState.STOPPED && speed == 0.0) return
 
         lastSavedLocation = Pair(x, y)
         currentDistanceKm += distanceDelta
@@ -143,17 +142,6 @@ class ScooterTrackingTracker(
         _isTracking.value = false
         _isPaused.value = false
 
-        val durationSeconds = finalDuration / 1000L
-        val averageSpeed = if (finalDuration > 0) (currentDistanceKm / (finalDuration / 3600000.0)) else 0.0
-
-        val trip = Trip(
-            timeTrip = durationSeconds,
-            averageSpeed = averageSpeed,
-            distance = currentDistanceKm,
-            createTmst = System.currentTimeMillis()
-        )
-
-        val tripId = tripDatabasePort.saveTrip(trip, telemetryQueue.toList())
         telemetryQueue.clear()
         lastSavedLocation = null
 
@@ -186,3 +174,4 @@ class ScooterTrackingTracker(
 
     fun getCachedTelemetryCount(): Int = telemetryQueue.size
 }
+

@@ -1,5 +1,6 @@
 package co.japl.android.ev_ride_connect.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
@@ -26,7 +28,6 @@ import androidx.compose.material.icons.filled.ElectricMeter
 import androidx.compose.material.icons.filled.ElectricScooter
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Tune
@@ -46,6 +47,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -62,20 +65,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import co.com.japl.ui.components.ConfigSectionCard
 import co.com.japl.ui.components.SpecTile
 import co.com.japl.ui.components.VehicleImageCard
+import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.EvConfigViewModel
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.MotorSpec
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.MotorSpec
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -366,6 +375,7 @@ private fun AiAssistantHeaderSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralInfoSection(
     evConfig: EvConfig,
@@ -375,6 +385,34 @@ private fun GeneralInfoSection(
     onCompanyChanged: (String) -> Unit,
     onBoughtDateChanged: (String) -> Unit
 ) {
+    var boughtDatePickerVisible by remember { mutableStateOf(false) }
+    var boughtDateMillis by remember(evConfig.boughtDate) {
+        mutableStateOf(
+            evConfig.boughtDate.takeIf { it.isNotBlank() }
+                ?.let { dateStr ->
+                    val formatters = listOf(
+                        DateTimeFormatter.ISO_LOCAL_DATE,
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                        DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+                        DateTimeFormatter.ofPattern("yyyy/MM/dd"),
+                        DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                    )
+                    var parsedDate: LocalDate? = null
+                    for (formatter in formatters) {
+                        try {
+                            parsedDate = LocalDate.parse(dateStr, formatter)
+                            break
+                        } catch (_: Exception) {
+                            // try next formatter
+                        }
+                    }
+                    parsedDate?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
+                }
+                ?: LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        )
+    }
+
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = boughtDateMillis)
     ConfigSectionCard(
         title = stringResource(R.string.ev_config_title),
         icon = Icons.Default.ElectricScooter
@@ -410,12 +448,32 @@ private fun GeneralInfoSection(
                 modifier = Modifier.weight(1f)
             )
 
-            OutlinedTextField(
-                value = evConfig.boughtDate,
-                onValueChange = onBoughtDateChanged,
-                label = { Text(stringResource(R.string.ev_bought_date_label)) },
-                modifier = Modifier.weight(1f)
-            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                OutlinedTextField(
+                    value = evConfig.boughtDate,
+                    onValueChange = {},
+                    label = { Text(stringResource(R.string.ev_bought_date_label)) },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { boughtDatePickerVisible = true }) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { boughtDatePickerVisible = true }
+                )
+            }
         }
 
         OutlinedTextField(
@@ -423,6 +481,39 @@ private fun GeneralInfoSection(
             onValueChange = onCompanyChanged,
             label = { Text(stringResource(R.string.ev_manufactory_company_label)) },
             modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+    if (boughtDatePickerVisible) {
+        AlertDialog(
+            onDismissRequest = { boughtDatePickerVisible = false },
+            title = { Text(stringResource(R.string.ev_bought_date_label)) },
+            text = {
+                DatePicker(
+                    state = datePickerState
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis ?: boughtDateMillis
+                        onBoughtDateChanged(
+                            Instant.ofEpochMilli(selectedMillis)
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate()
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE)
+                        )
+                        boughtDatePickerVisible = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { boughtDatePickerVisible = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
         )
     }
 }
@@ -916,4 +1007,102 @@ private fun EvSearchProgressDialog(
             }
         }
     )
+}
+
+@Preview(name = "EvConfig - Loaded Vehicle State")
+@Composable
+private fun EvConfigLoadedVehiclePreview() {
+    MaterialThemeComposeUI {
+        val dummyConfig = EvConfig(
+            id = 1,
+            brand = "VSETT",
+            version = "10+",
+            manufactoryYear = "2023",
+            boughtDate = "2023-05-10",
+            manufactoryCompany = "Ningbo VSETT Intelligent Technology",
+            request = "VSETT 10+ Dual Motor 60V 2080W",
+            batteryTechnology = "Lithium-ion LG",
+            batteryVolts = "60V",
+            batteryAmpers = "25.6Ah",
+            maxVoltage = 67.2,
+            minVoltage = 48.0,
+            brakeQuantity = 2,
+            brakeTechnology = "Hydraulic Disc Brakes",
+            suspensionTechnology = "Hydraulic Spring Coil",
+            chargePower = "60V 2A",
+            otherCharacteristics = "NFC Key Lock, Turn Signals, Folding Handlebars",
+            imageUrl = "",
+            isLoaded = true,
+            batteryMode = BatteryMode.VOLTAGE,
+            motors = listOf(
+                MotorSpec("Front Motor", 1400),
+                MotorSpec("Rear Motor", 1400)
+            )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            GeneralInfoSection(
+                evConfig = dummyConfig,
+                onBrandChanged = {},
+                onVersionChanged = {},
+                onYearChanged = {},
+                onCompanyChanged = {},
+                onBoughtDateChanged = {}
+            )
+
+            MotorsSection(
+                motors = dummyConfig.motors,
+                onAddMotor = { _, _ -> },
+                onUpdateMotor = { _, _, _ -> },
+                onRemoveMotor = {}
+            )
+
+            BatterySpecsSection(
+                evConfig = dummyConfig,
+                onBatteryTechChanged = {},
+                onVoltsChanged = {},
+                onAmpersChanged = {},
+                onBatteryModeChanged = {},
+                onMaxVoltageChanged = {},
+                onMinVoltageChanged = {}
+            )
+
+            BottomActionTray(
+                isLoaded = true,
+                onDiscard = {},
+                onSave = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "EvConfig - AI Search Progress Dialog")
+@Composable
+private fun EvSearchProgressDialogPreview() {
+    MaterialThemeComposeUI {
+        EvSearchProgressDialog(
+            isLoading = true,
+            errorMessage = null,
+            onRetry = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview(name = "EvConfig - AI Search Error Dialog")
+@Composable
+private fun EvSearchErrorDialogPreview() {
+    MaterialThemeComposeUI {
+        EvSearchProgressDialog(
+            isLoading = false,
+            errorMessage = "NO_ACTIVE_LLM_CONFIG",
+            onRetry = {},
+            onDismiss = {}
+        )
+    }
 }

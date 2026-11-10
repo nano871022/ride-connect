@@ -38,16 +38,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import co.com.japl.ui.components.BatteryLevelCard
 import co.com.japl.ui.components.ConsumptionCard
 import co.com.japl.ui.components.LastChargeCard
 import co.com.japl.ui.components.MaintenanceBanner
 import co.com.japl.ui.components.OdometerCard
+import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvData
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
@@ -72,6 +74,7 @@ fun DashboardScreen(
     val estimatedVoltage by viewModel.estimatedVoltage.collectAsState()
     val lastMaxChargeDate by viewModel.lastMaxChargeDate.collectAsState()
     val lastHigherChargeDayInfo by viewModel.lastHigherChargeDayInfo.collectAsState()
+    val consumptionChartData by viewModel.consumptionChartData.collectAsState()
 
     var showBatteryEditDialog by remember { mutableStateOf(false) }
     var showOdometerEditDialog by remember { mutableStateOf(false) }
@@ -90,6 +93,7 @@ fun DashboardScreen(
             lastMaxChargeDate = lastMaxChargeDate,
             lastTripKm = lastTrip?.distance ?: 0.0,
             lastHigherChargeDayInfo = lastHigherChargeDayInfo,
+            consumptionChartData = consumptionChartData,
             onBatteryEditClick = { showBatteryEditDialog = true },
             onOdometerEditClick = { showOdometerEditDialog = true },
             onStartTrackingClick = { navigator.navigateToTrip() },
@@ -132,7 +136,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardContent(
+fun DashboardContent(
     latestEvData: EvData?,
     isTracking: Boolean,
     isPaused: Boolean,
@@ -143,6 +147,7 @@ private fun DashboardContent(
     lastMaxChargeDate: String,
     lastTripKm: Double,
     lastHigherChargeDayInfo: String,
+    consumptionChartData: List<Float>,
     onBatteryEditClick: () -> Unit,
     onOdometerEditClick: () -> Unit,
     onStartTrackingClick: () -> Unit,
@@ -171,50 +176,50 @@ private fun DashboardContent(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.size(44.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Timeline,
-                                contentDescription = null,
-                                tint = if (isTracking) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
-                            )
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isTracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Timeline,
+                                    contentDescription = null,
+                                    tint = if (isTracking) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
-                    }
-                    Column {
-                        Text(
-                            text = if (isTracking) {
-                                if (isPaused) stringResource(R.string.trip_status_paused) else stringResource(R.string.trip_live_telemetry)
-                            } else {
-                                stringResource(R.string.trip_title)
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (isTracking) {
+                        Column {
                             Text(
-                                text = stringResource(R.string.scaffold_tracking_title),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = if (isTracking) {
+                                    if (isPaused) stringResource(R.string.trip_status_paused) else stringResource(R.string.trip_live_telemetry)
+                                } else {
+                                    stringResource(R.string.trip_title)
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
                             )
+                            if (isTracking) {
+                                Text(
+                                    text = stringResource(R.string.scaffold_tracking_title),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
-            }
 
                 Button(
                     onClick = onStartTrackingClick,
@@ -242,7 +247,8 @@ private fun DashboardContent(
         )
 
         ConsumptionCard(
-            whPerKm = consumptionWhPerKm
+            whPerKm = consumptionWhPerKm,
+            chartData = consumptionChartData
         )
 
         OdometerCard(
@@ -262,7 +268,7 @@ private fun DashboardContent(
 }
 
 @Composable
-private fun StartupApiKeyDialog(
+fun StartupApiKeyDialog(
     onDismiss: () -> Unit,
     onConfigureClick: () -> Unit
 ) {
@@ -401,4 +407,86 @@ fun ManualOdometerEditDialog(
             }
         }
     )
+}
+
+@Preview(name = "Dashboard - Idle Mode")
+@Composable
+private fun DashboardIdlePreview() {
+    MaterialThemeComposeUI {
+        DashboardContent(
+            latestEvData = EvData(
+                id = 1,
+                evCode = "1",
+                km = 1250,
+                batteryLevel = 85,
+                createTmst = System.currentTimeMillis()
+            ),
+            isTracking = false,
+            isPaused = false,
+            consumptionWhPerKm = 18.5,
+            cyclesUsed = 12,
+            optimalBatteryPercentage = 80.0,
+            estimatedVoltage = "58.4 V",
+            lastMaxChargeDate = "2026-03-25",
+            lastTripKm = 14.2,
+            lastHigherChargeDayInfo = "Max charge: 100% on Monday",
+            consumptionChartData = emptyList(),
+            onBatteryEditClick = {},
+            onOdometerEditClick = {},
+            onStartTrackingClick = {}
+        )
+    }
+}
+
+@Preview(name = "Dashboard - Tracking Active Mode")
+@Composable
+private fun DashboardTrackingActivePreview() {
+    MaterialThemeComposeUI {
+        DashboardContent(
+            latestEvData = EvData(
+                id = 1,
+                evCode = "1",
+                km = 1250,
+                batteryLevel = 70,
+                createTmst = System.currentTimeMillis()
+            ),
+            isTracking = true,
+            isPaused = false,
+            consumptionWhPerKm = 21.0,
+            cyclesUsed = 15,
+            optimalBatteryPercentage = 80.0,
+            estimatedVoltage = "54.2 V",
+            lastMaxChargeDate = "2026-03-28",
+            lastTripKm = 8.5,
+            lastHigherChargeDayInfo = "Active Session",
+            consumptionChartData = emptyList(),
+            onBatteryEditClick = {},
+            onOdometerEditClick = {},
+            onStartTrackingClick = {}
+        )
+    }
+}
+
+@Preview(name = "Dashboard - Battery Edit Dialog")
+@Composable
+private fun DashboardBatteryEditDialogPreview() {
+    MaterialThemeComposeUI {
+        ManualBatteryEditDialog(
+            initialBatteryLevel = 85,
+            batteryMode = BatteryMode.PERCENTAGE,
+            onDismiss = {},
+            onSave = {}
+        )
+    }
+}
+
+@Preview(name = "Dashboard - Startup API Key Dialog")
+@Composable
+private fun DashboardStartupApiKeyDialogPreview() {
+    MaterialThemeComposeUI {
+        StartupApiKeyDialog(
+            onDismiss = {},
+            onConfigureClick = {}
+        )
+    }
 }

@@ -24,6 +24,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "EVRideConnect"
+include(":interfaces")
 include(":app")
 include(":core")
 include(":services:ble")

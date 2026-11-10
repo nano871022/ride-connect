@@ -1,8 +1,8 @@
 package co.japl.android.ev_ride_connect.database
 
 import android.content.Context
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.core.ports.GoogleDriveBackupPort
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
 
 class GoogleDriveBackupHelper(
     private val context: Context? = null

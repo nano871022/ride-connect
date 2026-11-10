@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.database
 
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
 import co.japl.android.ev_ride_connect.database.dao.TripDao
 import co.japl.android.ev_ride_connect.database.entities.TripEntity
 import co.japl.android.ev_ride_connect.database.entities.TripGpsEntity
@@ -21,19 +21,6 @@ class RoomTripAdapterUnitTest {
     fun setUp() {
         fakeTripDao = FakeTripDao()
         adapter = RoomTripAdapter(fakeTripDao)
-    }
-
-    @Test
-    fun shouldSaveTripDataSuccessfully() = runTest {
-        val distance = 2500
-        val batteryConsumed = 18
-
-        adapter.saveTripData(distance, batteryConsumed)
-
-        val trips = fakeTripDao.getAllTrips()
-        assertThat(trips).hasSize(1)
-        assertThat(trips[0].distance).isEqualTo(distance)
-        assertThat(trips[0].batteryConsumed).isEqualTo(batteryConsumed)
     }
 
     @Test

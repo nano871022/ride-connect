@@ -1,9 +1,9 @@
 package co.japl.android.ev_ride_connect.database
 
-import co.japl.android.ev_ride_connect.core.domain.BatteryMode
-import co.japl.android.ev_ride_connect.core.domain.EvConfig
-import co.japl.android.ev_ride_connect.core.domain.MotorSpec
-import co.japl.android.ev_ride_connect.core.ports.EvConfigPort
+import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
+import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
+import co.japl.android.ev_ride_connect.interfaces.model.MotorSpec
+import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.database.dao.EvConfigDao
 import co.japl.android.ev_ride_connect.database.entities.EvConfigEntity
 

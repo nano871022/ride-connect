@@ -1,7 +1,7 @@
 package co.japl.android.ev_ride_connect.track.di
 
 import android.content.Context
-import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
+import co.japl.android.ev_ride_connect.interfaces.ports.MotionDetectorPort
 import co.japl.android.ev_ride_connect.track.MotionDetector
 import dagger.Module
 import dagger.Provides

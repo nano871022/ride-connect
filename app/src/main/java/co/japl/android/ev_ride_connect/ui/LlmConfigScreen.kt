@@ -56,8 +56,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import co.com.japl.ui.components.ModelConfigCard
+import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.AVAILABLE_LLM_MODELS
 import co.japl.android.ev_ride_connect.controller.LlmConfigViewModel
@@ -215,7 +217,7 @@ fun LlmConfigScreen(
 }
 
 @Composable
-private fun LlmConfigFormCard(
+fun LlmConfigFormCard(
     selectedModel: String,
     apiKeyInput: String,
     availableVersions: List<String>,
@@ -542,5 +544,55 @@ private fun LlmConfigFormCard(
                 }
             }
         }
+    }
+}
+
+@Preview(name = "LlmConfig - Form Default State")
+@Composable
+private fun LlmConfigFormDefaultPreview() {
+    MaterialThemeComposeUI {
+        LlmConfigFormCard(
+            selectedModel = "Gemini",
+            apiKeyInput = "AIzaSyKey123456",
+            availableVersions = listOf("gemini-1.5-flash", "gemini-1.5-pro"),
+            selectedVersion = "gemini-1.5-flash",
+            isFetchingVersions = false,
+            isValidating = false,
+            errorMessage = null,
+            editingConfigId = 0L,
+            validationSuccessMessage = "Connected successfully",
+            onModelSelected = {},
+            onApiKeyChanged = {},
+            onFetchVersions = {},
+            onVersionSelected = {},
+            onValidate = {},
+            onCancelEdit = {},
+            onSave = {}
+        )
+    }
+}
+
+@Preview(name = "LlmConfig - Validation Error State")
+@Composable
+private fun LlmConfigFormErrorPreview() {
+    MaterialThemeComposeUI {
+        LlmConfigFormCard(
+            selectedModel = "Gemini",
+            apiKeyInput = "invalid_key",
+            availableVersions = emptyList(),
+            selectedVersion = "",
+            isFetchingVersions = false,
+            isValidating = false,
+            errorMessage = "Invalid API Key provided",
+            editingConfigId = 0L,
+            validationSuccessMessage = null,
+            onModelSelected = {},
+            onApiKeyChanged = {},
+            onFetchVersions = {},
+            onVersionSelected = {},
+            onValidate = {},
+            onCancelEdit = {},
+            onSave = {}
+        )
     }
 }

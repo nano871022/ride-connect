@@ -1,7 +1,6 @@
 package co.japl.android.ev_ride_connect.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,44 +10,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import co.com.japl.ui.components.SegmentOption
 import co.com.japl.ui.components.SegmentedChipGroup
 import co.com.japl.ui.components.SettingSwitchRow
 import co.com.japl.ui.components.StatusCard
+import co.com.japl.ui.theme.MaterialThemeComposeUI
 import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.BackupViewModel
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
-import co.japl.android.ev_ride_connect.core.domain.BackupStatus
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupScreen(
     viewModel: BackupViewModel,
@@ -61,6 +47,31 @@ fun BackupScreen(
     val isBackingUp by viewModel.isBackingUp.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
 
+    BackupContent(
+        backupConfig = backupConfig,
+        isBackingUp = isBackingUp,
+        backupStatus = backupStatus,
+        onPerformBackup = { viewModel.performManualBackup(databasePath, imagePaths) },
+        onToggleAutoBackup = { enabled ->
+            viewModel.configureAutoBackup(enabled, backupConfig.backupIntervalHours)
+        },
+        onIntervalSelected = { interval ->
+            viewModel.configureAutoBackup(backupConfig.isAutoBackupEnabled, interval)
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun BackupContent(
+    backupConfig: BackupConfig,
+    isBackingUp: Boolean,
+    backupStatus: BackupStatus,
+    onPerformBackup: () -> Unit,
+    onToggleAutoBackup: (Boolean) -> Unit,
+    onIntervalSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -84,19 +95,15 @@ fun BackupScreen(
             isLoading = isBackingUp,
             lastUpdatedText = lastBackupText,
             actionButtonText = stringResource(R.string.backup_now),
-            onActionClick = { viewModel.performManualBackup(databasePath, imagePaths) },
+            onActionClick = onPerformBackup,
             statusMessage = statusMsg,
             isSuccessStatus = backupStatus == BackupStatus.SUCCESS
         )
 
         AutoBackupCard(
             backupConfig = backupConfig,
-            onToggleAutoBackup = { enabled ->
-                viewModel.configureAutoBackup(enabled, backupConfig.backupIntervalHours)
-            },
-            onIntervalSelected = { interval ->
-                viewModel.configureAutoBackup(backupConfig.isAutoBackupEnabled, interval)
-            }
+            onToggleAutoBackup = onToggleAutoBackup,
+            onIntervalSelected = onIntervalSelected
         )
 
         BackupInfoCard(backupConfig = backupConfig)
@@ -168,5 +175,105 @@ private fun BackupInfoCard(backupConfig: BackupConfig) {
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Preview(name = "Backup Screen - Idle / Default")
+@Composable
+private fun BackupScreenIdlePreview() {
+    MaterialThemeComposeUI {
+        BackupContent(
+            backupConfig = BackupConfig(
+                isAutoBackupEnabled = false,
+                backupIntervalHours = 24,
+                lastBackupTimestamp = 1710000000000L,
+                backupAppFolder = "RideConnectBackups"
+            ),
+            isBackingUp = false,
+            backupStatus = BackupStatus.IDLE,
+            onPerformBackup = {},
+            onToggleAutoBackup = {},
+            onIntervalSelected = {}
+        )
+    }
+}
+
+@Preview(name = "Backup Screen - Auto Backup Enabled")
+@Composable
+private fun BackupScreenAutoBackupEnabledPreview() {
+    MaterialThemeComposeUI {
+        BackupContent(
+            backupConfig = BackupConfig(
+                isAutoBackupEnabled = true,
+                backupIntervalHours = 12,
+                lastBackupTimestamp = 1710000000000L,
+                backupAppFolder = "RideConnectBackups"
+            ),
+            isBackingUp = false,
+            backupStatus = BackupStatus.IDLE,
+            onPerformBackup = {},
+            onToggleAutoBackup = {},
+            onIntervalSelected = {}
+        )
+    }
+}
+
+@Preview(name = "Backup Screen - Backing Up / Loading")
+@Composable
+private fun BackupScreenLoadingPreview() {
+    MaterialThemeComposeUI {
+        BackupContent(
+            backupConfig = BackupConfig(
+                isAutoBackupEnabled = true,
+                backupIntervalHours = 24,
+                lastBackupTimestamp = 1710000000000L,
+                backupAppFolder = "RideConnectBackups"
+            ),
+            isBackingUp = true,
+            backupStatus = BackupStatus.IDLE,
+            onPerformBackup = {},
+            onToggleAutoBackup = {},
+            onIntervalSelected = {}
+        )
+    }
+}
+
+@Preview(name = "Backup Screen - Success Status")
+@Composable
+private fun BackupScreenSuccessPreview() {
+    MaterialThemeComposeUI {
+        BackupContent(
+            backupConfig = BackupConfig(
+                isAutoBackupEnabled = true,
+                backupIntervalHours = 24,
+                lastBackupTimestamp = System.currentTimeMillis(),
+                backupAppFolder = "RideConnectBackups"
+            ),
+            isBackingUp = false,
+            backupStatus = BackupStatus.SUCCESS,
+            onPerformBackup = {},
+            onToggleAutoBackup = {},
+            onIntervalSelected = {}
+        )
+    }
+}
+
+@Preview(name = "Backup Screen - Failure Status")
+@Composable
+private fun BackupScreenFailurePreview() {
+    MaterialThemeComposeUI {
+        BackupContent(
+            backupConfig = BackupConfig(
+                isAutoBackupEnabled = false,
+                backupIntervalHours = 24,
+                lastBackupTimestamp = 0L,
+                backupAppFolder = "RideConnectBackups"
+            ),
+            isBackingUp = false,
+            backupStatus = BackupStatus.FAILURE,
+            onPerformBackup = {},
+            onToggleAutoBackup = {},
+            onIntervalSelected = {}
+        )
     }
 }

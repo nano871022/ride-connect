@@ -20,6 +20,8 @@ data class TripEntity(
     val timeTrip: Long = 0,
     @ColumnInfo(name = "average_speed")
     val averageSpeed: Double = 0.0,
+    @ColumnInfo(name = "max_speed")
+    val maxSpeed: Double = 0.0,
     @ColumnInfo(name = "distance_km")
     val distanceKm: Double = 0.0,
     @ColumnInfo(name = "create_tmst")

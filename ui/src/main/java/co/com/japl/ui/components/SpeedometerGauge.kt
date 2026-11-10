@@ -53,6 +53,8 @@ fun SpeedometerGauge(
     val secondaryGreen = Color(0xFF34FF8C)
     val lightCyan = Color(0xFF7DF4FF)
     val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val safeMaxSpeed = if (maxSpeed > 0.0 && maxSpeed.isFinite()) maxSpeed else 100.0
+    val safeSpeed = if (speed.isFinite() && speed >= 0.0) speed else 0.0
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -73,7 +75,7 @@ fun SpeedometerGauge(
                     val strokeWidth = 12.dp.toPx()
                     val sweepAngle = 280f
                     val startAngle = 130f
-                    val progressRatio = (speed / maxSpeed).coerceIn(0.0, 1.0).toFloat()
+                    val progressRatio = (safeSpeed / safeMaxSpeed).coerceIn(0.0, 1.0).toFloat()
 
                     // Background track arc
                     drawArc(
@@ -127,7 +129,7 @@ fun SpeedometerGauge(
                     ) {
                         val currentLocale = LocalConfiguration.current.locales[0]
                         Text(
-                            text = if (speed % 1.0 == 0.0) speed.toInt().toString() else String.format(currentLocale, "%.1f", speed),
+                            text = if (safeSpeed % 1.0 == 0.0) safeSpeed.toInt().toString() else String.format(currentLocale, "%.1f", safeSpeed),
                             fontSize = 44.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface

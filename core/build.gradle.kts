@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    api(project(":interfaces"))
     implementation(project(":utils"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.org.json)

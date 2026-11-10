@@ -1,7 +1,7 @@
-package co.japl.android.ev_ride_connect.core.ports
+package co.japl.android.ev_ride_connect.interfaces.ports
 
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
+import co.japl.android.ev_ride_connect.interfaces.model.Trip
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -10,18 +10,6 @@ import uk.co.jemos.podam.api.PodamFactoryImpl
 class TripDatabasePortTest {
 
     private val podamFactory = PodamFactoryImpl()
-
-    @Test
-    fun shouldSaveTripData() = runTest {
-        val port = FakeTripDatabasePort()
-        val expectedDistance = 1500
-        val expectedBatteryConsumed = 25
-
-        port.saveTripData(expectedDistance, expectedBatteryConsumed)
-
-        assertThat(port.savedDistance).isEqualTo(expectedDistance)
-        assertThat(port.savedBatteryConsumed).isEqualTo(expectedBatteryConsumed)
-    }
 
     @Test
     fun shouldSaveTripAndGpsPoints() = runTest {
@@ -55,17 +43,9 @@ class TripDatabasePortTest {
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        var savedDistance: Int? = null
-        var savedBatteryConsumed: Int? = null
-
         private val trips = mutableListOf<Trip>()
         private val gpsMap = mutableMapOf<Long, MutableList<TripGps>>()
         private var nextId = 1L
-
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {
-            savedDistance = distance
-            savedBatteryConsumed = batteryConsumed
-        }
 
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
             val assignedId = if (trip.id == 0L) nextId++ else trip.id

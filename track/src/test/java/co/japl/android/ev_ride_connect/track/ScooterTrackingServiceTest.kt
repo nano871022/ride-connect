@@ -1,11 +1,10 @@
 package co.japl.android.ev_ride_connect.track
 
-import co.japl.android.ev_ride_connect.core.domain.ActiveSession
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.domain.Trip
-import co.japl.android.ev_ride_connect.core.domain.TripGps
-import co.japl.android.ev_ride_connect.core.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.ports.TripDatabasePort
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateMaxSpeedUseCase
+import co.japl.android.ev_ride_connect.interfaces.model.ActiveSession
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.model.TripGps
+import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -17,25 +16,28 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScooterTrackingServiceTest {
 
-    private lateinit var fakeTripPort: FakeTripDatabasePort
     private lateinit var fakeSessionPort: FakeSessionStatePort
     private lateinit var trackingTracker: ScooterTrackingTracker
 
     @Before
     fun setUp() {
-        fakeTripPort = FakeTripDatabasePort()
         fakeSessionPort = FakeSessionStatePort()
     }
 
     @Test
     fun shouldNotBeTrackingInitially() {
-        trackingTracker = ScooterTrackingTracker(fakeTripPort, fakeSessionPort)
+        trackingTracker = ScooterTrackingTracker(
+            sessionStatePort = fakeSessionPort
+        )
         assertThat(trackingTracker.isTracking.value).isFalse()
     }
 
     @Test
     fun shouldStartTrackingWhenStartCalled() = runTest {
-        trackingTracker = ScooterTrackingTracker(fakeTripPort, fakeSessionPort, this)
+        trackingTracker = ScooterTrackingTracker(
+            sessionStatePort = fakeSessionPort,
+            coroutineScope = this
+        )
         trackingTracker.startTracking()
 
         assertThat(trackingTracker.isTracking.value).isTrue()
@@ -44,8 +46,11 @@ class ScooterTrackingServiceTest {
     }
 
     @Test
-    fun shouldStopTrackingAndSaveTripWhenStopCalled() = runTest {
-        trackingTracker = ScooterTrackingTracker(fakeTripPort, fakeSessionPort, this)
+    fun shouldStopTrackingClearSessionButNotSaveTrip() = runTest {
+        trackingTracker = ScooterTrackingTracker(
+            sessionStatePort = fakeSessionPort,
+            coroutineScope = this
+        )
 
         trackingTracker.startTracking()
         trackingTracker.recordTelemetry(x = 10.0, y = 20.0, speed = 20.0, distanceDelta = 1.0)
@@ -54,12 +59,16 @@ class ScooterTrackingServiceTest {
         trackingTracker.stopTracking()
 
         assertThat(trackingTracker.isTracking.value).isFalse()
-        assertThat(fakeTripPort.savedTrips).hasSize(1)
+        // El tracker ya no persiste viajes (solo el ViewModel/FinalizeTripUseCase lo hace)
+        assertThat(fakeSessionPort.activeSession).isNull()
     }
 
     @Test
     fun shouldRecordMultipleContinuousTelemetryPoints() = runTest {
-        trackingTracker = ScooterTrackingTracker(fakeTripPort, fakeSessionPort, this)
+        trackingTracker = ScooterTrackingTracker(
+            sessionStatePort = fakeSessionPort,
+            coroutineScope = this
+        )
 
         trackingTracker.startTracking()
         trackingTracker.recordTelemetry(x = 10.0001, y = 20.0001, speed = 15.0, distanceDelta = 0.05, motionState = MotionState.MOVING)
@@ -70,32 +79,7 @@ class ScooterTrackingServiceTest {
         assertThat(trackingTracker.getCachedTelemetryCount()).isEqualTo(3)
 
         trackingTracker.stopTracking()
-        assertThat(fakeTripPort.savedGpsPoints).hasSize(3)
-    }
-
-    private class FakeTripDatabasePort : TripDatabasePort {
-        val savedTrips = mutableListOf<Trip>()
-        val savedGpsPoints = mutableListOf<TripGps>()
-
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
-
-        override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
-            savedTrips.add(trip)
-            savedGpsPoints.addAll(gpsPoints)
-            return 1L
-        }
-
-        override suspend fun getAllTrips(): List<Trip> = savedTrips
-
-        override suspend fun getTripById(tripId: Long): Trip? = savedTrips.firstOrNull()
-
-        override suspend fun getGpsPointsByTripId(tripId: Long): List<TripGps> = savedGpsPoints
-
-        override suspend fun getTripsByDate(startTimestamp: Long, endTimestamp: Long): List<Trip> = savedTrips
-
-        override suspend fun getTotalTripsCount(): Int = savedTrips.size
-        override suspend fun getTotalDistanceKm(): Double = savedTrips.sumOf { it.distance }
-        override suspend fun getChargeDetectionsCount(threshold: Int): Int = savedTrips.count { it.batteryConsumed >= threshold }
+        // El tracker ya no guarda puntos GPS en BD
     }
 
     private class FakeSessionStatePort : SessionStatePort {

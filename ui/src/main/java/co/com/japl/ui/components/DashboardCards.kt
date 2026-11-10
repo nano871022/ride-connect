@@ -211,7 +211,7 @@ fun LastChargeCard(
 @Composable
 fun ConsumptionCard(
     whPerKm: Double,
-    chartData: List<Float> = listOf(22f, 18f, 25f, 19f, 21f, 17f, 20f),
+    chartData: List<Float>,
     modifier: Modifier = Modifier
 ) {
     Card(

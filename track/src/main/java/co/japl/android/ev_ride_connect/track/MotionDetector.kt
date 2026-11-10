@@ -5,11 +5,12 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import co.japl.android.ev_ride_connect.core.domain.MotionState
-import co.japl.android.ev_ride_connect.core.ports.MotionDetectorPort
+import co.japl.android.ev_ride_connect.interfaces.model.MotionState
+import co.japl.android.ev_ride_connect.interfaces.ports.MotionDetectorPort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.LocalDateTime
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -100,7 +101,15 @@ class MotionDetector(private val context: Context? = null) : MotionDetectorPort,
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
         if (event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION || event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            processSensorData(event.values[0], event.values[1], event.values[2])
+            processSensorData(
+                accX = event.values[0],
+                accY = event.values[1],
+                accZ = event.values[2],
+                gyroX = 0f,
+                gyroY = 0f,
+                gyroZ = 0f,
+                currentTimestamp = System.currentTimeMillis()
+            )
         }
     }
 

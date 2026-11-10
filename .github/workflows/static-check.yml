@@ -54,12 +54,12 @@ jobs:
 
       - name: Run lint code analysis
         id: run_tests
-        continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew lint -x :about:lint | tee build_errors.log
+          ./gradlew lint -x :about:lint -x :about:test | tee build_errors.log
 
       - name: Package lint results as zip
+        if: always()
         run: |
           mkdir -p zipped_artifacts
           zip -r zipped_artifacts/lint-results.zip **/build/reports/lint-results* || true
@@ -78,7 +78,7 @@ jobs:
           echo "## 📊 Test & Lint Execution Summary" >> $GITHUB_STEP_SUMMARY
 
           WARNINGS_FOUND=false
-          ERRORS_FOUND=false
+          ERRORS_FOUND=true
 
           LINT_REPORTS=$(find . -name "lint-results*.xml" -o -name "lint-results*.html")
           if [ -n "$LINT_REPORTS" ]; then
@@ -94,26 +94,7 @@ jobs:
           echo "ERRORS_FOUND=$ERRORS_FOUND" >> $GITHUB_OUTPUT
 
       - name: Read Error Log
-        if: failure()
-        run: |
-          ISSUE_TITLE="[CI Alert] Lint Errors or Warnings in Commit ${{ github.sha }}"
-          ISSUE_BODY="Automated issue created by GitHub Actions.
-
-          **Workflow:** ${{ github.workflow }}
-          **Run Number:** ${{ github.run_number }}
-          **Commit:** ${{ github.sha }}
-          **Branch/Ref:** ${{ github.ref }}
-
-          ### Status
-          - **Errors Detected:** ${{ steps.analyze_results.outputs.ERRORS_FOUND }}
-          - **Warnings Detected:** ${{ steps.analyze_results.outputs.WARNINGS_FOUND }}
-
-          Please check the workflow artifacts (\`lint-results-zip\`) and job summary for detailed test and lint outputs."
-
-          gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "bug" || echo "Failed to create issue or gh CLI not authenticated."
-
-      - name: Read Error Log
-        if: failure() || steps.run_tests.outcome != 'success'
+        if: always()
         id: error_log
         run: |
           if [ -f build_errors.log ]; then

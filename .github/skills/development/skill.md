@@ -36,3 +36,7 @@ The primary objective is to write clean, decoupled, maintainable, and simple cod
 *   **External Module Guidelines (`:about` module):**
     *   Do NOT create local source code, layout files, or folders for the `:about` module inside this repository.
     *   The `:about` module is an external repository reference configured in `settings.gradle.kts` via `project(":about").projectDir = file("../japl-android-about-module")`.
+
+*   **UI Component Preview Requirements:**
+    *   All UI interface screens (`*Screen`) MUST include Jetpack Compose `@Preview` methods to allow UI inspection without launching or deploying the application.
+    *   Provide a distinct `@Preview` composable function for every conditional state, option, or dialog view (e.g., idle, active, loading, error, empty, or dialog-open states).

@@ -1,6 +1,6 @@
 package co.japl.android.ev_ride_connect.database
 
-import co.japl.android.ev_ride_connect.core.domain.BackupConfig
+import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before

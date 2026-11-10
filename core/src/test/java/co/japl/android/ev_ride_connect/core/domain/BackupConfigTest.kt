@@ -1,4 +1,4 @@
-package co.japl.android.ev_ride_connect.core.domain
+package co.japl.android.ev_ride_connect.interfaces.model
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

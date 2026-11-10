@@ -35,6 +35,8 @@ data class TripGpsEntity(
     val y: Double,
     @ColumnInfo(name = "create_tmst")
     val createTmst: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "timestamp")
+    val timestamp: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "motion_state")
     val motionState: String = "STOPPED"
 )
