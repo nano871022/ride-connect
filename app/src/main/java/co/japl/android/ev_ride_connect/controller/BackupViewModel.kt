@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
 import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
-import co.japl.android.ev_ride_connect.interfaces.usecase.BackupUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.BackupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,3 +63,4 @@ class BackupViewModel @Inject constructor(
         }
     }
 }
+

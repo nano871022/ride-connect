@@ -10,17 +10,21 @@ import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.core.usecase.CalculateConsumptionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.CalculateDynamicBatteryPercentageUseCase
-import co.japl.android.ev_ride_connect.core.usecase.CalculateOptimalBatteryPercentageUseCase
-import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetLatestEvDataUseCase
-import co.japl.android.ev_ride_connect.core.usecase.ObserveActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveEvDataUseCase
-import co.japl.android.ev_ride_connect.core.usecase.UpdateOdometerUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateConsumptionChartDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateDashboardMetricsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateConsumptionChartDataUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateConsumptionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateDashboardMetricsUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateDynamicBatteryPercentageUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateOptimalBatteryPercentageUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.DashboardUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetLatestEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.ObserveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.SaveEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.UpdateOdometerUseCase
 import co.japl.android.ev_ride_connect.controller.DashboardViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -77,7 +81,9 @@ class DashboardScreenScreenshotTest {
             GetAllTripsUseCase(tripDatabasePort)
         )
 
-        val viewModel = DashboardViewModel(dashboardUseCase)
+        val dashboardMetricsUseCase = CalculateDashboardMetricsUseCaseImpl()
+        val consumptionChartDataUseCase = CalculateConsumptionChartDataUseCaseImpl()
+        val viewModel = DashboardViewModel(dashboardUseCase, dashboardMetricsUseCase, consumptionChartDataUseCase)
     }
 
     private class FakeEvDataPort : EvDataPort {
@@ -108,7 +114,6 @@ class DashboardScreenScreenshotTest {
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
         override suspend fun getAllTrips(): List<Trip> = emptyList()
         override suspend fun getTripById(tripId: Long): Trip? = null
@@ -119,3 +124,4 @@ class DashboardScreenScreenshotTest {
         override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 }
+

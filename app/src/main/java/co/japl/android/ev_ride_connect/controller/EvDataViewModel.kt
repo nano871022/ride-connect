@@ -7,7 +7,7 @@ import co.com.japl.ui.components.HistoryRecordType
 import co.com.japl.ui.components.MaintenanceIndicatorItem
 import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.EvDataUseCase
 import co.japl.android.ev_ride_connect.ui.HistoryFilter
 import co.japl.android.ev_ride_connect.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -111,3 +111,4 @@ class EvDataViewModel @Inject constructor(
         }
     }
 }
+

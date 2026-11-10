@@ -12,6 +12,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import uk.co.jemos.podam.api.PodamFactoryImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
+import co.japl.android.ev_ride_connect.core.usecase.api.*
 
 class TripUseCasesTest {
 
@@ -45,8 +47,6 @@ class TripUseCasesTest {
     private class FakeTripDatabasePort : TripDatabasePort {
         val trips = mutableMapOf<Long, Trip>()
         val gpsPoints = mutableMapOf<Long, List<TripGps>>()
-
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
 
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
             val id = (trips.size + 1).toLong()

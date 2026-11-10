@@ -1,23 +1,31 @@
 package co.japl.android.ev_ride_connect.di
 
-import co.japl.android.ev_ride_connect.core.usecase.BackupUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.DashboardUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.EvConfigUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.LlmConfigUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.MainScaffoldUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.SplashUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.TripDetailUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.TripUseCaseImpl
-import co.japl.android.ev_ride_connect.interfaces.usecase.BackupUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.DashboardUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvConfigUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvDataUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.LlmConfigUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.MainScaffoldUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.SplashUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripDetailUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.BackupUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.DashboardUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.EvConfigUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.EvDataUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.LlmConfigUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.MainScaffoldUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.SplashUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.TripDetailUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.TripUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.api.BackupUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateConsumptionChartDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateDashboardMetricsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.CalculateMaxSpeedUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.DashboardUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.EvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.EvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.LlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.MainScaffoldUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.SplashUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripDetailUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateConsumptionChartDataUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateDashboardMetricsUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.CalculateMaxSpeedUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.SaveTripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.TripWriterUseCase
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -81,4 +89,30 @@ abstract class UseCaseModule {
     abstract fun bindTripUseCase(
         impl: TripUseCaseImpl
     ): TripUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindCalculateMaxSpeedUseCase(
+        impl: CalculateMaxSpeedUseCaseImpl
+    ): CalculateMaxSpeedUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindCalculateDashboardMetricsUseCase(
+        impl: CalculateDashboardMetricsUseCaseImpl
+    ): CalculateDashboardMetricsUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindCalculateConsumptionChartDataUseCase(
+        impl: CalculateConsumptionChartDataUseCaseImpl
+    ): CalculateConsumptionChartDataUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindTripWriterUseCase(
+        impl: SaveTripUseCase
+    ): TripWriterUseCase
 }
+
+

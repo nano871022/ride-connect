@@ -7,14 +7,14 @@ import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.core.usecase.ClearActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.EvConfigUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetEvConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveActiveSessionUseCase
-import co.japl.android.ev_ride_connect.core.usecase.SaveEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.ClearActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.EvConfigUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.FetchEvInfoUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetEvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.SaveActiveSessionUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.SaveEvConfigUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -98,3 +98,4 @@ class EvConfigViewModelTest {
         override suspend fun clearActiveSession() {}
     }
 }
+

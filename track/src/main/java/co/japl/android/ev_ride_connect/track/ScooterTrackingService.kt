@@ -26,7 +26,7 @@ import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.interfaces.ports.MotionDetectorPort
 import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.core.usecase.FetchEvInfoUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.FetchEvInfoUseCase
 import co.japl.android.ev_ride_connect.utils.GpsUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -40,9 +40,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class ScooterTrackingService : Service() {
-
-    @Inject
-    lateinit var tripDatabasePort: TripDatabasePort
 
     @Inject
     lateinit var sessionStatePort: SessionStatePort
@@ -68,7 +65,7 @@ class ScooterTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        trackingTracker = ScooterTrackingTracker(tripDatabasePort, sessionStatePort, serviceScope)
+        trackingTracker = ScooterTrackingTracker(sessionStatePort, serviceScope)
         createNotificationChannel()
         observeBleState()
         observeMotionState()
@@ -82,7 +79,7 @@ class ScooterTrackingService : Service() {
                         x = lastLocation?.latitude ?: 0.0,
                         y = lastLocation?.longitude ?: 0.0,
                         speed = scooterState.currentSpeed.toDouble(),
-                        distanceDelta = 0.01,
+                        distanceDelta = 0.0,
                         motionState = motionDetectorPort.motionState.value
                     )
                 }
@@ -358,3 +355,4 @@ class ScooterTrackingService : Service() {
             .build()
     }
 }
+

@@ -3,10 +3,10 @@ package co.japl.android.ev_ride_connect.controller
 import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
 import co.japl.android.ev_ride_connect.interfaces.model.BackupStatus
 import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
-import co.japl.android.ev_ride_connect.core.usecase.BackupUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.ConfigureAutoBackupUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetBackupConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.PerformManualBackupUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.BackupUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.ConfigureAutoBackupUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetBackupConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.PerformManualBackupUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -68,3 +68,4 @@ class BackupViewModelTest {
         }
     }
 }
+

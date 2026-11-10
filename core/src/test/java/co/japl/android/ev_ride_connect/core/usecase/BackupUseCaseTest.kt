@@ -2,11 +2,12 @@ package co.japl.android.ev_ride_connect.core.usecase
 
 import co.japl.android.ev_ride_connect.interfaces.model.BackupConfig
 import co.japl.android.ev_ride_connect.interfaces.ports.GoogleDriveBackupPort
-import co.japl.android.ev_ride_connect.interfaces.usecase.BackupUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.BackupUseCase
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
 
 class BackupUseCaseTest {
 
@@ -63,3 +64,4 @@ class BackupUseCaseTest {
         override suspend fun getBackupConfig(): BackupConfig = currentConfig
     }
 }
+

@@ -3,11 +3,12 @@ package co.japl.android.ev_ride_connect.core.usecase
 import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.interfaces.usecase.LlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.LlmConfigUseCase
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
 
 class LlmConfigUseCaseTest {
 
@@ -55,3 +56,4 @@ class LlmConfigUseCaseTest {
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String = ""
     }
 }
+

@@ -11,7 +11,7 @@ import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.MotionDetectorPort
 import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
 
 class TripUseCaseTest {
 
@@ -69,7 +70,6 @@ class TripUseCaseTest {
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long = trip.id
         override suspend fun getAllTrips(): List<Trip> = emptyList()
         override suspend fun getTripById(tripId: Long): Trip? = null
@@ -108,3 +108,4 @@ class TripUseCaseTest {
         override fun updateState(newState: MotionState, currentTimestamp: Long) {}
     }
 }
+

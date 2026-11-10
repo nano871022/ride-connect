@@ -6,11 +6,12 @@ import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
 import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.interfaces.usecase.SplashUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.SplashUseCase
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
 
 class SplashUseCaseTest {
 
@@ -61,3 +62,4 @@ class SplashUseCaseTest {
         override suspend fun deleteConfig(id: Long): Boolean = true
     }
 }
+

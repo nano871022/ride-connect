@@ -34,8 +34,8 @@ import co.japl.android.ev_ride_connect.R
 import co.japl.android.ev_ride_connect.controller.TripDetailViewModel
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.model.TripGps
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripDetailUseCase
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripDetailUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripUseCase
 import co.japl.android.ev_ride_connect.navigation.AppNavigator
 import co.japl.android.ev_ride_connect.utils.DateUtils
 
@@ -223,3 +223,4 @@ internal fun TripDetailScreenPreview1(){
         )
     }
 }
+

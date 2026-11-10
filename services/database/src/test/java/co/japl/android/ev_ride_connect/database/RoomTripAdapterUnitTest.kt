@@ -24,19 +24,6 @@ class RoomTripAdapterUnitTest {
     }
 
     @Test
-    fun shouldSaveTripDataSuccessfully() = runTest {
-        val distance = 2500
-        val batteryConsumed = 18
-
-        adapter.saveTripData(distance, batteryConsumed)
-
-        val trips = fakeTripDao.getAllTrips()
-        assertThat(trips).hasSize(1)
-        assertThat(trips[0].distance).isEqualTo(distance)
-        assertThat(trips[0].batteryConsumed).isEqualTo(batteryConsumed)
-    }
-
-    @Test
     fun shouldSaveTripAndFetchTripHistoryAndDetail() = runTest {
         val trip = podamFactory.manufacturePojo(Trip::class.java).copy(id = 0)
         val gpsPoints = listOf(

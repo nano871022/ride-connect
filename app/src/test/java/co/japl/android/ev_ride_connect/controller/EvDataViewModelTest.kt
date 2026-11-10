@@ -4,10 +4,10 @@ import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.core.usecase.EvDataUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.GetAllEvDataUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllTripsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetTripsByDateUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.EvDataUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetAllEvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetAllTripsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetTripsByDateUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -61,7 +61,6 @@ class EvDataViewModelTest {
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
         override suspend fun getAllTrips(): List<Trip> = listOf(Trip(id = 1L))
         override suspend fun getTripById(tripId: Long): Trip? = null
@@ -72,3 +71,4 @@ class EvDataViewModelTest {
         override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 }
+

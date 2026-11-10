@@ -2,7 +2,7 @@ package co.japl.android.ev_ride_connect.controller
 
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.model.TripGps
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripDetailUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripDetailUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -78,3 +78,4 @@ class TripDetailViewModelTest {
         override suspend fun getTripById(tripId: Long): Trip? = null
     }
 }
+

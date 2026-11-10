@@ -3,14 +3,14 @@ package co.japl.android.ev_ride_connect.controller
 import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
-import co.japl.android.ev_ride_connect.core.usecase.DeleteLlmConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.FetchAvailableLlmModelsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetActiveLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.GetAllLlmConfigsUseCase
-import co.japl.android.ev_ride_connect.core.usecase.LlmConfigUseCaseImpl
-import co.japl.android.ev_ride_connect.core.usecase.SaveLlmConfigUseCase
-import co.japl.android.ev_ride_connect.core.usecase.ToggleLlmConfigStatusUseCase
-import co.japl.android.ev_ride_connect.core.usecase.ValidateLlmApiKeyUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.DeleteLlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.FetchAvailableLlmModelsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetActiveLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.GetAllLlmConfigsUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.LlmConfigUseCaseImpl
+import co.japl.android.ev_ride_connect.core.usecase.impl.SaveLlmConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.ToggleLlmConfigStatusUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.ValidateLlmApiKeyUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -75,3 +75,4 @@ class LlmConfigViewModelTest {
         override suspend fun generateResponse(modelName: String, apiKey: String, prompt: String): String = ""
     }
 }
+

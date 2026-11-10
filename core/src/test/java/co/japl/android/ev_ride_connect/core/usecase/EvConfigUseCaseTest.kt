@@ -7,13 +7,14 @@ import co.japl.android.ev_ride_connect.interfaces.ports.EvConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmClientPort
 import co.japl.android.ev_ride_connect.interfaces.ports.LlmConfigPort
 import co.japl.android.ev_ride_connect.interfaces.ports.SessionStatePort
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.EvConfigUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
 
 class EvConfigUseCaseTest {
 
@@ -82,3 +83,4 @@ class EvConfigUseCaseTest {
         override suspend fun clearActiveSession() {}
     }
 }
+

@@ -4,6 +4,8 @@ import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
 import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
+import co.japl.android.ev_ride_connect.core.usecase.api.*
 
 class CalculateDynamicBatteryPercentageUseCaseTest {
 

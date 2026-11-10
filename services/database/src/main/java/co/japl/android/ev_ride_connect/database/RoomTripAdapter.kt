@@ -12,21 +12,13 @@ class RoomTripAdapter(
     private val tripDao: TripDao
 ) : TripDatabasePort {
 
-    override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {
-        val tripEntity = TripEntity(
-            distance = distance,
-            batteryConsumed = batteryConsumed,
-            distanceKm = distance / 1000.0
-        )
-        tripDao.insertTrip(tripEntity)
-    }
-
     override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
         val tripEntity = TripEntity(
             id = trip.id,
             duration = trip.timeTrip,
             timeTrip = trip.timeTrip,
             averageSpeed = trip.averageSpeed,
+            maxSpeed = trip.maxSpeed,
             distanceKm = trip.distance,
             distance = (trip.distance * 1000).toInt(),
             batteryConsumed = trip.batteryConsumed,
@@ -54,6 +46,7 @@ class RoomTripAdapter(
                     x = gps.x,
                     y = gps.y,
                     createTmst = gps.createTmst,
+                    timestamp = gps.timestamp,
                     motionState = gps.motionState.name
                 )
             }
@@ -69,6 +62,7 @@ class RoomTripAdapter(
                 id = entity.id,
                 timeTrip = if (entity.timeTrip != 0L) entity.timeTrip else entity.duration,
                 averageSpeed = entity.averageSpeed,
+                maxSpeed = entity.maxSpeed,
                 distance = if (entity.distanceKm != 0.0) entity.distanceKm else entity.distance / 1000.0,
                 batteryConsumed = entity.batteryConsumed,
                 createTmst = if (entity.createTmst != 0L) entity.createTmst else entity.timestamp
@@ -82,6 +76,7 @@ class RoomTripAdapter(
             id = entity.id,
             timeTrip = if (entity.timeTrip != 0L) entity.timeTrip else entity.duration,
             averageSpeed = entity.averageSpeed,
+            maxSpeed = entity.maxSpeed,
             distance = if (entity.distanceKm != 0.0) entity.distanceKm else entity.distance / 1000.0,
             batteryConsumed = entity.batteryConsumed,
             createTmst = if (entity.createTmst != 0L) entity.createTmst else entity.timestamp
@@ -104,6 +99,7 @@ class RoomTripAdapter(
                 x = entity.x,
                 y = entity.y,
                 createTmst = entity.createTmst,
+                timestamp = entity.timestamp,
                 motionState = motionState
             )
         }
@@ -115,6 +111,7 @@ class RoomTripAdapter(
                 id = entity.id,
                 timeTrip = if (entity.timeTrip != 0L) entity.timeTrip else entity.duration,
                 averageSpeed = entity.averageSpeed,
+                maxSpeed = entity.maxSpeed,
                 distance = if (entity.distanceKm != 0.0) entity.distanceKm else entity.distance / 1000.0,
                 batteryConsumed = entity.batteryConsumed,
                 createTmst = if (entity.createTmst != 0L) entity.createTmst else entity.timestamp

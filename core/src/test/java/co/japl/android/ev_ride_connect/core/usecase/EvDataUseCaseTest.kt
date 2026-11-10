@@ -4,11 +4,12 @@ import co.japl.android.ev_ride_connect.interfaces.model.EvData
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.ports.EvDataPort
 import co.japl.android.ev_ride_connect.interfaces.ports.TripDatabasePort
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvDataUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.EvDataUseCase
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import co.japl.android.ev_ride_connect.core.usecase.impl.*
 
 class EvDataUseCaseTest {
 
@@ -45,7 +46,6 @@ class EvDataUseCaseTest {
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {}
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<co.japl.android.ev_ride_connect.interfaces.model.TripGps>): Long = 1L
         override suspend fun getAllTrips(): List<Trip> = listOf(Trip(id = 1L))
         override suspend fun getTripById(tripId: Long): Trip? = null
@@ -56,3 +56,4 @@ class EvDataUseCaseTest {
         override suspend fun getChargeDetectionsCount(threshold: Int): Int = 0
     }
 }
+

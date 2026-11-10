@@ -19,7 +19,8 @@ import co.japl.android.ev_ride_connect.interfaces.model.MotionState
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.model.TripGps
 import co.japl.android.ev_ride_connect.interfaces.model.TripSummary
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripUseCase
+import co.japl.android.ev_ride_connect.core.usecase.impl.FinalizeTripUseCase
 import co.japl.android.ev_ride_connect.track.ScooterTrackingService
 import co.japl.android.ev_ride_connect.track.TrackingSettings
 import co.japl.android.ev_ride_connect.ui.HistoryFilter
@@ -38,19 +39,20 @@ import javax.inject.Inject
 @HiltViewModel
 class TripViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val tripUseCase: TripUseCase
+    private val tripUseCase: TripUseCase,
+    private val finalizeTripUseCase: FinalizeTripUseCase
 ) : ViewModel() {
 
-    private val _isTripActive = MutableStateFlow(false)
+    internal val _isTripActive = MutableStateFlow(false)
     val isTripActive: StateFlow<Boolean> = _isTripActive.asStateFlow()
 
-    private val _isPaused = MutableStateFlow(false)
+    internal val _isPaused = MutableStateFlow(false)
     val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
 
-    private val _elapsedTimeSeconds = MutableStateFlow(0L)
+    internal val _elapsedTimeSeconds = MutableStateFlow(0L)
     val elapsedTimeSeconds: StateFlow<Long> = _elapsedTimeSeconds.asStateFlow()
 
-    private val _currentDistance = MutableStateFlow(0.0)
+    internal val _currentDistance = MutableStateFlow(0.0)
     val currentDistance: StateFlow<Double> = _currentDistance.asStateFlow()
 
     private val _currentSpeed = MutableStateFlow(0.0)
@@ -83,7 +85,7 @@ class TripViewModel @Inject constructor(
     private val _showStartBatteryDialog = MutableStateFlow(false)
     val showStartBatteryDialog: StateFlow<Boolean> = _showStartBatteryDialog.asStateFlow()
 
-    private val _latestBatteryLevel = MutableStateFlow<Short>(100)
+    internal val _latestBatteryLevel = MutableStateFlow<Short>(100)
     val latestBatteryLevel: StateFlow<Short> = _latestBatteryLevel.asStateFlow()
 
     private val _showEndBatteryDialog = MutableStateFlow(false)
@@ -102,19 +104,19 @@ class TripViewModel @Inject constructor(
     val showSummaryDialog: StateFlow<Boolean> = _showSummaryDialog.asStateFlow()
 
 
-    private val _activeSession = MutableStateFlow<ActiveSession?>(null)
+    internal val _activeSession = MutableStateFlow<ActiveSession?>(null)
     val activeSession: StateFlow<ActiveSession?> = _activeSession.asStateFlow()
 
     private val _evConfig = MutableStateFlow<EvConfig?>(null)
     val evConfig: StateFlow<EvConfig?> = _evConfig.asStateFlow()
 
-    private val _tripHistory = MutableStateFlow<List<Trip>>(emptyList())
+    internal val _tripHistory = MutableStateFlow<List<Trip>>(emptyList())
     val tripHistory: StateFlow<List<Trip>> = _tripHistory.asStateFlow()
 
     private val _selectedFilter = MutableStateFlow(HistoryFilter.ALL)
     val selectedFilter: StateFlow<HistoryFilter> = _selectedFilter.asStateFlow()
 
-    val recordedGpsPoints = mutableListOf<TripGps>()
+    internal val recordedGpsPoints = mutableListOf<TripGps>()
     private var timerJob: Job? = null
     private var gpsSamplingJob: Job? = null
     private var startBatteryLevel: Short = 100
@@ -123,7 +125,9 @@ class TripViewModel @Inject constructor(
     init {
         loadEvConfig()
         observeActiveSession()
-        loadTripHistory()
+        viewModelScope.launch {
+            loadTripHistory()
+        }
     }
 
     fun loadEvConfig() {
@@ -140,13 +144,11 @@ class TripViewModel @Inject constructor(
         }
     }
 
-    fun loadTripHistory() {
-        viewModelScope.launch {
-            try {
-                _tripHistory.value = tripUseCase.getAllTrips()
-            } catch (e: Exception) {
-                Log.e(this@TripViewModel.javaClass.name, e.message, e)
-            }
+    internal suspend fun loadTripHistory() {
+        try {
+            _tripHistory.value = tripUseCase.getAllTrips()
+        } catch (e: Exception) {
+            Log.e(this@TripViewModel.javaClass.name, e.message, e)
         }
     }
 
@@ -496,7 +498,7 @@ class TripViewModel @Inject constructor(
         val voltageVal = config?.batteryVolts?.replace("V", "")?.toDoubleOrNull() ?: 52.0
         val ampersVal = config?.batteryAmpers?.replace("Ah", "")?.toDoubleOrNull() ?: 20.0
         _estimatedConsumptionWh.value = tripUseCase.calculateConsumption(
-            batteryConsumedPercentage = 10,
+            batteryConsumedPercentage = 0,
             batteryVoltage = voltageVal,
             batteryAmperes = ampersVal,
             distanceKm = _currentDistance.value
@@ -524,6 +526,7 @@ class TripViewModel @Inject constructor(
             averageSpeed = finalAverageSpeed,
             distance = totalDistance,
             batteryConsumed = batteryConsumed,
+            maxSpeed = 0.0,
             createTmst = System.currentTimeMillis()
         )
 
@@ -531,7 +534,10 @@ class TripViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                tripUseCase.saveTrip(trip, pointsToSave)
+                // RF-01 + RF-02: único punto de escritura en Core; maxSpeed se calcula en FinalizeTripUseCase
+                finalizeTripUseCase.execute(trip, pointsToSave)
+                // RF-05: Recargar historial tras guardar el viaje
+                _tripHistory.value = tripUseCase.getAllTrips()
             } catch (e: Exception) {
                 Log.e(this@TripViewModel.javaClass.name, e.message, e)
             }
@@ -544,3 +550,4 @@ class TripViewModel @Inject constructor(
         stopLocationUpdates()
     }
 }
+

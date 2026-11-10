@@ -23,7 +23,7 @@ import co.japl.android.ev_ride_connect.database.entities.TripGpsEntity
         EvDataEntity::class,
         ActiveSessionEntity::class
     ],
-    version = 10,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

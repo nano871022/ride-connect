@@ -6,7 +6,7 @@ import co.japl.android.ev_ride_connect.interfaces.model.BatteryMode
 import co.japl.android.ev_ride_connect.interfaces.model.EvConfig
 import co.japl.android.ev_ride_connect.interfaces.model.LlmConfig
 import co.japl.android.ev_ride_connect.interfaces.model.MotorSpec
-import co.japl.android.ev_ride_connect.interfaces.usecase.EvConfigUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.EvConfigUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -260,3 +260,4 @@ class EvConfigViewModel @Inject constructor(
         _llmErrorMessage.value = null
     }
 }
+

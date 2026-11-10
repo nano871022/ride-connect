@@ -74,6 +74,7 @@ fun DashboardScreen(
     val estimatedVoltage by viewModel.estimatedVoltage.collectAsState()
     val lastMaxChargeDate by viewModel.lastMaxChargeDate.collectAsState()
     val lastHigherChargeDayInfo by viewModel.lastHigherChargeDayInfo.collectAsState()
+    val consumptionChartData by viewModel.consumptionChartData.collectAsState()
 
     var showBatteryEditDialog by remember { mutableStateOf(false) }
     var showOdometerEditDialog by remember { mutableStateOf(false) }
@@ -92,6 +93,7 @@ fun DashboardScreen(
             lastMaxChargeDate = lastMaxChargeDate,
             lastTripKm = lastTrip?.distance ?: 0.0,
             lastHigherChargeDayInfo = lastHigherChargeDayInfo,
+            consumptionChartData = consumptionChartData,
             onBatteryEditClick = { showBatteryEditDialog = true },
             onOdometerEditClick = { showOdometerEditDialog = true },
             onStartTrackingClick = { navigator.navigateToTrip() },
@@ -145,6 +147,7 @@ fun DashboardContent(
     lastMaxChargeDate: String,
     lastTripKm: Double,
     lastHigherChargeDayInfo: String,
+    consumptionChartData: List<Float>,
     onBatteryEditClick: () -> Unit,
     onOdometerEditClick: () -> Unit,
     onStartTrackingClick: () -> Unit,
@@ -244,7 +247,8 @@ fun DashboardContent(
         )
 
         ConsumptionCard(
-            whPerKm = consumptionWhPerKm
+            whPerKm = consumptionWhPerKm,
+            chartData = consumptionChartData
         )
 
         OdometerCard(
@@ -426,6 +430,7 @@ private fun DashboardIdlePreview() {
             lastMaxChargeDate = "2026-03-25",
             lastTripKm = 14.2,
             lastHigherChargeDayInfo = "Max charge: 100% on Monday",
+            consumptionChartData = emptyList(),
             onBatteryEditClick = {},
             onOdometerEditClick = {},
             onStartTrackingClick = {}
@@ -454,6 +459,7 @@ private fun DashboardTrackingActivePreview() {
             lastMaxChargeDate = "2026-03-28",
             lastTripKm = 8.5,
             lastHigherChargeDayInfo = "Active Session",
+            consumptionChartData = emptyList(),
             onBatteryEditClick = {},
             onOdometerEditClick = {},
             onStartTrackingClick = {}

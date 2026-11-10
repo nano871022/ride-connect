@@ -12,18 +12,6 @@ class TripDatabasePortTest {
     private val podamFactory = PodamFactoryImpl()
 
     @Test
-    fun shouldSaveTripData() = runTest {
-        val port = FakeTripDatabasePort()
-        val expectedDistance = 1500
-        val expectedBatteryConsumed = 25
-
-        port.saveTripData(expectedDistance, expectedBatteryConsumed)
-
-        assertThat(port.savedDistance).isEqualTo(expectedDistance)
-        assertThat(port.savedBatteryConsumed).isEqualTo(expectedBatteryConsumed)
-    }
-
-    @Test
     fun shouldSaveTripAndGpsPoints() = runTest {
         val port = FakeTripDatabasePort()
         val trip = podamFactory.manufacturePojo(Trip::class.java)
@@ -55,17 +43,9 @@ class TripDatabasePortTest {
     }
 
     private class FakeTripDatabasePort : TripDatabasePort {
-        var savedDistance: Int? = null
-        var savedBatteryConsumed: Int? = null
-
         private val trips = mutableListOf<Trip>()
         private val gpsMap = mutableMapOf<Long, MutableList<TripGps>>()
         private var nextId = 1L
-
-        override suspend fun saveTripData(distance: Int, batteryConsumed: Int) {
-            savedDistance = distance
-            savedBatteryConsumed = batteryConsumed
-        }
 
         override suspend fun saveTrip(trip: Trip, gpsPoints: List<TripGps>): Long {
             val assignedId = if (trip.id == 0L) nextId++ else trip.id

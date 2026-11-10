@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.japl.android.ev_ride_connect.interfaces.model.Trip
 import co.japl.android.ev_ride_connect.interfaces.model.TripGps
-import co.japl.android.ev_ride_connect.interfaces.usecase.TripDetailUseCase
+import co.japl.android.ev_ride_connect.core.usecase.api.TripDetailUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,3 +32,4 @@ class TripDetailViewModel @Inject constructor(
         }
     }
 }
+

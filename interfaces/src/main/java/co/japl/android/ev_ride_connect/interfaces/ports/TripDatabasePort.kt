@@ -12,5 +12,4 @@ interface TripDatabasePort {
     suspend fun getTotalTripsCount(): Int
     suspend fun getTotalDistanceKm(): Double
     suspend fun getChargeDetectionsCount(threshold: Int): Int
-    suspend fun saveTripData(distance: Int, batteryConsumed: Int)
 }
